@@ -13,7 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
         players: [],
         assignments: {},
         scores: {},
-        titles: {},
+        titles: {
+            qf_date: 'July 6', qf_best: 'Best of 5',
+            sf_date: 'July 12', sf_best: 'Best of 7',
+            final_date: 'July 13', final_best: 'Best of 9',
+            third_date: 'July 13', third_best: 'Best of 5',
+            final_time: '17:00 GMT', third_time: '15:00 GMT',
+        },
         mainTitle_bracket: 'BRACKETS',
         mainTitle_groups: 'GROUPS',
         viewMode: 'bracket',
@@ -197,8 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             mainTitleEl.textContent = state.mainTitle_groups;
             renderGroupsCanvas(contentArea);
         }
-        // Force redraw connectors if bracket view is active
-        redrawConnectorsIfBracket();
     }
 
     function renderGroupsCanvas(container) {
@@ -229,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initCardGradients();
     }
 
-    function renderMatchBox(matchId) {
+    function renderMatch(matchId, extraClass = '') {
         const p1_slot_id = `${matchId}-p1`;
         const p2_slot_id = `${matchId}-p2`;
 
@@ -254,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return `
-            <div class="match-box" data-match-id="${matchId}">
+            <div class="match-box ${extraClass}" data-match-id="${matchId}">
                 <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1.flag}')"></div>
                 <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2.flag}')"></div>
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
@@ -269,45 +273,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        const col_style = "width: 24%; display: flex; flex-direction: column; justify-content: space-around; align-items: stretch; gap: 20px; padding: 80px 0;";
+        let html = '<div class="bracket-view">';
 
-        let html = `
-            <div class="bracket-view">
-                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
+        // Quarterfinals Column
+        html += '<div class="round-column qf-column">';
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best}</span></div>`;
+        html += renderMatch('qf1');
+        html += renderMatch('qf2');
+        html += renderMatch('qf3');
+        html += renderMatch('qf4');
+        html += '</div>';
 
-                <!-- Titles are positioned absolutely relative to the bracket-view -->
-                <div class="round-title" style="position:absolute; top: 20px; left: 12%; transform: translateX(-50%);" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="position:absolute; top: 20px; left: 37%; transform: translateX(-50%);" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="position:absolute; top: 20px; left: 62%; transform: translateX(-50%);" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
-                <div class="round-title" style="position:absolute; top: 20px; left: 87%; transform: translateX(-50%);" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+        // Semifinals Column
+        html += '<div class="round-column sf-column">';
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best}</span></div>`;
+        html += renderMatch('sf1');
+        html += renderMatch('sf2');
+        html += '</div>';
 
-                <!-- Column for Quarterfinals -->
-                <div class="round-column" style="${col_style}">
-                    ${renderMatchBox('qf1')}
-                    ${renderMatchBox('qf2')}
-                    ${renderMatchBox('qf3')}
-                    ${renderMatchBox('qf4')}
-                </div>
+        // Final & 3rd Place Column
+        html += '<div class="round-column final-column">';
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time}</span></div>`;
+        html += renderMatch('final');
+        html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time}</span></div>`;
+        html += renderMatch('third-place', 'third-match');
+        html += '</div>';
 
-                <!-- Column for Semifinals -->
-                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
-                    ${renderMatchBox('sf1')}
-                    ${renderMatchBox('sf2')}
-                </div>
-
-                <!-- Column for Final -->
-                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
-                    ${renderMatchBox('final')}
-                </div>
-
-                <!-- Column for Third Place -->
-                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
-                    ${renderMatchBox('third-place')}
-                </div>
-            </div>`;
-
+        html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
-        // Connector drawing is handled by redrawConnectorsIfBracket() called from render()
+        // The redraw is handled by the main render() function now
     }
 
     function updateBracketProgression(matchId) {
@@ -345,60 +339,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('bracket-svg');
+        container.prepend(svg);
 
-        const connections = [
-            // Quarters to Semis
-            { from: 'qf1', to: 'sf1', fromPort: 'right', toPort: 'left-top' },
-            { from: 'qf2', to: 'sf1', fromPort: 'right', toPort: 'left-bottom' },
-            { from: 'qf3', to: 'sf2', fromPort: 'right', toPort: 'left-top' },
-            { from: 'qf4', to: 'sf2', fromPort: 'right', toPort: 'left-bottom' },
-            // Semis to Final
-            { from: 'sf1', to: 'final', fromPort: 'right', toPort: 'left-top' },
-            { from: 'sf2', to: 'final', fromPort: 'right', toPort: 'left-bottom' },
-            // Semis to 3rd Place
-            { from: 'sf1', to: 'third-place', fromPort: 'right', toPort: 'left-top', type: 'third-place' },
-            { from: 'sf2', to: 'third-place', fromPort: 'right', toPort: 'left-bottom', type: 'third-place' },
-        ];
+        function createConnectorPath(sourceEl, destEl, containerEl) {
+            if (!sourceEl || !destEl || !containerEl) return '';
+            const sourceRect = sourceEl.getBoundingClientRect();
+            const destRect = destEl.getBoundingClientRect();
+            const containerRect = containerEl.getBoundingClientRect();
 
-        function getPortPoint(matchId, port) {
-            const el = container.querySelector(`[data-match-id="${matchId}"]`);
-            if (!el) return null;
-            const rect = el.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
+            const startX = sourceRect.right - containerRect.left;
+            const startY = sourceRect.top + sourceRect.height / 2 - containerRect.top;
+            const endX = destRect.left - containerRect.left;
+            const endY = destRect.top + destRect.height / 2 - containerRect.top;
 
-            const relTop = rect.top - containerRect.top;
-            const relLeft = rect.left - containerRect.left;
+            const midX = startX + 40; // Controls the horizontal length of the connector line
 
-            switch(port) {
-                case 'right': return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
-                case 'left-top': return { x: relLeft, y: relTop + rect.height * 0.25 };
-                case 'left-bottom': return { x: relLeft, y: relTop + rect.height * 0.75 };
-                default: return { x: relLeft, y: relTop + rect.height / 2 }; // 'left'
-            }
+            return `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
         }
 
+        const connections = [
+            { from: 'qf1', to: 'sf1-p1' }, { from: 'qf2', to: 'sf1-p2' },
+            { from: 'qf3', to: 'sf2-p1' }, { from: 'qf4', to: 'sf2-p2' },
+            { from: 'sf1', to: 'final-p1', loserTo: 'third-place-p1' },
+            { from: 'sf2', to: 'final-p2', loserTo: 'third-place-p2' },
+        ];
+
         connections.forEach(conn => {
-            const startPoint = getPortPoint(conn.from, conn.fromPort);
-            const endPoint = getPortPoint(conn.to, conn.toPort);
+            const fromMatchEl = container.querySelector(`[data-match-id="${conn.from}"]`);
+            if (!fromMatchEl) return;
 
-            if (!startPoint || !endPoint) return;
+            // Connect winner
+            const winnerSlot = fromMatchEl.querySelector('.winner');
+            const destSlot = container.querySelector(`[data-slot-id="${conn.to}"]`);
+            if (winnerSlot && destSlot) {
+                const pathString = createConnectorPath(winnerSlot, destSlot, container);
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathString);
+                path.classList.add('bracket-connector-path');
+                svg.appendChild(path);
+            }
 
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-
-            // Use smooth, curved lines for a more modern look
-            const offset = 30; // Controls the curve of the connector
-            const p2x = startPoint.x + offset;
-            const p3x = endPoint.x - offset;
-
-            // M = Move to, C = Cubic Bezier Curve
-            const d = `M ${startPoint.x} ${startPoint.y} C ${p2x} ${startPoint.y}, ${p3x} ${endPoint.y}, ${endPoint.x} ${endPoint.y}`;
-
-            path.setAttribute('d', d);
-            path.classList.add('bracket-connector-path');
-            svg.appendChild(path);
+            // Connect loser (for semifinals)
+            if (conn.loserTo) {
+                const loserSlot = fromMatchEl.querySelector('.loser');
+                const loserDestSlot = container.querySelector(`[data-slot-id="${conn.loserTo}"]`);
+                if (loserSlot && loserDestSlot) {
+                    const pathString = createConnectorPath(loserSlot, loserDestSlot, container);
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathString);
+                    path.classList.add('bracket-connector-path');
+                    svg.appendChild(path);
+                }
+            }
         });
-
-        container.prepend(svg);
     }
 
     // --- DECORATIONS ---
@@ -533,38 +526,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scoreEl) {
             const slotId = scoreEl.dataset.scoreId;
             state.scores[slotId] = scoreEl.textContent;
-
             const matchId = slotId.substring(0, slotId.lastIndexOf('-'));
             updateBracketProgression(matchId);
-
             markDirty();
-            render(); // Re-render to show everything
+            render(); // Re-render to show winner/loser styling and progression
+            return; // Exit to avoid handling other blurs
         }
-        const titleEl = e.target.closest('.round-title');
-        if (titleEl) {
-            state.titles[titleEl.dataset.titleId] = titleEl.textContent;
-            markDirty();
-        }
-    }
 
-    function redrawConnectorsIfBracket() {
-        if (state.viewMode !== 'bracket') return;
-        const view = document.querySelector('.bracket-view');
-        if (view) {
-            // Use a timeout to ensure the DOM has been painted after a resize or render
-            setTimeout(() => drawBracketConnectors(view), 100);
+        // Handle bracket metadata editing (dates, best-of, etc.)
+        const editedTitleEl = e.target.closest('[data-title-id]');
+        if (editedTitleEl) {
+            const titleId = editedTitleEl.dataset.titleId;
+            if (state.titles[titleId] !== editedTitleEl.textContent) {
+                state.titles[titleId] = editedTitleEl.textContent;
+                markDirty();
+            }
         }
     }
 
     // --- CANVAS SCALING ---
     function scaleCanvas() {
-        // Fully disable scaling, canvas is now fixed size
+        const wrapper = document.getElementById('canvas-wrapper');
         const canvas = document.getElementById('canvas');
-        if (canvas) {
-            canvas.style.transform = 'scale(1)';
-        }
-        // Force redraw of connectors on resize or view change
-        redrawConnectorsIfBracket();
+        if (!wrapper || !canvas) return;
+
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+
+        const canvasWidth = 1920;
+        const canvasHeight = 1080;
+
+        const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
+
+        canvas.style.transform = `scale(${scale})`;
     }
 
 
