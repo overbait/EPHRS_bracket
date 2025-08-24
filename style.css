@@ -30,7 +30,7 @@ body {
     width: 95%;
     max-width: 1400px;
     aspect-ratio: 16 / 9;
-    border: 1px solid var(--primary-color);
+    /* border: 1px solid var(--primary-color); */ /* Replaced by ::before pseudo-element */
     position: relative;
     overflow: hidden;
     display: flex;
@@ -40,6 +40,17 @@ body {
     /* Background styles moved here */
     background-size: cover;
     background-position: center;
+    clip-path: polygon(4% 0, 96% 0, 100% 4%, 100% 100%, 0 100%, 0 4%);
+}
+
+#canvas-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid var(--primary-color);
+    clip-path: polygon(4% 0, 96% 0, 100% 4%, 100% 100%, 0 100%, 0 4%);
+    pointer-events: none;
+    z-index: 100; /* Ensure border is on top of everything */
 }
 #canvas {
     width: 1920px;
@@ -207,10 +218,10 @@ body {
 .groups-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.8rem;
+    font-size: 2.1rem; /* Increased font size */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px;
+    padding-left: 50px; /* Increased padding */
 }
 /* The old .flag class is no longer needed */
 
@@ -345,10 +356,10 @@ body {
 .bracket-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.4rem;
+    font-size: 1.7rem; /* Increased font size */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px;
+    padding-left: 50px; /* Increased padding */
     position: relative;
     z-index: 1;
 }
@@ -433,8 +444,8 @@ body {
     background-image: var(--flag-image); /* Set via JS */
     pointer-events: none;
     /* Use mask-image for a reliable fade-out effect */
-    mask-image: linear-gradient(to right, black 60%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 60%, transparent 100%);
+    mask-image: linear-gradient(to right, black 50%, transparent 90%);
+    -webkit-mask-image: linear-gradient(to right, black 50%, transparent 90%);
 }
 
 /* For Groups View */
@@ -445,7 +456,7 @@ body {
     height: 100%;
     background-size: cover;
     background-position: left center; /* Align image to the left */
-    opacity: 0.5;
+    /* opacity: 0.5; */ /* Removed for consistency with playoffs view */
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
