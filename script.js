@@ -228,33 +228,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        // Adjusted layout values to better fit the 1920px canvas and larger match boxes
+        // Centered and more compact layout
+        const qf_left = 150;
+        const sf_left = 570;
+        const f_left = 990;
+        const tp_left = 1410; // 3rd place
+
         container.innerHTML = `
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-                <div class="round-title" style="top: 60px; left: 150px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 60px; left: 580px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 120px; left: 990px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+
+                <!-- Titles -->
+                <div class="round-title" style="top: 150px; left: ${qf_left + 70}px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 265px; left: ${sf_left + 70}px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 425px; left: ${f_left + 70}px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: 755px; left: ${tp_left + 70}px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
 
                 <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 140px; left: 50px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 320px; left: 50px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 620px; left: 50px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 800px; left: 50px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: 200px; left: ${qf_left}px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: 330px; left: ${qf_left}px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 640px; left: ${qf_left}px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 770px; left: ${qf_left}px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 230px; left: 470px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 710px; left: 470px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: 315px; left: ${sf_left}px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 705px; left: ${sf_left}px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 470px; left: 890px;" data-match-id="final"></div>
+                <div class="match-box" style="top: 510px; left: ${f_left}px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="round-title" style="top: 800px; left: 1420px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-                <div class="match-box" style="top: 880px; left: 1320px;" data-match-id="third-place"></div>
+                <div class="match-box" style="top: 810px; left: ${tp_left}px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
-        // Use a timeout to ensure the DOM is painted and positions are calculated before drawing SVG connectors
         setTimeout(() => {
             drawBracketConnectors(container.querySelector('.bracket-view'));
         }, 0);
@@ -375,12 +381,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-            // Use straight angled lines as requested
-            const offset = 60; // The length of the horizontal part of the connector
+            // Use smooth, curved lines for a more modern look
+            const offset = 90; // Controls the curve of the connector
             const p2x = startPoint.x + offset;
             const p3x = endPoint.x - offset;
 
-            const d = `M ${startPoint.x} ${startPoint.y} H ${p2x} L ${p3x} ${endPoint.y} H ${endPoint.x}`;
+            // M = Move to, C = Cubic Bezier Curve
+            const d = `M ${startPoint.x} ${startPoint.y} C ${p2x} ${startPoint.y}, ${p3x} ${endPoint.y}, ${endPoint.x} ${endPoint.y}`;
 
             path.setAttribute('d', d);
             path.classList.add('bracket-connector-path');
@@ -396,10 +403,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initCardGradients({
       blobsPerCard = 3,
-      sizeMin = 400,
-      sizeMax = 1000,
-      blurPx = 80,
-      opacity = 0.10,
+      sizeMin = 600,      // Increased for larger blobs
+      sizeMax = 1200,     // Increased for larger blobs
+      blurPx = 90,        // Increased for softer edges
+      opacity = 0.08,     // Decreased for more subtlety
       colors = [
         ['#C9CBA3', '#FFE1A8'],
         ['#E26D5C', '#723D46'],
