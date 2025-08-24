@@ -218,9 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
                 group += `
                     <div class="player-slot" data-slot-id="${slotId}">
-                        <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
-                        <img src="${player.avatar}" class="avatar">
+                        <img src="${player.flag}" class="flag">
                         <span class="name">${player.name}</span>
+                        <img src="${player.avatar}" class="avatar">
                     </div>`;
             }
             group += `</div>`;
@@ -293,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Final & 3rd Place Column
         html += '<div class="round-column final-column">';
+        html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time}</span></div>`;
         html += renderMatch('final');
         html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time}</span></div>`;

@@ -128,7 +128,7 @@ body {
     width: 100%;
     height: 100%;
     /* Add padding to prevent touching the edges */
-    padding: 50px 100px;
+    padding: 50px 150px;
     box-sizing: border-box;
     position: relative;
 }
@@ -185,22 +185,26 @@ body {
     border-color: rgba(255, 210, 125, 0.5);
     background: rgba(0,0,0,0.4);
 }
+.groups-view .player-slot .flag {
+    height: 100%;
+    width: auto;
+    object-fit: cover;
+    margin-right: 15px;
+}
 .groups-view .player-slot .avatar {
     width: 45px; /* Slightly smaller to fit new height */
     height: 45px;
     border-radius: 50%;
     background: #555;
-    margin-right: 20px;
+    margin-left: auto; /* Pushes avatar to the far right */
     object-fit: cover;
 }
 .groups-view .player-slot .name {
-    flex-grow: 1;
     font-family: var(--font-display);
     font-size: 1.8rem; /* Larger font */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Add shadow for readability */
 }
-/* The old .flag class is no longer needed */
 
 /* --- BRACKET VIEW --- */
 .bracket-view {
@@ -218,16 +222,13 @@ body {
 .round-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* Use space-around for QF, but will be overridden */
-    height: 100%; /* Use full height to allow space-around to work */
-    gap: 20px; /* Gap between matches */
+    justify-content: center; /* Center all columns for consistency */
+    height: 100%;
+    gap: 40px; /* Increased gap for better spacing */
+    width: 28%;
 }
 
-.qf-column { width: 28%; }
-.sf-column { width: 28%; justify-content: center; } /* Also center the SF matches vertically */
 .final-column {
-    width: 28%;
-    justify-content: center; /* Vertically center the final match */
     position: relative; /* For positioning 3rd place match */
 }
 
@@ -241,6 +242,15 @@ body {
     color: var(--primary-color);
     font-size: 2rem;
     margin: 5px 0;
+    display: inline-block;
+    padding: 10px 80px; /* Increased horizontal padding for the gradient */
+    border-radius: 10px;
+    background: linear-gradient(to right,
+        transparent 0%,
+        rgba(0,0,0,0.6) 25%,
+        rgba(0,0,0,0.6) 75%,
+        transparent 100%
+    );
 }
 .round-header .date, .round-header .best-of, .round-header .time {
     display: block;
@@ -254,6 +264,12 @@ body {
 }
 .third-header {
     margin-top: 60px; /* Space between final and 3rd place header */
+}
+
+.final-logo {
+    max-width: 300px;
+    width: 70%;
+    height: auto;
 }
 
 .bracket-logo {
@@ -397,22 +413,6 @@ body {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
-}
-
-/* For Groups View */
-.groups-view .player-slot .flag-background {
-    top: 0;
-    right: 0; /* Position on the right */
-    width: 70%; /* Cover the right 70% of the slot */
-    height: 100%;
-}
-.groups-view .player-slot .flag-background::after {
-    /* Smoother gradient that fades to the background color */
-    background: linear-gradient(to right, var(--content-box-bg) 30%, transparent 80%);
-}
-.groups-view .player-slot .avatar,
-.groups-view .player-slot .name {
-    z-index: 1; /* Ensure avatar and name are on top of the flag background */
 }
 
 
