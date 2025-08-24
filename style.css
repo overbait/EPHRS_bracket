@@ -158,13 +158,13 @@ body {
     flex-direction: column;
     justify-content: center;
     gap: 40px;
-    width: 420px; /* Width of a single group box */
+    width: 480px; /* Increased width */
 }
 .logo-column-main {
     flex-shrink: 0;
 }
 .logo-column-main img {
-    width: 300px;
+    width: 340px; /* Increased width */
     height: auto;
 }
 .groups-view .player-slot {
@@ -173,16 +173,28 @@ body {
     height: 50px;
     padding: 10px 20px;
     margin: 8px 0;
-    border: 1px solid rgba(255, 210, 125, 0.2);
+    /* border: 1px solid rgba(255, 210, 125, 0.2); */ /* Replaced by ::after */
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     position: relative;
     background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
 }
+.groups-view .player-slot::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid rgba(255, 210, 125, 0.2);
+    border-radius: 4px;
+    z-index: 2;
+    pointer-events: none;
+    transition: border-color 0.2s ease-in-out;
+}
 .groups-view .player-slot:hover {
-    border-color: rgba(255, 210, 125, 0.5);
     background: rgba(0,0,0,0.4);
+}
+.groups-view .player-slot:hover::after {
+    border-color: rgba(255, 210, 125, 0.5);
 }
 .groups-view .player-slot .avatar {
     width: 45px;
@@ -211,7 +223,7 @@ body {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 50px 100px;
+    padding: 50px 60px; /* Reduced horizontal padding */
     box-sizing: border-box;
 }
 
@@ -220,7 +232,7 @@ body {
     flex-direction: column;
     height: 100%;
     gap: 20px; /* Default gap */
-    width: 28%;
+    width: 30%; /* Increased width */
 }
 
 .qf-column, .sf-column {
@@ -290,7 +302,7 @@ body {
     width: 100%;
     height: auto; /* Height will be determined by content */
     background-color: var(--content-box-bg);
-    border: 1px solid var(--primary-color);
+    /* border: 1px solid var(--primary-color); */ /* Replaced by ::after */
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
     padding: 8px 8px 8px 30px;
     box-sizing: border-box;
@@ -299,6 +311,16 @@ body {
     justify-content: space-around;
     overflow: hidden;
     flex-shrink: 0; /* Prevent match box from shrinking */
+}
+
+.match-box::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid var(--primary-color);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
+    z-index: 2;
+    pointer-events: none;
 }
 
 .third-match {
@@ -410,13 +432,9 @@ body {
     background-size: cover;
     background-image: var(--flag-image); /* Set via JS */
     pointer-events: none;
-}
-.flag-background::after { /* Pseudo-element for the gradient overlay */
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* More aggressive gradient to ensure flag edge is transparent */
-    background: linear-gradient(to right, transparent 25%, var(--content-box-bg) 70%);
+    /* Use mask-image for a reliable fade-out effect */
+    mask-image: linear-gradient(to right, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 60%, transparent 100%);
 }
 
 /* For Groups View */
@@ -452,8 +470,4 @@ body {
 .match-box .p2-flag-bg {
     bottom: 0;
 }
-.match-box .flag-background::after {
-    /* Gradient fades from transparent on left to opaque on right */
-    /* More aggressive gradient to ensure flag edge is transparent */
-    background: linear-gradient(to right, transparent 10%, var(--content-box-bg) 50%);
-}
+/* The ::after pseudo-element is no longer needed for gradient; using mask-image now */
