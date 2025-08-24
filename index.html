@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Tournament Graphics</title>
+    <title>Tournament Graphics Editor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -14,9 +14,7 @@
         <!-- Player Bank Sidebar -->
         <aside id="player-bank">
             <h2 class="sidebar-title">Player Bank</h2>
-            <ul id="player-list">
-                <!-- Player items for the bank will be dynamically inserted here -->
-            </ul>
+            <ul id="player-list"></ul>
             <button id="add-player-btn" class="btn-primary">+</button>
         </aside>
 
@@ -27,36 +25,42 @@
                     <label><input type="radio" name="mode" value="bracket" checked> Bracket</label>
                     <label><input type="radio" name="mode" value="groups"> Groups</label>
                 </div>
+                <button id="save-btn" class="btn-primary">Save</button>
                 <button id="export-png" class="btn-primary">Export as PNG</button>
             </div>
 
             <div id="canvas-wrapper">
-                <!-- The canvas for rendering the graphic -->
                 <div id="canvas">
                     <div class="background"></div>
                     <div id="decorations-container"></div>
                     <div class="overlay"></div>
                     <div class="edge-vignette"></div>
-                    <div class="content-area">
-                        <!-- This will hold either the bracket or groups structure -->
-                    </div>
+                    <div class="content-area"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modals and Popups -->
-    <div id="player-assign-modal" class="modal-hidden">
-        <div id="player-assign-list">
-            <!-- List of available players will be shown here -->
+    <!-- Modals -->
+    <div id="player-assign-modal" class="modal-hidden"></div>
+    <div id="player-edit-modal" class="modal-hidden">
+        <div class="modal-content">
+            <h3>Edit Player</h3>
+            <input type="text" id="edit-player-name" placeholder="Player Name">
+            <div id="edit-flag-selection">
+                <p>Current Flag: <img id="edit-current-flag" src="" alt="flag"></p>
+                <input type="text" id="edit-flag-search" placeholder="Search new flag...">
+                <div id="edit-flag-options"></div>
+            </div>
+            <p>Avatar: <img id="edit-current-avatar" src="" class="avatar-preview"></p>
+            <label for="edit-avatar-upload">Upload new avatar:</label>
+            <input type="file" id="edit-avatar-upload" accept="image/*">
+            <div class="modal-actions">
+                <button id="save-player-changes-btn">Save Changes</button>
+                <button id="cancel-player-edit-btn">Cancel</button>
+            </div>
         </div>
     </div>
-
-    <!-- This is for editing player details in the bank -->
-    <div id="player-edit-modal" class="modal-hidden">
-         <!-- Form for editing player name, flag, etc. -->
-    </div>
-
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="script.js"></script>
