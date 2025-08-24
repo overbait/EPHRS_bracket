@@ -1,0 +1,455 @@
+/* --- ROOT VARIABLES & FONT DEFINITIONS --- */
+:root {
+    --primary-color: #ffd27d;
+    --accent-color: #e06636;
+    --content-box-bg: rgba(44, 28, 17, .8);
+    --dark-bg: #0d0d0d;
+    --text-color: #f5f0e6;
+    --font-main: 'Roboto', sans-serif;
+    --font-title: 'Cinzel', serif;
+    --font-display: 'SouthParkFont', sans-serif;
+}
+
+@font-face {
+    font-family: 'SouthParkFont';
+    src: url('Media/fonts_spfont 2.ttf') format('truetype');
+}
+
+/* --- BASE & LAYOUT --- */
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    margin: 0;
+}
+#app-container { display: flex; height: 100vh; }
+#player-bank { width: 300px; background-color: #1a1a1a; padding: 20px; border-right: 2px solid var(--accent-color); display: flex; flex-direction: column; }
+#main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
+#canvas-wrapper {
+    width: 95%;
+    max-width: 1400px;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--primary-color);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+#canvas {
+    width: 1840px; /* Cropped width to align with branding */
+    height: 1080px;
+    transform-origin: center;
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure background scaling doesn't bleed out */
+}
+
+/* --- SAVE BUTTON --- */
+#save-btn.saved {
+    background-color: #5a5a5a;
+    color: #aaa;
+    cursor: default;
+}
+
+/* --- MODAL STYLES --- */
+.modal-hidden { display: none !important; }
+.modal-content { width: 400px; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid var(--primary-color); }
+#player-edit-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 101; }
+#player-edit-modal input[type="text"], #player-edit-modal input[type="file"] { width: 95%; padding: 8px; margin: 10px 0; }
+#edit-current-flag {
+    width: 30px;
+    height: 22px;
+    object-fit: cover;
+    vertical-align: middle;
+    border: 1px solid #555;
+}
+#edit-flag-options {
+    display: none; /* Hidden by default */
+    max-height: 150px;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-top: 5px;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+#edit-flag-options img {
+    width: 30px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+#edit-flag-options img:hover {
+    border-color: var(--primary-color);
+}
+.avatar-preview { width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; }
+.modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* --- COMPONENT STYLES --- */
+.sidebar-title { font-family: var(--font-display); color: var(--primary-color); text-align: center; }
+#player-list { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
+.player-bank-item { display: flex; align-items: center; gap: 10px; padding: 8px; background: #2a2a2a; border-radius: 4px; margin-bottom: 8px; }
+.player-avatar-bank { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.player-name-bank { flex-grow: 1; font-family: var(--font-title); }
+.player-flag-bank { width: 25px; height: 18px; object-fit: cover; }
+.player-bank-actions { display: flex; gap: 5px; }
+.player-bank-actions button { background: none; border: none; color: var(--text-color); cursor: pointer; opacity: 0.7; font-size: 16px; }
+.player-bank-actions button:hover { opacity: 1; color: var(--primary-color); }
+.btn-primary { font-family: var(--font-title); background-color: var(--primary-color); color: var(--dark-bg); border: none; padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+
+/* --- CANVAS LAYERS --- */
+#canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+#canvas .background {
+    z-index: 1;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.05); /* Slightly enlarge the background to fill edges */
+}
+#decorations-container { z-index: 2; }
+#canvas .overlay { z-index: 3; }
+#canvas .edge-vignette { z-index: 4; }
+#canvas .content-area { z-index: 5; }
+
+/* --- GROUPS VIEW --- */
+.groups-view {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 50px;
+    box-sizing: border-box;
+}
+
+/* Базовая карточка */
+.content-box {
+  background-color: var(--content-box-bg); /* полупрозрачный темный */
+  border: 1px solid rgba(255, 210, 125, 0.4); /* тонкая золотистая рамка */
+  padding: 25px 35px;
+  border-radius: 6px;
+  position: relative; /* важно для фонового слоя */
+  z-index: 1;
+}
+
+/* Слои для градиентных пятен */
+.card-bg-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  z-index: -1; /* уходит под контент карточки */
+}
+.card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.group-title { font-family: var(--font-display); color: var(--primary-color); text-align: center; font-size: 2.5rem; margin: -5px 0 15px; }
+.group-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    width: 420px; /* Width of a single group box */
+}
+.logo-column-main {
+    flex-shrink: 0;
+}
+.logo-column-main img {
+    width: 300px;
+    height: auto;
+}
+.groups-view .player-slot {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    padding: 10px 20px;
+    margin: 8px 0;
+    border: 1px solid rgba(255, 210, 125, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
+}
+.groups-view .player-slot:hover {
+    border-color: rgba(255, 210, 125, 0.5);
+    background: rgba(0,0,0,0.4);
+}
+.groups-view .player-slot .avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #555;
+    margin-left: 20px;
+    object-fit: cover;
+}
+.groups-view .player-slot .name {
+    flex-grow: 1;
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    padding-left: 40px;
+}
+/* The old .flag class is no longer needed */
+
+/* --- BRACKET VIEW --- */
+.bracket-view {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 50px 100px;
+    box-sizing: border-box;
+}
+
+.round-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 20px; /* Default gap */
+    width: 28%;
+}
+
+.qf-column, .sf-column {
+    justify-content: center;
+}
+
+.final-column {
+    justify-content: flex-start; /* Align content to the top */
+    position: relative;
+    padding-top: 20px; /* Small padding to push content down from the top edge */
+    gap: 15px; /* Tighter gap for final column */
+}
+
+.round-header {
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: var(--font-title);
+}
+.round-header h3 {
+    font-family: var(--font-display);
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin: 5px 0;
+    padding: 5px 40px; /* Reduced padding */
+    white-space: nowrap;
+    display: inline-block;
+    border-radius: 10px;
+    background: linear-gradient(to right,
+        transparent 0%,
+        rgba(0,0,0,0.6) 25%,
+        rgba(0,0,0,0.6) 75%,
+        transparent 100%
+    );
+}
+.round-header .date, .round-header .best-of, .round-header .time {
+    display: block;
+    font-size: 1rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+.round-header .time.live {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+.third-header {
+    margin-top: 40px; /* Reduced margin */
+}
+.final-logo {
+    max-width: 250px;
+    width: 60%;
+    height: auto;
+    align-self: center;
+    margin-bottom: 20px;
+}
+.bracket-logo {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    z-index: -1; /* Behind connectors and content */
+    opacity: 0.3;
+}
+
+.match-box {
+    position: relative; /* No longer absolute */
+    width: 100%;
+    height: auto; /* Height will be determined by content */
+    background-color: var(--content-box-bg);
+    border: 1px solid var(--primary-color);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
+    padding: 8px 8px 8px 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    overflow: hidden;
+    flex-shrink: 0; /* Prevent match box from shrinking */
+}
+
+.third-match {
+    margin-top: 20px; /* Spacing from the final match */
+}
+
+.bracket-view .player-slot {
+    display: flex;
+    align-items: center;
+    min-height: 50px; /* Ensure a minimum height */
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+}
+.bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
+.bracket-view .player-slot.winner {
+    background: radial-gradient(circle at 90% 50%, rgba(60, 179, 113, 0.3) 0%, rgba(60, 179, 113, 0) 60%);
+}
+.bracket-view .player-slot.loser {
+    background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
+}
+.bracket-view .player-slot .name {
+    flex-grow: 1;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    padding-left: 40px;
+    position: relative;
+    z-index: 1;
+}
+.bracket-view .player-slot .score {
+    font-size: 2rem;
+    font-family: var(--font-display);
+    width: 40px;
+    text-align: center;
+    cursor: text;
+    color: var(--primary-color);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.bracket-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0; /* Above background, below content */
+}
+
+.bracket-connector-path {
+    stroke: var(--primary-color);
+    stroke-width: 4px;
+    fill: none;
+}
+
+#player-assign-modal { position: absolute; z-index: 100; background: #222; border: 1px solid var(--primary-color); }
+#player-assign-modal div { padding: 8px; cursor: pointer; }
+#player-assign-modal div:hover { background: var(--accent-color); }
+.leaf-decoration { position: absolute; pointer-events: none; }
+
+/* --- BRANDING --- */
+#bottom-branding {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    z-index: 4;
+    display: flex;
+    justify-content: flex-start; /* Aligned to the left */
+    align-items: flex-end;
+    padding: 0 0 20px 40px; /* Add left padding */
+    box-sizing: border-box;
+}
+
+#bottom-branding img {
+    height: 50px; /* Adjust as needed */
+}
+
+.hosted-by-text {
+    color: white;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    margin-right: 15px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+#main-title {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: var(--primary-color);
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    z-index: 10;
+    margin: 0;
+    padding: 0 20px;
+}
+
+/* --- FLAG BACKGROUND STYLES --- */
+.flag-background {
+    position: absolute;
+    z-index: 0; /* Behind text content */
+    background-size: cover;
+    background-position: center;
+    background-image: var(--flag-image); /* Set via JS */
+    pointer-events: none;
+}
+.flag-background::after { /* Pseudo-element for the gradient overlay */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+}
+
+/* For Groups View */
+.groups-view .player-slot .flag-background {
+    top: 0;
+    left: 0;
+    width: 30%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5;
+}
+.groups-view .player-slot .avatar,
+.groups-view .player-slot .name {
+    z-index: 1; /* Ensure avatar and name are on top of the flag background */
+}
+
+
+/* For Brackets View */
+.match-box {
+    position: relative; /* Ensure it's a positioning context for the flags */
+    overflow: hidden; /* This will clip the flag backgrounds */
+}
+.match-box .flag-background {
+    width: 50%; /* Smaller, sits behind the player name */
+    height: 50%;
+    left: 0;
+}
+.match-box .p1-flag-bg {
+    top: 0;
+}
+.match-box .p2-flag-bg {
+    bottom: 0;
+}
+.match-box .flag-background::after {
+    /* Gradient fades from transparent on left to opaque on right */
+    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 80%);
+}
