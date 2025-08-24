@@ -27,8 +27,9 @@ body {
 #main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
 #canvas-wrapper {
-    width: 95%;
-    max-width: 1400px;
+    /* Fills more of the screen to remove "black bars" */
+    width: 98%;
+    max-width: 1800px; /* Allow it to be larger */
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
@@ -37,6 +38,7 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    margin: auto; /* Center the wrapper itself */
 }
 #canvas {
     width: 1920px;
@@ -116,14 +118,17 @@ body {
 /* --- GROUPS VIEW --- */
 .groups-view {
     display: grid;
-    grid-template-columns: repeat(2, 370px);
+    /* Increased column width to make groups larger */
+    grid-template-columns: repeat(2, 420px);
     grid-template-rows: repeat(2, auto);
-    gap: 80px 450px; /* Increased horizontal gap */
-    justify-content: center;
+    gap: 60px 0; /* Let justify-content handle spacing */
+    /* Pushes content to the edges */
+    justify-content: space-between;
     align-content: center;
     width: 100%;
     height: 100%;
-    padding: 40px;
+    /* Add padding to prevent touching the edges */
+    padding: 50px 100px;
     box-sizing: border-box;
     position: relative;
 }
@@ -166,8 +171,8 @@ body {
 .groups-view .player-slot {
     display: flex;
     align-items: center;
-    padding: 12px;
-    margin: 8px 0;
+    padding: 15px; /* Increased padding */
+    margin: 10px 0; /* Increased margin */
     background: rgba(0,0,0,0.2);
     border: 1px solid rgba(255, 210, 125, 0.2);
     border-radius: 4px;
@@ -178,14 +183,14 @@ body {
     background: rgba(0,0,0,0.4);
     border-color: rgba(255, 210, 125, 0.5);
 }
-.groups-view .player-slot .avatar { width: 40px; height: 40px; border-radius: 50%; background: #555; margin-right: 15px; object-fit: cover; }
+.groups-view .player-slot .avatar { width: 50px; height: 50px; border-radius: 50%; background: #555; margin-right: 15px; object-fit: cover; } /* Larger avatar */
 .groups-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: 1.5rem; /* Larger font */
     color: var(--primary-color);
 }
-.groups-view .player-slot .flag { width: 30px; object-fit: cover; }
+.groups-view .player-slot .flag { width: 30px; object-fit: cover; } /* Flag size is ok */
 
 /* --- BRACKET VIEW --- */
 .bracket-view { position: relative; width: 100%; height: 100%; }
@@ -211,7 +216,7 @@ body {
     white-space: nowrap;
 }
 
-.match-box { position: absolute; width: 360px; height: 110px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 15px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 25px; box-sizing: border-box; }
+.match-box { position: absolute; width: 400px; height: 120px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 30px; box-sizing: border-box; }
 .bracket-view .player-slot { display: flex; align-items: center; height: 45%; cursor: pointer; }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {

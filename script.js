@@ -228,29 +228,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
+        // Adjusted layout values to better fit the 1920px canvas and larger match boxes
         container.innerHTML = `
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-                <div class="round-title" style="top: 80px; left: 250px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 760px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 1270px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: 60px; left: 150px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 60px; left: 785px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 60px; left: 1420px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
 
                 <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 150px; left: 200px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 340px; left: 200px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 570px; left: 200px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 760px; left: 200px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: 140px; left: 50px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: 320px; left: 50px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 620px; left: 50px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 800px; left: 50px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 245px; left: 710px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 665px; left: 710px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: 230px; left: 470px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 710px; left: 470px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 455px; left: 1220px;" data-match-id="final"></div>
+                <div class="match-box" style="top: 470px; left: 890px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="round-title" style="top: 780px; left: 1270px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-                <div class="match-box" style="top: 860px; left: 1220px;" data-match-id="third-place"></div>
+                <div class="round-title" style="top: 800px; left: 1420px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="match-box" style="top: 880px; left: 1320px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
         // Use a timeout to ensure the DOM is painted and positions are calculated before drawing SVG connectors
@@ -594,6 +595,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     editingPlayer.flag = `countryflags/${newFlagCode}.png`;
                     document.getElementById('edit-current-flag').src = editingPlayer.flag;
                 }
+            }
+        });
+
+        // Avatar Upload Listener
+        document.getElementById('edit-avatar-upload').addEventListener('change', (e) => {
+            if (!editingPlayer) return;
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const dataUrl = event.target.result;
+                    editingPlayer.avatar = dataUrl;
+                    document.getElementById('edit-current-avatar').src = dataUrl;
+                    markDirty(); // Mark state as changed
+                };
+                reader.readAsDataURL(file);
             }
         });
 
