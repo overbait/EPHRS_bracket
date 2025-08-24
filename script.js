@@ -133,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-player-name').value = player.name;
         document.getElementById('edit-current-flag').src = player.flag;
         document.getElementById('edit-current-avatar').src = player.avatar;
-        renderFlagOptions(); // Show all flags initially
         editModalEl.classList.remove('modal-hidden');
     }
 
@@ -222,19 +221,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBracketCanvas(container) {
         container.innerHTML = `
             <div class="bracket-view">
-                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-                <div class="round-title" style="top: 20px; left: 140px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 20px; left: 690px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 20px; left: 1240px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
-                <div class="round-title" style="top: 880px; left: 690px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE MATCH'}</div>
-                <div class="match-box" style="top: 100px; left: 100px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 300px; left: 100px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 580px; left: 100px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 780px; left: 100px;" data-match-id="qf4"></div>
-                <div class="match-box" style="top: 200px; left: 650px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 680px; left: 650px;" data-match-id="sf2"></div>
-                <div class="match-box" style="top: 440px; left: 1200px;" data-match-id="final"></div>
-                <div class="match-box" style="top: 950px; left: 650px;" data-match-id="third-place"></div>
+                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo" style="top: auto; bottom: 40px; right: auto; left: 40px;">
+                <div class="round-title" style="top: 40px; left: 140px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 40px; left: 700px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 40px; left: 1260px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+
+                <!-- QUARTERFINALS -->
+                <div class="match-box" style="top: 120px; left: 100px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: 320px; left: 100px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 600px; left: 100px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 800px; left: 100px;" data-match-id="qf4"></div>
+
+                <!-- SEMIFINALS -->
+                <div class="match-box" style="top: 220px; left: 660px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 700px; left: 660px;" data-match-id="sf2"></div>
+
+                <!-- FINAL -->
+                <div class="match-box" style="top: 460px; left: 1220px;" data-match-id="final"></div>
+
+                <!-- 3RD PLACE -->
+                <div class="round-title" style="top: 750px; left: 1255px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="match-box" style="top: 830px; left: 1220px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
         drawBracketConnectors(container.querySelector('.bracket-view'));
@@ -242,22 +249,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function populateMatchBox(box) {
         const matchId = box.dataset.matchId;
-        const p1_slot = `${matchId}-p1`;
-        const p2_slot = `${matchId}-p2`;
-        const p1_id = state.assignments[p1_slot];
-        const p2_id = state.assignments[p2_slot];
+        const p1_slot_id = `${matchId}-p1`;
+        const p2_slot_id = `${matchId}-p2`;
+
+        const p1_id = state.assignments[p1_slot_id];
+        const p2_id = state.assignments[p2_slot_id];
+
         const player1 = state.players.find(p=>p.id === p1_id) || {name: '...', flag: 'countryflags/aq.png'};
         const player2 = state.players.find(p=>p.id === p2_id) || {name: '...', flag: 'countryflags/aq.png'};
+
+        const score1 = parseInt(state.scores[p1_slot_id], 10) || 0;
+        const score2 = parseInt(state.scores[p2_slot_id], 10) || 0;
+
+        let p1_class = 'player-slot';
+        let p2_class = 'player-slot';
+
+        if (score1 > score2) {
+            p1_class += ' winner';
+            p2_class += ' loser';
+        } else if (score2 > score1) {
+            p2_class += ' winner';
+            p1_class += ' loser';
+        }
+
         box.innerHTML = `
-            <div class="player-slot" data-slot-id="${p1_slot}">
+            <div class="${p1_class}" data-slot-id="${p1_slot_id}">
                 <img src="${player1.flag}" class="flag">
                 <span class="name">${player1.name}</span>
-                <span class="score" data-score-id="${p1_slot}" contenteditable="true">${state.scores[p1_slot] || 0}</span>
+                <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
             </div>
-            <div class="player-slot" data-slot-id="${p2_slot}">
+            <div class="${p2_class}" data-slot-id="${p2_slot_id}">
                 <img src="${player2.flag}" class="flag">
                 <span class="name">${player2.name}</span>
-                <span class="score" data-score-id="${p2_slot}" contenteditable="true">${state.scores[p2_slot] || 0}</span>
+                <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
             </div>`;
     }
 
@@ -278,8 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { from: 'sf1', to: 'final', fromPort: 'right', toPort: 'left-top' },
             { from: 'sf2', to: 'final', fromPort: 'right', toPort: 'left-bottom' },
             // Semis to 3rd Place
-            { from: 'sf1', to: 'third-place', fromPort: 'bottom', toPort: 'left-top' },
-            { from: 'sf2', to: 'third-place', fromPort: 'bottom', toPort: 'left-bottom' },
+            { from: 'sf1', to: 'third-place', fromPort: 'right', toPort: 'left-top', type: 'third-place' },
+            { from: 'sf2', to: 'third-place', fromPort: 'right', toPort: 'left-bottom', type: 'third-place' },
         ];
 
         function getPortPoint(matchId, port) {
@@ -295,8 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'right': return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
                 case 'left-top': return { x: relLeft, y: relTop + rect.height * 0.25 };
                 case 'left-bottom': return { x: relLeft, y: relTop + rect.height * 0.75 };
-                case 'bottom': return { x: relLeft + rect.width / 2, y: relTop + rect.height };
-                default: return null; // 'left'
+                default: return { x: relLeft, y: relTop + rect.height / 2 }; // 'left'
             }
         }
 
@@ -309,14 +332,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             let d = '';
 
-            if (conn.fromPort === 'right') {
-                const midX = startPoint.x + 40;
+            if (conn.type === 'third-place') {
+                const midX1 = startPoint.x + 40;
+                const midY = endPoint.y > startPoint.y ? endPoint.y + 60 : endPoint.y - 60;
+                const midX2 = endPoint.x - 40;
+                d = `M ${startPoint.x},${startPoint.y} H ${midX1} V ${midY} H ${midX2} V ${endPoint.y} H ${endPoint.x}`;
+            } else {
+                const midX = startPoint.x + 60;
                 d = `M ${startPoint.x},${startPoint.y} H ${midX} V ${endPoint.y} H ${endPoint.x}`;
-            } else if (conn.fromPort === 'bottom') {
-                const midY = startPoint.y + 40;
-                const midX = endPoint.x - 40;
-                // A more complex path for the 3rd place match
-                d = `M ${startPoint.x},${startPoint.y} V ${midY} H ${midX} V ${endPoint.y} H ${endPoint.x}`;
             }
 
             path.setAttribute('d', d);
@@ -380,20 +403,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyDecorations() {
-        const bgElement = document.getElementById('app-container');
+        const bgElement = document.querySelector('#canvas .background');
+        if (!bgElement) return;
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         bgElement.style.backgroundImage = `url('${randomBg}')`;
 
         const decorationsContainer = document.getElementById('decorations-container');
         decorationsContainer.innerHTML = '';
-        for (let i = 0; i < 8; i++) {
+
+        // Grid placement logic to prevent overlaps
+        const numLeaves = 8;
+        const gridCols = 4;
+        const gridRows = 3;
+        const cellWidth = 100 / gridCols;
+        const cellHeight = 100 / gridRows;
+
+        let availableCells = Array.from({ length: gridCols * gridRows }, (_, i) => i);
+
+        for (let i = 0; i < numLeaves; i++) {
+            if (availableCells.length === 0) break; // Stop if we run out of cells
+
+            // Pick a random available cell and remove it from the list
+            const randomCellIndex = Math.floor(Math.random() * availableCells.length);
+            const cell = availableCells.splice(randomCellIndex, 1)[0];
+
+            const col = cell % gridCols;
+            const row = Math.floor(cell / gridCols);
+
+            // Calculate random position within the cell
+            const top = row * cellHeight + Math.random() * (cellHeight - 20); // -20 to avoid edges
+            const left = col * cellWidth + Math.random() * (cellWidth - 15);
+
             const leaf = document.createElement('img');
             leaf.className = 'leaf-decoration';
             leaf.src = leafImages[Math.floor(Math.random() * leafImages.length)];
-            leaf.style.top = `${Math.random() * 90}%`;
-            leaf.style.left = `${Math.random() * 90}%`;
-            leaf.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.5 + 0.5})`;
-            leaf.style.opacity = `${Math.random() * 0.4 + 0.2}`;
+            leaf.style.top = `${top}%`;
+            leaf.style.left = `${left}%`;
+            leaf.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.25 + 0.25})`;
+            leaf.style.opacity = `${Math.random() * 0.4 + 0.3}`;
             decorationsContainer.appendChild(leaf);
         }
     }
@@ -483,7 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Player Edit Modal Listeners
         document.getElementById('edit-flag-search').addEventListener('input', (e) => {
-            renderFlagOptions(e.target.value);
+            const searchTerm = e.target.value;
+            const optionsContainer = document.getElementById('edit-flag-options');
+            if (searchTerm) {
+                optionsContainer.style.display = 'flex';
+                renderFlagOptions(searchTerm);
+            } else {
+                optionsContainer.style.display = 'none';
+            }
         });
 
         document.getElementById('edit-flag-options').addEventListener('click', (e) => {
