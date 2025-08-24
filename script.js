@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapperWidth = wrapper.clientWidth;
         const wrapperHeight = wrapper.clientHeight;
 
-        const canvasWidth = 1920;
+        const canvasWidth = 1840;
         const canvasHeight = 1080;
 
         const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
