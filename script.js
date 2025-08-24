@@ -197,6 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainTitleEl.textContent = state.mainTitle_groups;
             renderGroupsCanvas(contentArea);
         }
+        // Force redraw connectors if bracket view is active
+        redrawConnectorsIfBracket();
     }
 
     function renderGroupsCanvas(container) {
@@ -227,55 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
         initCardGradients();
     }
 
-    function renderBracketCanvas(container) {
-        // Centered and more compact layout
-        const qf_left = 150;
-        const sf_left = 570;
-        const f_left = 990;
-        const tp_left = 1410; // 3rd place
-
-        container.innerHTML = `
-            <div class="bracket-view">
-                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-
-                <!-- Titles -->
-                <div class="round-title" style="top: 150px; left: ${qf_left + 70}px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 265px; left: ${sf_left + 70}px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 425px; left: ${f_left + 70}px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
-                <div class="round-title" style="top: 755px; left: ${tp_left + 70}px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-
-                <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 200px; left: ${qf_left}px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 330px; left: ${qf_left}px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 640px; left: ${qf_left}px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 770px; left: ${qf_left}px;" data-match-id="qf4"></div>
-
-                <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 315px; left: ${sf_left}px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 705px; left: ${sf_left}px;" data-match-id="sf2"></div>
-
-                <!-- FINAL -->
-                <div class="match-box" style="top: 510px; left: ${f_left}px;" data-match-id="final"></div>
-
-                <!-- 3RD PLACE -->
-                <div class="match-box" style="top: 810px; left: ${tp_left}px;" data-match-id="third-place"></div>
-            </div>`;
-        document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
-        setTimeout(() => {
-            drawBracketConnectors(container.querySelector('.bracket-view'));
-        }, 0);
-    }
-
-    function populateMatchBox(box) {
-        const matchId = box.dataset.matchId;
+    function renderMatchBox(matchId) {
         const p1_slot_id = `${matchId}-p1`;
         const p2_slot_id = `${matchId}-p2`;
 
         const p1_id = state.assignments[p1_slot_id];
         const p2_id = state.assignments[p2_slot_id];
 
-        const player1 = state.players.find(p=>p.id === p1_id) || {name: '...', flag: 'countryflags/aq.png'};
-        const player2 = state.players.find(p=>p.id === p2_id) || {name: '...', flag: 'countryflags/aq.png'};
+        const player1 = state.players.find(p => p.id === p1_id) || { name: '...', flag: 'countryflags/aq.png' };
+        const player2 = state.players.find(p => p.id === p2_id) || { name: '...', flag: 'countryflags/aq.png' };
 
         const score1 = parseInt(state.scores[p1_slot_id], 10) || 0;
         const score2 = parseInt(state.scores[p2_slot_id], 10) || 0;
@@ -291,19 +253,61 @@ document.addEventListener('DOMContentLoaded', () => {
             p1_class += ' loser';
         }
 
-        box.innerHTML = `
-            <!-- Flag backgrounds are now direct children of match-box for correct clipping -->
-            <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1.flag}')"></div>
-            <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2.flag}')"></div>
-
-            <div class="${p1_class}" data-slot-id="${p1_slot_id}">
-                <span class="name">${player1.name}</span>
-                <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
-            </div>
-            <div class="${p2_class}" data-slot-id="${p2_slot_id}">
-                <span class="name">${player2.name}</span>
-                <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
+        return `
+            <div class="match-box" data-match-id="${matchId}">
+                <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1.flag}')"></div>
+                <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2.flag}')"></div>
+                <div class="${p1_class}" data-slot-id="${p1_slot_id}">
+                    <span class="name">${player1.name}</span>
+                    <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
+                </div>
+                <div class="${p2_class}" data-slot-id="${p2_slot_id}">
+                    <span class="name">${player2.name}</span>
+                    <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
+                </div>
             </div>`;
+    }
+
+    function renderBracketCanvas(container) {
+        const col_style = "width: 24%; display: flex; flex-direction: column; justify-content: space-around; align-items: stretch; gap: 20px; padding: 80px 0;";
+
+        let html = `
+            <div class="bracket-view">
+                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
+
+                <!-- Titles are positioned absolutely relative to the bracket-view -->
+                <div class="round-title" style="position:absolute; top: 20px; left: 12%; transform: translateX(-50%);" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="position:absolute; top: 20px; left: 37%; transform: translateX(-50%);" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="position:absolute; top: 20px; left: 62%; transform: translateX(-50%);" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="position:absolute; top: 20px; left: 87%; transform: translateX(-50%);" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+
+                <!-- Column for Quarterfinals -->
+                <div class="round-column" style="${col_style}">
+                    ${renderMatchBox('qf1')}
+                    ${renderMatchBox('qf2')}
+                    ${renderMatchBox('qf3')}
+                    ${renderMatchBox('qf4')}
+                </div>
+
+                <!-- Column for Semifinals -->
+                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
+                    ${renderMatchBox('sf1')}
+                    ${renderMatchBox('sf2')}
+                </div>
+
+                <!-- Column for Final -->
+                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
+                    ${renderMatchBox('final')}
+                </div>
+
+                <!-- Column for Third Place -->
+                <div class="round-column" style="${col_style.replace('space-around', 'center')}">
+                    ${renderMatchBox('third-place')}
+                </div>
+            </div>`;
+
+        container.innerHTML = html;
+        // Connector drawing is handled by redrawConnectorsIfBracket() called from render()
     }
 
     function updateBracketProgression(matchId) {
@@ -543,21 +547,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getCanvasBaseSize() {
-        return { w: 1920, h: 1080 };
+    function redrawConnectorsIfBracket() {
+        if (state.viewMode !== 'bracket') return;
+        const view = document.querySelector('.bracket-view');
+        if (view) {
+            // Use a timeout to ensure the DOM has been painted after a resize or render
+            setTimeout(() => drawBracketConnectors(view), 100);
+        }
     }
 
     // --- CANVAS SCALING ---
     function scaleCanvas() {
-        const wrapper = document.getElementById('canvas-wrapper');
+        // Fully disable scaling, canvas is now fixed size
         const canvas = document.getElementById('canvas');
-        if (!wrapper || !canvas) return;
-
-        const { w: CW, h: CH } = getCanvasBaseSize();
-        // const ww = wrapper.clientWidth;  // Not needed anymore
-        // const wh = wrapper.clientHeight;
-        // const scale = Math.min(ww / CW, wh / CH);
-        // canvas.style.transform = `scale(${scale})`;  // Scaling is disabled for fixed canvas
+        if (canvas) {
+            canvas.style.transform = 'scale(1)';
+        }
+        // Force redraw of connectors on resize or view change
+        redrawConnectorsIfBracket();
     }
 
 
