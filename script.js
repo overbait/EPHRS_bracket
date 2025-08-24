@@ -211,10 +211,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const assignedPlayerId = state.assignments[slotId];
                 const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
                 group += `
-                    <div class="player-slot" data-slot-id="${slotId}">
+                    <div class="player-slot" data-slot-id="${slotId}" style="--flag-image: url('${player.flag}')">
                         <img src="${player.avatar}" class="avatar">
                         <span class="name">${player.name}</span>
-                        <img src="${player.flag}" class="flag">
                     </div>`;
             }
             group += `</div>`;
@@ -233,8 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
                 <div class="round-title" style="top: 60px; left: 150px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 60px; left: 785px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 60px; left: 1420px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: 60px; left: 580px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 120px; left: 990px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
 
                 <!-- QUARTERFINALS -->
                 <div class="match-box" style="top: 140px; left: 50px;" data-match-id="qf1"></div>
@@ -286,13 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         box.innerHTML = `
-            <div class="${p1_class}" data-slot-id="${p1_slot_id}">
-                <img src="${player1.flag}" class="flag">
+            <div class="${p1_class}" data-slot-id="${p1_slot_id}" style="--flag-image: url('${player1.flag}')">
                 <span class="name">${player1.name}</span>
                 <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
             </div>
-            <div class="${p2_class}" data-slot-id="${p2_slot_id}">
-                <img src="${player2.flag}" class="flag">
+            <div class="${p2_class}" data-slot-id="${p2_slot_id}" style="--flag-image: url('${player2.flag}')">
                 <span class="name">${player2.name}</span>
                 <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
             </div>`;
@@ -372,17 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!startPoint || !endPoint) return;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            let d = '';
 
-            if (conn.type === 'third-place') {
-                const midX1 = startPoint.x + 40;
-                const midY = endPoint.y > startPoint.y ? endPoint.y + 60 : endPoint.y - 60;
-                const midX2 = endPoint.x - 40;
-                d = `M ${startPoint.x},${startPoint.y} H ${midX1} V ${midY} H ${midX2} V ${endPoint.y} H ${endPoint.x}`;
-            } else {
-                const midX = startPoint.x + 60;
-                d = `M ${startPoint.x},${startPoint.y} H ${midX} V ${endPoint.y} H ${endPoint.x}`;
-            }
+            // Use cubic Bezier curves for smooth connectors
+            const handleOffset = 100; // Controls the "S" shape of the curve
+            const cp1x = startPoint.x + handleOffset;
+            const cp1y = startPoint.y;
+            const cp2x = endPoint.x - handleOffset;
+            const cp2y = endPoint.y;
+
+            const d = `M ${startPoint.x} ${startPoint.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endPoint.x} ${endPoint.y}`;
 
             path.setAttribute('d', d);
             path.classList.add('bracket-connector-path');
@@ -445,10 +440,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyDecorations() {
-        const bgElement = document.querySelector('#canvas .background');
-        if (!bgElement) return;
+        // Apply the main background to the body for a full-screen effect
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
-        bgElement.style.backgroundImage = `url('${randomBg}')`;
+        document.body.style.backgroundImage = `url('${randomBg}')`;
+
+        // Clear the old background element just in case
+        const oldBgElement = document.querySelector('#canvas .background');
+        if (oldBgElement) {
+            oldBgElement.style.backgroundImage = 'none';
+        }
 
         const decorationsContainer = document.getElementById('decorations-container');
         decorationsContainer.innerHTML = '';
