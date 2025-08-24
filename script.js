@@ -206,31 +206,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderGroupsCanvas(container) {
-        let groupsHtml = '';
-        const groups = ['A', 'B', 'C', 'D'];
+        const groups = {
+            left: ['A', 'C'],
+            right: ['B', 'D']
+        };
 
-        for(const groupLetter of groups) {
-            let group = `<div class="content-box">
-                <h2 class="group-title" data-title-id="group-title-${groupLetter}" contenteditable="true">${state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`}</h2>`;
-            for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
-                const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
-                const assignedPlayerId = state.assignments[slotId];
-                const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
-                group += `
-                    <div class="player-slot" data-slot-id="${slotId}">
-                        <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
-                        <span class="name">${player.name}</span>
-                        <img src="${player.avatar}" class="avatar">
-                    </div>`;
-            }
-            group += `</div>`;
-            groupsHtml += group;
+        let leftColumnHtml = '<div class="group-column left">';
+        let rightColumnHtml = '<div class="group-column right">';
+
+        for (const groupLetter of groups.left) {
+            leftColumnHtml += renderGroup(groupLetter);
+        }
+        for (const groupLetter of groups.right) {
+            rightColumnHtml += renderGroup(groupLetter);
         }
 
-        const logoHtml = `<div class="logo-column"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+        leftColumnHtml += '</div>';
+        rightColumnHtml += '</div>';
 
-        container.innerHTML = `<div class="groups-view">${groupsHtml}${logoHtml}</div>`;
+        const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+
+        container.innerHTML = `<div class="groups-view-3col">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
         initCardGradients();
+    }
+
+    function renderGroup(groupLetter) {
+        let groupHtml = `<div class="content-box">
+            <h2 class="group-title" data-title-id="group-title-${groupLetter}" contenteditable="true">${state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`}</h2>`;
+        for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
+            const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
+            const assignedPlayerId = state.assignments[slotId];
+            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
+            groupHtml += `
+                <div class="player-slot" data-slot-id="${slotId}">
+                    <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
+                    <span class="name">${player.name}</span>
+                    <img src="${player.avatar}" class="avatar">
+                </div>`;
+        }
+        groupHtml += `</div>`;
+        return groupHtml;
     }
 
     function renderMatch(matchId, extraClass = '') {
