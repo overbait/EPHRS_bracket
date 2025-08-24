@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
             // Use smooth, curved lines for a more modern look
-            const offset = 90; // Controls the curve of the connector
+            const offset = 30; // Controls the curve of the connector
             const p2x = startPoint.x + offset;
             const p3x = endPoint.x - offset;
 
@@ -543,21 +543,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getCanvasBaseSize() {
+        return { w: 1920, h: 1080 };
+    }
+
     // --- CANVAS SCALING ---
     function scaleCanvas() {
         const wrapper = document.getElementById('canvas-wrapper');
         const canvas = document.getElementById('canvas');
         if (!wrapper || !canvas) return;
 
-        const wrapperWidth = wrapper.clientWidth;
-        const wrapperHeight = wrapper.clientHeight;
-
-        const canvasWidth = 1920;
-        const canvasHeight = 1080;
-
-        const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
-
-        canvas.style.transform = `scale(${scale})`;
+        const { w: CW, h: CH } = getCanvasBaseSize();
+        // const ww = wrapper.clientWidth;  // Not needed anymore
+        // const wh = wrapper.clientHeight;
+        // const scale = Math.min(ww / CW, wh / CH);
+        // canvas.style.transform = `scale(${scale})`;  // Scaling is disabled for fixed canvas
     }
 
 
