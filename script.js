@@ -231,29 +231,32 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = `
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-                <div class="round-title" style="top: 80px; left: 230px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 700px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 1170px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: 80px; left: 250px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 760px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 1270px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
 
                 <!-- QUARTERFINALS -->
                 <div class="match-box" style="top: 150px; left: 200px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 320px; left: 200px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 560px; left: 200px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 730px; left: 200px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: 340px; left: 200px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 570px; left: 200px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 760px; left: 200px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 235px; left: 670px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 645px; left: 670px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: 245px; left: 710px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 665px; left: 710px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 440px; left: 1140px;" data-match-id="final"></div>
+                <div class="match-box" style="top: 455px; left: 1220px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="round-title" style="top: 750px; left: 1170px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-                <div class="match-box" style="top: 830px; left: 1140px;" data-match-id="third-place"></div>
+                <div class="round-title" style="top: 780px; left: 1270px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="match-box" style="top: 860px; left: 1220px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
-        drawBracketConnectors(container.querySelector('.bracket-view'));
+        // Use a timeout to ensure the DOM is painted and positions are calculated before drawing SVG connectors
+        setTimeout(() => {
+            drawBracketConnectors(container.querySelector('.bracket-view'));
+        }, 0);
     }
 
     function populateMatchBox(box) {
@@ -312,26 +315,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const winner_player_id = state.assignments[winner_slot_id];
         const loser_player_id = state.assignments[loser_slot_id];
 
-        // Use a temp object to avoid modifying state before all checks
-        const newAssignments = {};
-
         if (progression.winnerTo) {
-            // If a player is already in the destination slot, don't overwrite.
-            // This allows for manual overrides.
-            // However, for this feature, we probably DO want to overwrite.
-            // Let's assume we overwrite.
-            newAssignments[progression.winnerTo] = winner_player_id;
+            state.assignments[progression.winnerTo] = winner_player_id;
         }
 
         if (progression.loserTo) {
-            newAssignments[progression.loserTo] = loser_player_id;
+            state.assignments[progression.loserTo] = loser_player_id;
         }
 
-        // Apply changes if any were determined
-        if (Object.keys(newAssignments).length > 0) {
-            Object.assign(state.assignments, newAssignments);
-            markDirty();
-        }
+        markDirty();
     }
 
     function drawBracketConnectors(container) {
@@ -502,8 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerSlot = e.target.closest('.player-slot');
         if (playerSlot) {
             activeSlotId = playerSlot.dataset.slotId;
-            // Show all players to allow assigning the same player to multiple slots.
-            const availablePlayers = state.players;
+            const availablePlayers = state.players; // Allow assigning same player multiple times
             let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
             optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
             playerAssignModal.innerHTML = optionsHtml;
@@ -537,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBracketProgression(matchId);
 
             markDirty();
-            render(); // Re-render to show winner/loser highlighting and trigger progression
+            render(); // Re-render to show everything
         }
         const titleEl = e.target.closest('.round-title');
         if (titleEl) {
