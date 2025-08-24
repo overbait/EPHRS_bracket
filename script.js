@@ -240,11 +240,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const p1_id = state.assignments[p1_slot_id];
         const p2_id = state.assignments[p2_slot_id];
 
-        const player1 = state.players.find(p => p.id === p1_id) || { name: '', flag: 'countryflags/aq.png' };
-        const player2 = state.players.find(p => p.id === p2_id) || { name: '', flag: 'countryflags/aq.png' };
+        const player1 = state.players.find(p => p.id === p1_id);
+        const player2 = state.players.find(p => p.id === p2_id);
 
-        const score1 = parseInt(state.scores[p1_slot_id], 10) || 0;
-        const score2 = parseInt(state.scores[p2_slot_id], 10) || 0;
+        const player1Name = player1 ? player1.name : '';
+        const player2Name = player2 ? player2.name : '';
+
+        const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
+        const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
+
+        const score1 = player1 ? (parseInt(state.scores[p1_slot_id], 10) || 0) : '';
+        const score2 = player2 ? (parseInt(state.scores[p2_slot_id], 10) || 0) : '';
 
         let p1_class = 'player-slot';
         let p2_class = 'player-slot';
@@ -259,15 +265,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="match-box ${extraClass}" data-match-id="${matchId}">
-                <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1.flag}')"></div>
-                <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2.flag}')"></div>
+                <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1Flag}')"></div>
+                <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2Flag}')"></div>
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
-                    <span class="name">${player1.name}</span>
-                    <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
+                    <span class="name">${player1Name}</span>
+                    <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
                 </div>
                 <div class="${p2_class}" data-slot-id="${p2_slot_id}">
-                    <span class="name">${player2.name}</span>
-                    <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
+                    <span class="name">${player2Name}</span>
+                    <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
                 </div>
             </div>`;
     }

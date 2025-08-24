@@ -128,7 +128,7 @@ body {
     width: 100%;
     height: 100%;
     /* Add padding to prevent touching the edges */
-    padding: 50px 250px;
+    padding: 50px 300px;
     box-sizing: border-box;
     position: relative;
 }
@@ -199,7 +199,7 @@ body {
     font-size: 1.8rem; /* Larger font */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Add shadow for readability */
-    padding-left: 20px; /* Add padding to not overlap with flag gradient start */
+    padding-left: 40px; /* Move nickname to the right */
 }
 /* The old .flag class is no longer needed */
 
@@ -219,14 +219,18 @@ body {
 .round-column {
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Center all columns for consistency */
     height: 100%;
-    gap: 40px; /* Increased gap for better spacing */
+    gap: 20px; /* Gap between matches */
     width: 28%;
 }
 
+.qf-column, .sf-column {
+    justify-content: center;
+}
+
 .final-column {
-    position: relative; /* For positioning 3rd place match */
+    justify-content: flex-start; /* Align content to the top */
+    position: relative;
 }
 
 .round-header {
@@ -241,7 +245,7 @@ body {
     margin: 5px 0;
     white-space: nowrap;
     display: inline-block;
-    padding: 10px 80px; /* Increased horizontal padding for the gradient */
+    padding: 10px 80px;
     border-radius: 10px;
     background: linear-gradient(to right,
         transparent 0%,
@@ -264,6 +268,15 @@ body {
     margin-top: 60px; /* Space between final and 3rd place header */
 }
 
+.final-logo {
+    margin-top: 100px; /* Push the logo down from the top */
+    margin-bottom: 50px; /* Space between logo and final match */
+    max-width: 300px;
+    width: 70%;
+    height: auto;
+    align-self: center; /* Center the logo within the column */
+}
+
 .bracket-logo {
     position: absolute;
     top: 10px;
@@ -272,12 +285,6 @@ body {
     width: 200px;
     z-index: -1; /* Behind connectors and content */
     opacity: 0.3;
-}
-
-.final-logo {
-    max-width: 300px;
-    width: 70%;
-    height: auto;
 }
 
 .match-box {
@@ -420,10 +427,13 @@ body {
     left: 0; /* Position on the left */
     width: 25%; /* Cover a quarter of the cell */
     height: 100%;
+    background-size: contain; /* Prevent aspect ratio distortion */
+    background-repeat: no-repeat;
+    background-position: left center;
 }
 .groups-view .player-slot .flag-background::after {
     /* Gradient fades from transparent to opaque, increased transparency */
-    background: linear-gradient(to right, transparent 40%, var(--content-box-bg) 80%);
+    background: linear-gradient(to right, transparent 10%, var(--content-box-bg) 50%);
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
