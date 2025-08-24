@@ -56,6 +56,33 @@ body {
 .modal-content { background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid var(--primary-color); }
 #player-edit-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 101; }
 #player-edit-modal input[type="text"], #player-edit-modal input[type="file"] { width: 95%; padding: 8px; margin: 10px 0; }
+#edit-current-flag {
+    width: 30px;
+    height: 22px;
+    object-fit: cover;
+    vertical-align: middle;
+    border: 1px solid #555;
+}
+#edit-flag-options {
+    max-height: 150px;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-top: 5px;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+#edit-flag-options img {
+    width: 30px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+#edit-flag-options img:hover {
+    border-color: var(--primary-color);
+}
 .avatar-preview { width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; }
 .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
 
@@ -73,7 +100,11 @@ body {
 
 /* --- CANVAS LAYERS --- */
 #canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-#canvas .background { z-index: 1; }
+#canvas .background {
+    z-index: 1;
+    background-size: cover;
+    background-position: center;
+}
 #decorations-container { z-index: 2; }
 #canvas .overlay { z-index: 3; }
 #canvas .edge-vignette { z-index: 4; }
@@ -84,7 +115,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 370px);
     grid-template-rows: repeat(2, auto);
-    gap: 60px 180px;
+    gap: 80px 220px;
     justify-content: center;
     align-content: center;
     width: 100%;
@@ -137,13 +168,40 @@ body {
 
 /* --- BRACKET VIEW --- */
 .bracket-view { position: relative; width: 100%; height: 100%; }
-.round-title { position: absolute; font-family: var(--font-display); color: var(--primary-color); font-size: 1.8rem; text-align: center; }
+
+.bracket-logo {
+    position: absolute;
+    top: 40px;
+    right: 60px;
+    width: 350px;
+    z-index: 1;
+}
+
+.round-title {
+    position: absolute;
+    font-family: var(--font-display);
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    text-align: center;
+    background-color: var(--content-box-bg);
+    border: 1px solid rgba(255, 210, 125, 0.4);
+    padding: 10px 25px;
+    border-radius: 6px;
+}
+
 .match-box { position: absolute; width: 320px; height: 90px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 15px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 25px; box-sizing: border-box; }
 .bracket-view .player-slot { display: flex; align-items: center; height: 45%; cursor: pointer; }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot .flag { width: 30px; height: 22px; margin-right: 10px; object-fit: cover; }
 .bracket-view .player-slot .name { flex-grow: 1; font-family: var(--font-title); }
-.bracket-view .player-slot .score { font-size: 1.5rem; font-weight: bold; width: 40px; text-align: center; cursor: text; }
+.bracket-view .player-slot .score {
+    font-size: 2rem; /* Increased size for the new font */
+    font-family: var(--font-display);
+    width: 40px;
+    text-align: center;
+    cursor: text;
+    color: var(--primary-color);
+}
 
 .bracket-svg {
     position: absolute;
@@ -165,3 +223,36 @@ body {
 #player-assign-modal div { padding: 8px; cursor: pointer; }
 #player-assign-modal div:hover { background: var(--accent-color); }
 .leaf-decoration { position: absolute; pointer-events: none; }
+
+/* --- BRANDING --- */
+#bottom-branding {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 150px; /* Adjust as needed */
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 20px;
+}
+
+#bottom-branding img {
+    height: 50px; /* Adjust as needed */
+}
+
+#main-title {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: var(--primary-color);
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    z-index: 10;
+    margin: 0;
+    padding: 0 20px;
+}

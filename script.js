@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         assignments: {},
         scores: {},
         titles: {},
+        mainTitle_bracket: 'BRACKETS',
+        mainTitle_groups: 'GROUPS',
         viewMode: 'bracket',
         nextPlayerId: 1,
         isDirty: false,
@@ -117,15 +119,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDeletePlayer(id) { /* ... implementation ... */ }
 
+    function renderFlagOptions(searchTerm = '') {
+        const optionsContainer = document.getElementById('edit-flag-options');
+        const filteredFlags = countryFlags.filter(code => code.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        optionsContainer.innerHTML = filteredFlags.map(code =>
+            `<img src="countryflags/${code}.png" data-flag-code="${code}" alt="${code}" title="${code}">`
+        ).join('');
+    }
+
     function openEditModal(player) {
         editingPlayer = player;
         document.getElementById('edit-player-name').value = player.name;
         document.getElementById('edit-current-flag').src = player.flag;
         document.getElementById('edit-current-avatar').src = player.avatar;
+        renderFlagOptions(); // Show all flags initially
         editModalEl.classList.remove('modal-hidden');
     }
 
-    function closeEditModal() { editingPlayer = null; editModalEl.classList.add('modal-hidden'); }
+    function closeEditModal() {
+        editingPlayer = null;
+        document.getElementById('edit-flag-search').value = '';
+        document.getElementById('edit-flag-options').innerHTML = '';
+        editModalEl.classList.add('modal-hidden');
+    }
 
     function handleSaveChanges() {
         if (!editingPlayer) return;
@@ -163,9 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function render() {
         renderPlayerBank();
+        const mainTitleEl = document.getElementById('main-title');
+
         if (state.viewMode === 'bracket') {
+            mainTitleEl.textContent = state.mainTitle_bracket;
             renderBracketCanvas(contentArea);
         } else {
+            mainTitleEl.textContent = state.mainTitle_groups;
             renderGroupsCanvas(contentArea);
         }
     }
@@ -201,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBracketCanvas(container) {
         container.innerHTML = `
             <div class="bracket-view">
-                <img src="Media/Logo_main-min.png" style="position: absolute; top: 40px; right: 60px; width: 350px;">
+                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
                 <div class="round-title" style="top: 20px; left: 140px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
                 <div class="round-title" style="top: 20px; left: 690px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
                 <div class="round-title" style="top: 20px; left: 1240px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
@@ -246,61 +267,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('bracket-svg');
-        svg.setAttribute('width', '100%');
-        svg.setAttribute('height', '100%');
 
         const connections = [
-            { from: ['qf1', 'qf2'], to: 'sf1' },
-            { from: ['qf3', 'qf4'], to: 'sf2' },
-            { from: ['sf1', 'sf2'], to: 'final' },
-            { from: ['sf1', 'sf2'], to: 'third-place', thirdPlace: true },
+            // Quarters to Semis
+            { from: 'qf1', to: 'sf1', fromPort: 'right', toPort: 'left-top' },
+            { from: 'qf2', to: 'sf1', fromPort: 'right', toPort: 'left-bottom' },
+            { from: 'qf3', to: 'sf2', fromPort: 'right', toPort: 'left-top' },
+            { from: 'qf4', to: 'sf2', fromPort: 'right', toPort: 'left-bottom' },
+            // Semis to Final
+            { from: 'sf1', to: 'final', fromPort: 'right', toPort: 'left-top' },
+            { from: 'sf2', to: 'final', fromPort: 'right', toPort: 'left-bottom' },
+            // Semis to 3rd Place
+            { from: 'sf1', to: 'third-place', fromPort: 'bottom', toPort: 'left-top' },
+            { from: 'sf2', to: 'third-place', fromPort: 'bottom', toPort: 'left-bottom' },
         ];
 
-        function getElCenter(matchId, side = 'right') {
+        function getPortPoint(matchId, port) {
             const el = container.querySelector(`[data-match-id="${matchId}"]`);
             if (!el) return null;
             const rect = el.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
-            const y = rect.top - containerRect.top + rect.height / 2;
-            let x;
-            if (side === 'right') {
-                x = rect.right - containerRect.left;
-            } else { // left
-                x = rect.left - containerRect.left;
+
+            const relTop = rect.top - containerRect.top;
+            const relLeft = rect.left - containerRect.left;
+
+            switch(port) {
+                case 'right': return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
+                case 'left-top': return { x: relLeft, y: relTop + rect.height * 0.25 };
+                case 'left-bottom': return { x: relLeft, y: relTop + rect.height * 0.75 };
+                case 'bottom': return { x: relLeft + rect.width / 2, y: relTop + rect.height };
+                default: return null; // 'left'
             }
-            return { x, y };
         }
 
         connections.forEach(conn => {
-            const toEl = container.querySelector(`[data-match-id="${conn.to}"]`);
-            if (!toEl) return;
+            const startPoint = getPortPoint(conn.from, conn.fromPort);
+            const endPoint = getPortPoint(conn.to, conn.toPort);
 
-            const endPoint = getElCenter(conn.to, 'left');
+            if (!startPoint || !endPoint) return;
 
-            conn.from.forEach((fromId, index) => {
-                const fromEl = container.querySelector(`[data-match-id="${fromId}"]`);
-                if (!fromEl) return;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
 
-                const startPoint = getElCenter(fromId, 'right');
-                if (!startPoint || !endPoint) return;
+            if (conn.fromPort === 'right') {
+                const midX = startPoint.x + 40;
+                d = `M ${startPoint.x},${startPoint.y} H ${midX} V ${endPoint.y} H ${endPoint.x}`;
+            } else if (conn.fromPort === 'bottom') {
+                const midY = startPoint.y + 40;
+                const midX = endPoint.x - 40;
+                // A more complex path for the 3rd place match
+                d = `M ${startPoint.x},${startPoint.y} V ${midY} H ${midX} V ${endPoint.y} H ${endPoint.x}`;
+            }
 
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const midX = startPoint.x + (endPoint.x - startPoint.x) / 2;
-
-                let d;
-                if(conn.thirdPlace) {
-                    // Custom logic for the 3rd place match connector
-                    const yOffset = (index === 0) ? -50 : 50; // Move line away from sf connector
-                     d = `M ${startPoint.x},${startPoint.y} L ${midX},${startPoint.y} L ${midX},${endPoint.y + yOffset} L ${endPoint.x},${endPoint.y + yOffset}`;
-                     // This is a simplified logic, real third place matches might need more complex routing
-                } else {
-                     d = `M ${startPoint.x},${startPoint.y} L ${midX},${startPoint.y} L ${midX},${endPoint.y} L ${endPoint.x},${endPoint.y}`;
-                }
-
-                path.setAttribute('d', d);
-                path.classList.add('bracket-connector-path');
-                svg.appendChild(path);
-            });
+            path.setAttribute('d', d);
+            path.classList.add('bracket-connector-path');
+            svg.appendChild(path);
         });
 
         container.prepend(svg);
@@ -460,10 +481,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // Player Edit Modal Listeners
+        document.getElementById('edit-flag-search').addEventListener('input', (e) => {
+            renderFlagOptions(e.target.value);
+        });
+
+        document.getElementById('edit-flag-options').addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                const newFlagCode = e.target.dataset.flagCode;
+                if (editingPlayer && newFlagCode) {
+                    editingPlayer.flag = `countryflags/${newFlagCode}.png`;
+                    document.getElementById('edit-current-flag').src = editingPlayer.flag;
+                }
+            }
+        });
+
         // Canvas
         canvas.addEventListener('click', handleCanvasClick);
         canvas.addEventListener('focusout', handleCanvasBlur);
         window.addEventListener('resize', scaleCanvas);
+
+        document.getElementById('main-title').addEventListener('focusout', (e) => {
+            const newTitle = e.target.textContent;
+            const key = `mainTitle_${state.viewMode}`;
+            if (state[key] !== newTitle) {
+                state[key] = newTitle;
+                markDirty();
+            }
+        });
 
 
         console.log('Application initialized.');
