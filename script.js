@@ -226,7 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
 
-        container.innerHTML = `<div class="groups-view-3col">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
+        // Use `groups-view` as the main class for the 3-column layout
+        container.innerHTML = `<div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
         initCardGradients();
     }
 

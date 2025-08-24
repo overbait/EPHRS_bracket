@@ -116,7 +116,7 @@ body {
 #canvas .content-area { z-index: 5; }
 
 /* --- GROUPS VIEW --- */
-.groups-view-3col {
+.groups-view {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -124,20 +124,6 @@ body {
     height: 100%;
     padding: 50px;
     box-sizing: border-box;
-}
-.group-column {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 40px;
-    width: 420px; /* Width of a single group box */
-}
-.logo-column-main {
-    flex-shrink: 0; /* Prevent logo from shrinking */
-}
-.logo-column-main img {
-    width: 300px;
-    height: auto;
 }
 
 /* Базовая карточка */
@@ -165,6 +151,20 @@ body {
 }
 
 .group-title { font-family: var(--font-display); color: var(--primary-color); text-align: center; font-size: 2.5rem; margin: -5px 0 15px; }
+.group-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    width: 420px; /* Width of a single group box */
+}
+.logo-column-main {
+    flex-shrink: 0;
+}
+.logo-column-main img {
+    width: 300px;
+    height: auto;
+}
 .groups-view .player-slot {
     display: flex;
     align-items: center;
@@ -264,9 +264,8 @@ body {
     font-weight: bold;
 }
 .third-header {
-    margin-top: 60px; /* Space between final and 3rd place header */
+    margin-top: 40px; /* Reduced margin */
 }
-
 .final-logo {
     max-width: 250px;
     width: 60%;
