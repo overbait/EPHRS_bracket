@@ -128,7 +128,7 @@ body {
     width: 100%;
     height: 100%;
     /* Add padding to prevent touching the edges */
-    padding: 50px 300px;
+    padding: 50px 350px;
     box-sizing: border-box;
     position: relative;
 }
@@ -179,7 +179,8 @@ body {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     position: relative;
-    background: rgba(0,0,0,0.2);
+    /* The background is now a gradient to remove the dark bg under the flag */
+    background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
 }
 .groups-view .player-slot:hover {
     border-color: rgba(255, 210, 125, 0.5);
@@ -231,6 +232,7 @@ body {
 .final-column {
     justify-content: flex-start; /* Align content to the top */
     position: relative;
+    padding-top: 50px; /* Add padding to push content down from the top edge */
 }
 
 .round-header {
@@ -269,8 +271,6 @@ body {
 }
 
 .final-logo {
-    margin-top: 100px; /* Push the logo down from the top */
-    margin-bottom: 50px; /* Space between logo and final match */
     max-width: 300px;
     width: 70%;
     height: auto;
@@ -424,17 +424,14 @@ body {
 /* For Groups View */
 .groups-view .player-slot .flag-background {
     top: 0;
-    left: 0; /* Position on the left */
-    width: 25%; /* Cover a quarter of the cell */
+    left: 0;
+    width: 30%; /* Balanced size */
     height: 100%;
-    background-size: contain; /* Prevent aspect ratio distortion */
-    background-repeat: no-repeat;
-    background-position: left center;
+    background-size: cover; /* Make flag larger */
+    background-position: center;
+    opacity: 0.5; /* Make flag more subtle */
 }
-.groups-view .player-slot .flag-background::after {
-    /* Gradient fades from transparent to opaque, increased transparency */
-    background: linear-gradient(to right, transparent 10%, var(--content-box-bg) 50%);
-}
+/* ::after is no longer needed as the parent has the gradient */
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
     z-index: 1; /* Ensure avatar and name are on top of the flag background */

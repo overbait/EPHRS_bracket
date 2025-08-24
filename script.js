@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
                 const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
                 const assignedPlayerId = state.assignments[slotId];
-                const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
+                const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
                 group += `
                     <div class="player-slot" data-slot-id="${slotId}">
                         <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
@@ -249,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
         const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
 
-        const score1 = player1 ? (parseInt(state.scores[p1_slot_id], 10) || 0) : '';
-        const score2 = player2 ? (parseInt(state.scores[p2_slot_id], 10) || 0) : '';
+        const score1 = player1 ? (state.scores[p1_slot_id] || 0) : '';
+        const score2 = player2 ? (state.scores[p2_slot_id] || 0) : '';
 
         let p1_class = 'player-slot';
         let p2_class = 'player-slot';
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Quarterfinals Column
         html += '<div class="round-column qf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best}</span></div>`;
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
         html += renderMatch('qf1');
         html += renderMatch('qf2');
         html += renderMatch('qf3');
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Semifinals Column
         html += '<div class="round-column sf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best}</span></div>`;
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
         html += renderMatch('sf1');
         html += renderMatch('sf2');
         html += '</div>';
@@ -300,9 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Final & 3rd Place Column
         html += '<div class="round-column final-column">';
         html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time}</span></div>`;
+        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
-        html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time}</span></div>`;
+        html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
