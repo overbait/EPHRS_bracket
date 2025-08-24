@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyDecorations() {
-        const bgElement = document.querySelector('#canvas .background');
+        const bgElement = document.getElementById('app-container');
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         bgElement.style.backgroundImage = `url('${randomBg}')`;
 
