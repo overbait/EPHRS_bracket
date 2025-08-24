@@ -27,9 +27,8 @@ body {
 #main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
 #canvas-wrapper {
-    /* Fills more of the screen to remove "black bars" */
-    width: 98%;
-    max-width: 1800px; /* Allow it to be larger */
+    width: 100%; /* Fill available space */
+    max-width: none; /* Do not limit width */
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
@@ -226,14 +225,35 @@ body {
     white-space: nowrap;
 }
 
-.match-box { position: absolute; width: 400px; height: 120px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 30px; box-sizing: border-box; }
+.match-box {
+    position: absolute;
+    width: 400px;
+    height: 120px;
+    background-color: var(--content-box-bg);
+    border: 1px solid var(--primary-color);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
+    padding: 8px 8px 8px 30px;
+    box-sizing: border-box;
+    position: relative; /* Ensure it's a positioning context for the flags */
+    overflow: hidden; /* This will clip the flag backgrounds */
+}
 .bracket-view .player-slot {
     display: flex;
     align-items: center;
-    height: 45%;
+    height: 50%; /* Each slot takes up half the height */
     cursor: pointer;
-    position: relative;
+    position: absolute; /* Position slots absolutely within the match-box */
+    left: 0;
+    width: 100%;
+    padding: 0 8px 0 30px; /* Re-apply padding here */
+    box-sizing: border-box;
     transition: all 0.2s ease-in-out;
+}
+.bracket-view .player-slot:first-of-type {
+    top: 0;
+}
+.bracket-view .player-slot:last-of-type {
+    bottom: 0;
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
@@ -341,12 +361,13 @@ body {
 /* For Groups View */
 .groups-view .player-slot .flag-background {
     top: 0;
-    left: 0;
-    width: 60%;
+    right: 0; /* Position on the right */
+    width: 70%; /* Cover the right 70% of the slot */
     height: 100%;
 }
 .groups-view .player-slot .flag-background::after {
-    background: linear-gradient(to right, transparent 60%, var(--content-box-bg));
+    /* Gradient fades from the left to transparent on the right */
+    background: linear-gradient(to right, var(--content-box-bg) 20%, transparent 80%);
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
@@ -360,9 +381,9 @@ body {
     overflow: hidden; /* This will clip the flag backgrounds */
 }
 .match-box .flag-background {
-    width: 55%;
-    height: 49%; /* Less than 50% to avoid overlap/bleed */
-    right: 0;
+    width: 100%; /* Fill the full width of the match-box */
+    height: 50%; /* Fill the full height of its half */
+    left: 0; /* Align to the left */
 }
 .match-box .p1-flag-bg {
     top: 0;
@@ -371,5 +392,6 @@ body {
     bottom: 0;
 }
 .match-box .flag-background::after {
-     background: linear-gradient(to left, transparent 40%, var(--content-box-bg));
+    /* Gradient fades from the right to transparent on the left */
+    background: linear-gradient(to left, var(--content-box-bg) 20%, transparent 80%);
 }
