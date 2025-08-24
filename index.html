@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Graphics Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Tournament Graphics Generator</h1>
+        </header>
+
+        <div id="controls">
+            <h2>Controls</h2>
+            <div id="mode-selector">
+                <h3>Template Mode</h3>
+                <label><input type="radio" name="mode" value="bracket" checked> Bracket</label>
+                <label><input type="radio" name="mode" value="groups"> Groups</label>
+            </div>
+
+            <div id="player-management">
+                <h3>Player Management</h3>
+                <div id="player-form">
+                    <input type="text" id="player-name" placeholder="Player Name">
+                    <div id="flag-selection">
+                        <input type="text" id="flag-search" placeholder="Search for a country...">
+                        <div id="flag-options"></div>
+                    </div>
+                    <input type="hidden" id="player-flag">
+                    <input type="file" id="player-image" accept="image/*">
+                    <button id="add-player">Add Player</button>
+                </div>
+                <ul id="player-list"></ul>
+            </div>
+
+            <div id="export-controls">
+                <button id="export-png">Export as PNG</button>
+            </div>
+        </div>
+
+        <div id="preview-container">
+            <h2>Preview</h2>
+            <div id="preview" style="width: 960px; height: 540px; transform: scale(0.5); transform-origin: top left;">
+                <div id="render-area" style="width: 1920px; height: 1080px;">
+                    <!-- The generated graphic will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+/* General Styles */
+@font-face {
+    font-family: 'SPFont';
+    src: url('Media/fonts_spfont 2.ttf') format('truetype');
+}
+
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#app {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1600px;
+}
+
+header h1 {
+    font-family: 'SPFont', sans-serif;
+    text-align: center;
+    color: #444;
+}
+
+#controls {
+    width: 400px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    align-self: flex-start;
+}
+
+#controls h2, #controls h3 {
+    font-family: 'SPFont', sans-serif;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+#player-form input[type="text"], #player-form input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+#flag-selection {
+    position: relative;
+}
+
+#flag-options {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    width: 100%;
+    z-index: 1000;
+}
+
+#flag-options div {
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+#flag-options div:hover {
+    background: #eee;
+}
+
+#flag-options img {
+    width: 20px;
+    margin-right: 10px;
+}
+
+#player-list {
+    list-style: none;
+    padding: 0;
+}
+
+#player-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Preview Area */
+#preview-container {
+    flex-grow: 1;
+}
+
+#preview {
+    border: 1px solid #ccc;
+    background: #e9e9e9;
+    overflow: hidden;
+    position: relative;
+}
+
+#render-area {
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    color: white;
+    font-family: 'SPFont', sans-serif;
+}
+
+/* Bracket Template Styles */
+.bracket-template {
+    background-image: url('Media/background1-min.png');
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.bracket-template .round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 100%;
+}
+
+.bracket-template .match {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 20px 0;
+    width: 250px;
+}
+
+.bracket-template .player {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.bracket-template .player img.flag {
+    width: 30px;
+    margin-right: 10px;
+}
+
+.bracket-template .player .name {
+    flex-grow: 1;
+}
+
+.bracket-template .player .score {
+    font-weight: bold;
+    width: 30px;
+    text-align: right;
+}
+
+/* Groups Template Styles */
+.groups-template {
+    background-image: url('Media/background2-min.png');
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 20px;
+    padding: 50px;
+    box-sizing: border-box;
+}
+
+.groups-template .group {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+    width: 40%;
+    min-height: 300px;
+}
+
+.groups-template .group h3 {
+    font-family: 'SPFont', sans-serif;
+    color: #ffc107;
+    text-align: center;
+    margin-top: 0;
+    font-size: 2em;
+}
+
+.groups-template .player {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #444;
+}
+
+.groups-template .player:last-child {
+    border-bottom: none;
+}
+
+.groups-template .player img.flag {
+    width: 40px;
+    margin-right: 15px;
+}
+
+.groups-template .player .name {
+    font-size: 1.5em;
+}
+
+.groups-template .central-logo {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+}
+
+.groups-template .date {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5em;
+    color: #eee;
+}
