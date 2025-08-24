@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament Graphics Customizer</title>
+    <title>Interactive Tournament Graphics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -11,47 +11,52 @@
 </head>
 <body>
     <div id="app-container">
-        <aside id="player-controls">
-            <h2 class="section-title">Player List</h2>
+        <!-- Player Bank Sidebar -->
+        <aside id="player-bank">
+            <h2 class="sidebar-title">Player Bank</h2>
             <ul id="player-list">
-                <!-- Player items will be dynamically inserted here -->
+                <!-- Player items for the bank will be dynamically inserted here -->
             </ul>
             <button id="add-player-btn" class="btn-primary">+</button>
         </aside>
 
-        <main id="preview-section">
-            <div id="preview-controls">
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <div id="toolbar">
                  <div id="mode-selector">
                     <label><input type="radio" name="mode" value="bracket" checked> Bracket</label>
                     <label><input type="radio" name="mode" value="groups"> Groups</label>
                 </div>
-                <button id="export-png">Export as PNG</button>
+                <button id="export-png" class="btn-primary">Export as PNG</button>
             </div>
-            <div id="preview-wrapper">
-                <div id="render-area">
+
+            <div id="canvas-wrapper">
+                <!-- The canvas for rendering the graphic -->
+                <div id="canvas">
                     <div class="background"></div>
+                    <div id="decorations-container"></div>
                     <div class="overlay"></div>
                     <div class="edge-vignette"></div>
-                    <div class="content">
-                        <!-- The generated graphic content will be rendered here -->
-                    </div>
-                    <div id="decorations-container">
-                        <!-- JS-driven leaves will be added here -->
+                    <div class="content-area">
+                        <!-- This will hold either the bracket or groups structure -->
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal for flag selection -->
-    <div id="flag-modal" class="modal-hidden">
-        <div id="modal-content">
-            <h3>Select a Flag</h3>
-            <input type="text" id="flag-search" placeholder="Search for a country...">
-            <div id="flag-options"></div>
-            <button id="close-modal-btn">Close</button>
+    <!-- Modals and Popups -->
+    <div id="player-assign-modal" class="modal-hidden">
+        <div id="player-assign-list">
+            <!-- List of available players will be shown here -->
         </div>
     </div>
+
+    <!-- This is for editing player details in the bank -->
+    <div id="player-edit-modal" class="modal-hidden">
+         <!-- Form for editing player name, flag, etc. -->
+    </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="script.js"></script>

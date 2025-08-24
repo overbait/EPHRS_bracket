@@ -1,68 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE ---
     let players = [];
-    let currentMode = 'bracket';
     let nextPlayerId = 1;
-    let editingPlayerId = null; // To know which player's flag is being changed
+    let editingPlayerId = null;
 
-    // --- COUNTRY FLAGS ---
+    // --- CONSTANTS & DEFAULTS ---
     const countryFlags = [
-        'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'aq', 'ar', 'as', 'at', 'au', 'aw', 'ax', 'az',
-        'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bl', 'bm', 'bn', 'bo', 'bq', 'br', 'bs',
-        'bt', 'bv', 'bw', 'by', 'bz', 'ca', 'cc', 'cd', 'cf', 'cg', 'ch', 'ci', 'ck', 'cl', 'cm', 'cn',
-        'co', 'cr', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz', 'de', 'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee',
-        'eg', 'eh', 'er', 'es', 'et', 'fi', 'fj', 'fk', 'fm', 'fo', 'fr', 'ga', 'gb', 'gd', 'ge', 'gf',
-        'gg', 'gh', 'gi', 'gl', 'gm', 'gn', 'gp', 'gq', 'gr', 'gs', 'gt', 'gu', 'gw', 'gy', 'hk', 'hm',
-        'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'io', 'iq', 'ir', 'is', 'it', 'je', 'jm',
-        'jo', 'jp', 'ke', 'kg', 'kh', 'ki', 'km', 'kn', 'kp', 'kr', 'kw', 'ky', 'kz', 'la', 'lb', 'lc',
-        'li', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mk',
-        'ml', 'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na',
-        'nc', 'ne', 'nf', 'ng', 'ni', 'nl', 'no', 'np', 'nr', 'nu', 'nz', 'om', 'pa', 'pe', 'pf', 'pg',
-        'ph', 'pk', 'pl', 'pm', 'pn', 'pr', 'ps', 'pt', 'pw', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw',
-        'sa', 'sb', 'sc', 'sd', 'se', 'sg', 'sh', 'si', 'sj', 'sk', 'sl', 'sm', 'sn', 'so', 'sr', 'ss',
-        'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'td', 'tf', 'tg', 'th', 'tj', 'tk', 'tl', 'tm', 'tn', 'to',
-        'tr', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'um', 'us', 'uy', 'uz', 'va', 'vc', 've', 'vg', 'vi',
-        'vn', 'vu', 'wf', 'ws', 'ye', 'yt', 'za', 'zm', 'zw'
+        'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'aq', 'ar', 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bl', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bv', 'bw', 'by', 'bz', 'ca', 'cc', 'cd', 'cf', 'cg', 'ch', 'ci', 'ck', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz', 'de', 'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'eh', 'er', 'es', 'et', 'fi', 'fj', 'fk', 'fm', 'fo', 'fr', 'ga', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gl', 'gm', 'gn', 'gp', 'gq', 'gr', 'gs', 'gt', 'gu', 'gw', 'gy', 'hk', 'hm', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'io', 'iq', 'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'ki', 'km', 'kn', 'kp', 'kr', 'kw', 'ky', 'kz', 'la', 'lb', 'lc', 'li', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mk', 'ml', 'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'nf', 'ng', 'ni', 'nl', 'no', 'np', 'nr', 'nu', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pm', 'pn', 'pr', 'ps', 'pt', 'pw', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sb', 'sc', 'sd', 'se', 'sg', 'sh', 'si', 'sj', 'sk', 'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'td', 'tf', 'tg', 'th', 'tj', 'tk', 'tl', 'tm', 'tn', 'to', 'tr', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'um', 'us', 'uy', 'uz', 'va', 'vc', 've', 'vg', 'vi', 'vn', 'vu', 'wf', 'ws', 'ye', 'yt', 'za', 'zm', 'zw'
     ];
     const defaultFlag = 'countryflags/aq.png';
-    const defaultImage = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+    const defaultAvatar = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
 
     // --- DOM ELEMENTS ---
-    const addPlayerBtn = document.getElementById('add-player-btn');
     const playerListEl = document.getElementById('player-list');
-    const flagModal = document.getElementById('flag-modal');
-    const flagSearchInput = document.getElementById('flag-search');
-    const flagOptionsContainer = document.getElementById('flag-options');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const renderArea = document.getElementById('render-area');
-    const previewWrapper = document.getElementById('preview-wrapper');
+    const addPlayerBtn = document.getElementById('add-player-btn');
+    const canvas = document.getElementById('canvas');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
 
-    // Hidden file input for player images
-    const imageInput = document.createElement('input');
-    imageInput.type = 'file';
-    imageInput.accept = 'image/*';
-    imageInput.style.display = 'none';
-    document.body.appendChild(imageInput);
-
-
-    // --- FUNCTIONS ---
-
-    function getPlayerById(id) {
+    // --- PLAYER BANK FUNCTIONS ---
+    function getPlayer(id) {
         return players.find(p => p.id === id);
     }
 
-    function renderPlayerList() {
+    function renderPlayerBank() {
         playerListEl.innerHTML = '';
         players.forEach(player => {
             const li = document.createElement('li');
-            li.className = 'player-item';
+            li.className = 'player-bank-item';
             li.dataset.id = player.id;
-            li.draggable = true;
             li.innerHTML = `
-                <img src="${player.flag}" class="player-flag" alt="Flag">
-                <span class="player-name" contenteditable="false">${player.name}</span>
-                <img src="${player.image}" class="player-avatar" alt="Avatar">
-                <button class="delete-player-btn">×</button>
+                <img src="${player.avatar}" class="player-avatar-bank" alt="Avatar">
+                <span class="player-name-bank">${player.name}</span>
+                <img src="${player.flag}" class="player-flag-bank" alt="Flag">
+                <div class="player-bank-actions">
+                    <button class="edit-player-btn">✏️</button>
+                    <button class="delete-player-btn">🗑️</button>
+                </div>
             `;
             playerListEl.appendChild(li);
         });
@@ -73,370 +46,299 @@ document.addEventListener('DOMContentLoaded', () => {
             id: nextPlayerId++,
             name: `Player ${nextPlayerId - 1}`,
             flag: defaultFlag,
-            image: defaultImage,
+            avatar: defaultAvatar,
+            assigned: false
         };
         players.push(newPlayer);
-        renderPlayerList();
-        renderPreview();
+        renderPlayerBank();
     }
 
-    function handlePlayerListClick(e) {
+    function handleDeletePlayer(id) {
+        players = players.filter(p => p.id !== id);
+        // TODO: Unassign player from any slots if they are on the canvas
+        renderPlayerBank();
+    }
+
+    function handlePlayerBankClick(e) {
         const target = e.target;
-        const playerItem = target.closest('.player-item');
+        const playerItem = target.closest('.player-bank-item');
         if (!playerItem) return;
 
         const playerId = parseInt(playerItem.dataset.id);
-
-        if (target.classList.contains('player-name')) {
-            // Toggle content editable
-            const isEditing = target.contentEditable === 'true';
-            target.contentEditable = !isEditing;
-            if (!isEditing) {
-                target.focus();
-                document.execCommand('selectAll', false, null);
-            } else {
-                const player = getPlayerById(playerId);
-                player.name = target.textContent;
-                renderPreview();
-            }
-        } else if (target.classList.contains('player-flag')) {
-            editingPlayerId = playerId;
-            flagModal.classList.remove('modal-hidden');
-        } else if (target.classList.contains('player-avatar')) {
-             editingPlayerId = playerId;
-             imageInput.click(); // Trigger hidden file input
-        } else if (target.classList.contains('delete-player-btn')) {
-            players = players.filter(p => p.id !== playerId);
-            renderPlayerList();
-            renderPreview();
+        if (target.classList.contains('delete-player-btn')) {
+            handleDeletePlayer(playerId);
+        }
+        if (target.classList.contains('edit-player-btn')) {
+            // TODO: Open edit modal
+            console.log('Editing player', playerId);
         }
     }
 
-    function handleNameBlur(e) {
-        if (e.target.classList.contains('player-name')) {
-            e.target.contentEditable = 'false';
-            const playerItem = e.target.closest('.player-item');
-            const playerId = parseInt(playerItem.dataset.id);
-            const player = getPlayerById(playerId);
-            if(player) player.name = e.target.textContent;
-            renderPreview();
-        }
-    }
-
-    function handleNameKeydown(e) {
-         if (e.key === 'Enter' && e.target.classList.contains('player-name')) {
-            e.preventDefault();
-            e.target.blur();
-        }
-    }
-
-    function handleFlagSearch() {
-        const query = flagSearchInput.value.toLowerCase();
-        flagOptionsContainer.innerHTML = '';
-        const filtered = countryFlags.filter(code => code.startsWith(query));
-
-        filtered.forEach(code => {
-            const option = document.createElement('div');
-            option.dataset.flagUrl = `countryflags/${code}.png`;
-            option.innerHTML = `<img src="countryflags/${code}.png" alt="${code}"> ${code.toUpperCase()}`;
-            flagOptionsContainer.appendChild(option);
-        });
-    }
-
-    function handleFlagSelect(e) {
-        const flagUrl = e.target.closest('div').dataset.flagUrl;
-        if (flagUrl && editingPlayerId) {
-            const player = getPlayerById(editingPlayerId);
-            player.flag = flagUrl;
-            closeModal();
-            renderPlayerList();
-            renderPreview();
-        }
-    }
-
-    function handleImageUpload(e) {
-        const file = e.target.files[0];
-        if (file && editingPlayerId) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const player = getPlayerById(editingPlayerId);
-                player.image = event.target.result;
-                renderPlayerList();
-                renderPreview();
-            };
-            reader.readAsDataURL(file);
-        }
-        // Reset file input value to allow re-uploading the same file
-        e.target.value = '';
-    }
-
-    function closeModal() {
-        flagModal.classList.add('modal-hidden');
-        flagSearchInput.value = '';
-        editingPlayerId = null;
-    }
-
-    // --- Drag and Drop ---
-    let draggedPlayerId = null;
-
-    function handleDragStart(e) {
-        draggedPlayerId = parseInt(e.target.dataset.id);
-        e.target.style.opacity = '0.5';
-    }
-
-    function handleDragEnd(e) {
-        e.target.style.opacity = '1';
-        draggedPlayerId = null;
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault(); // Necessary to allow dropping
-        const targetItem = e.target.closest('.player-item');
-        if (targetItem) {
-            // Can add visual feedback here, like a placeholder
-        }
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        if (draggedPlayerId === null) return;
-
-        const targetItem = e.target.closest('.player-item');
-        if (!targetItem) return;
-
-        const droppedOnPlayerId = parseInt(targetItem.dataset.id);
-        if (draggedPlayerId === droppedOnPlayerId) return;
-
-        const draggedIndex = players.findIndex(p => p.id === draggedPlayerId);
-        const droppedOnIndex = players.findIndex(p => p.id === droppedOnPlayerId);
-
-        // Remove dragged player and re-insert at the new position
-        const [draggedPlayer] = players.splice(draggedIndex, 1);
-        players.splice(droppedOnIndex, 0, draggedPlayer);
-
-        renderPlayerList();
-        renderPreview();
-    }
-
-    // --- Resizing ---
-    function resizePreview() {
-        const wrapperWidth = previewWrapper.clientWidth;
+    // --- SCALING ---
+    function resizeCanvas() {
+        const wrapperWidth = canvasWrapper.clientWidth;
         const scale = wrapperWidth / 1920;
-        renderArea.style.transform = `scale(${scale})`;
+        canvas.style.transform = `scale(${scale})`;
+    }
+
+    let assignments = {}; // { 'slot-id': playerId, ... }
+    let activeSlot = null;
+
+    // --- CANVAS INTERACTION ---
+    function handleCanvasClick(e) {
+        const target = e.target;
+        const playerSlot = target.closest('.player-slot');
+
+        if (playerSlot) {
+            activeSlot = playerSlot.dataset.slotId;
+            const modal = document.getElementById('player-assign-modal');
+
+            // Populate modal with unassigned players
+            const assignList = document.getElementById('player-assign-list');
+            assignList.innerHTML = '';
+            const assignedPlayerIds = Object.values(assignments);
+            const availablePlayers = players.filter(p => !assignedPlayerIds.includes(p.id));
+
+            availablePlayers.forEach(p => {
+                const div = document.createElement('div');
+                div.dataset.playerId = p.id;
+                div.textContent = p.name;
+                assignList.appendChild(div);
+            });
+
+            // Add option to unassign
+            if (assignments[activeSlot]) {
+                 const unassign = document.createElement('div');
+                 unassign.dataset.playerId = 'unassign';
+                 unassign.textContent = '--- Unassign ---';
+                 unassign.style.color = 'red';
+                 assignList.prepend(unassign);
+            }
+
+            modal.style.left = `${e.clientX + 5}px`;
+            modal.style.top = `${e.clientY + 5}px`;
+            modal.classList.remove('modal-hidden');
+        } else if (!target.closest('#player-assign-modal')) {
+            // Hide modal if clicking anywhere else that's not the modal itself
+            document.getElementById('player-assign-modal').classList.add('modal-hidden');
+        }
+    }
+
+    function handlePlayerAssign(e) {
+        const playerIdStr = e.target.dataset.playerId;
+        if (!playerIdStr || !activeSlot) return;
+
+        const modal = document.getElementById('player-assign-modal');
+        modal.classList.add('modal-hidden');
+
+        const slotElement = document.querySelector(`[data-slot-id='${activeSlot}']`);
+        if (!slotElement) return;
+
+        // Unassigning
+        if (playerIdStr === 'unassign') {
+            delete assignments[activeSlot];
+            slotElement.querySelector('.name').textContent = '...';
+            slotElement.querySelector('.flag').innerHTML = '';
+            return;
+        }
+
+        const playerId = parseInt(playerIdStr);
+        const player = getPlayer(playerId);
+
+        // Update state
+        assignments[activeSlot] = playerId;
+
+        // Update view
+        slotElement.querySelector('.name').textContent = player.name;
+        slotElement.querySelector('.flag').innerHTML = `<img src="${player.flag}" alt="flag">`;
+
+        activeSlot = null;
     }
 
 
-    // --- EVENT LISTENERS ---
-    addPlayerBtn.addEventListener('click', handleAddPlayer);
-    playerListEl.addEventListener('click', handlePlayerListClick);
-    playerListEl.addEventListener('focusout', handleNameBlur);
-    playerListEl.addEventListener('keydown', handleNameKeydown);
+    const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
+    const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
 
-    closeModalBtn.addEventListener('click', closeModal);
-    flagSearchInput.addEventListener('input', handleFlagSearch);
-    flagOptionsContainer.addEventListener('click', handleFlagSelect);
-    imageInput.addEventListener('change', handleImageUpload);
-
-    playerListEl.addEventListener('dragstart', handleDragStart);
-    playerListEl.addEventListener('dragend', handleDragEnd);
-    playerListEl.addEventListener('dragover', handleDragOver);
-    playerListEl.addEventListener('drop', handleDrop);
-
-    document.querySelectorAll('input[name="mode"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            currentMode = e.target.value;
-            renderPreview();
-        });
-    });
-
-    window.addEventListener('resize', resizePreview);
-
-
-    // --- DECORATIONS & ADVANCED STYLING ---
-    const backgroundImages = [
-        'Media/background1-min.png',
-        'Media/background2-min.png',
-        'Media/background3-min.png',
-    ];
-    const leafImages = [
-        'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png',
-        'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png',
-        'Media/leves_7-min.png', 'Media/leves_8-min.png'
-    ];
-    const blobColors = ['#C9CBA3', '#FFE1A8', '#E26D5C', '#723D46', '#9E7A7A'];
-
-    function applyRandomBackground() {
-        const bgElement = document.querySelector('#render-area .background');
+    function applyDecorations() {
+        // Background
+        const bgElement = document.querySelector('#canvas .background');
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         bgElement.style.backgroundImage = `url('${randomBg}')`;
-    }
 
-    function addRandomLeaves() {
-        const container = document.getElementById('decorations-container');
-        container.innerHTML = '';
+        // Leaves
+        const decorationsContainer = document.getElementById('decorations-container');
+        decorationsContainer.innerHTML = '';
         for (let i = 0; i < 8; i++) {
             const leaf = document.createElement('img');
             leaf.className = 'leaf-decoration';
             leaf.src = leafImages[Math.floor(Math.random() * leafImages.length)];
             leaf.style.top = `${Math.random() * 90}%`;
             leaf.style.left = `${Math.random() * 90}%`;
-            const scale = Math.random() * 0.5 + 0.5;
-            const rotation = Math.random() * 360;
-            leaf.style.transform = `rotate(${rotation}deg) scale(${scale})`;
-            leaf.style.opacity = Math.random() * 0.5 + 0.3;
-            container.appendChild(leaf);
+            leaf.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.5 + 0.5})`;
+            decorationsContainer.appendChild(leaf);
         }
     }
 
-    function addBackgroundBlobs(container) {
-        const contentBoxes = container.querySelectorAll('.content-box');
-        contentBoxes.forEach(box => {
-            const oldContainer = box.querySelector('.card-bg-container');
-            if (oldContainer) oldContainer.remove();
+    // --- CANVAS RENDERING ---
+    function renderBracketCanvas(container) {
+        container.innerHTML = `
+            <div class="bracket-view">
+                <!-- Logo -->
+                <img src="Media/Logo_main-min.png" style="position: absolute; top: 20px; right: 20px; width: 300px;">
 
-            const blobContainer = document.createElement('div');
-            blobContainer.className = 'card-bg-container';
+                <!-- Round Titles -->
+                <div class="round-title" style="top: 10px; left: 150px;" contenteditable="true">JULY 6<br>QUARTERFINALS</div>
+                <div class="round-title" style="top: 10px; left: 600px;" contenteditable="true">JULY 12<br>SEMIFINALS</div>
+                <div class="round-title" style="top: 10px; left: 1050px;" contenteditable="true">JULY 13<br>GRAND FINAL</div>
+                <div class="round-title" style="top: 730px; left: 1050px;" contenteditable="true">3RD PLACE MATCH</div>
 
-            for (let i = 0; i < 3; i++) {
-                const blob = document.createElement('div');
-                blob.className = 'card-bg-blob';
-                const color1 = blobColors[Math.floor(Math.random() * blobColors.length)];
-                const color2 = blobColors[Math.floor(Math.random() * blobColors.length)];
-                blob.style.background = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
-                blob.style.top = `${Math.random() * 60 - 30}%`;
-                blob.style.left = `${Math.random() * 60 - 30}%`;
-                const size = Math.random() * 150 + 100;
-                blob.style.width = `${size}px`;
-                blob.style.height = `${size}px`;
-                blob.style.opacity = Math.random() * 0.4 + 0.2;
-                blobContainer.appendChild(blob);
-            }
-            box.prepend(blobContainer);
-        });
+                <!-- Quarter Finals -->
+                <div class="match-box" style="top: 100px; left: 100px;" data-match-id="qf1">
+                    <div class="player-slot" data-slot-id="qf1-p1"><span class="flag"></span><span class="name">Player 1</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="qf1-p2"><span class="flag"></span><span class="name">Player 2</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+                <div class="match-box" style="top: 300px; left: 100px;" data-match-id="qf2">
+                    <div class="player-slot" data-slot-id="qf2-p1"><span class="flag"></span><span class="name">Player 3</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="qf2-p2"><span class="flag"></span><span class="name">Player 4</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+                <div class="match-box" style="top: 550px; left: 100px;" data-match-id="qf3">
+                    <div class="player-slot" data-slot-id="qf3-p1"><span class="flag"></span><span class="name">Player 5</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="qf3-p2"><span class="flag"></span><span class="name">Player 6</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+                <div class="match-box" style="top: 750px; left: 100px;" data-match-id="qf4">
+                    <div class="player-slot" data-slot-id="qf4-p1"><span class="flag"></span><span class="name">Player 7</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="qf4-p2"><span class="flag"></span><span class="name">Player 8</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+
+                <!-- Semi Finals -->
+                <div class="match-box" style="top: 200px; left: 550px;" data-match-id="sf1">
+                    <div class="player-slot" data-slot-id="sf1-p1"><span class="flag"></span><span class="name">Winner QF1</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="sf1-p2"><span class="flag"></span><span class="name">Winner QF2</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+                <div class="match-box" style="top: 650px; left: 550px;" data-match-id="sf2">
+                    <div class="player-slot" data-slot-id="sf2-p1"><span class="flag"></span><span class="name">Winner QF3</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="sf2-p2"><span class="flag"></span><span class="name">Winner QF4</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+
+                <!-- Final -->
+                <div class="match-box" style="top: 425px; left: 1000px;" data-match-id="final">
+                    <div class="player-slot" data-slot-id="final-p1"><span class="flag"></span><span class="name">Winner SF1</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="final-p2"><span class="flag"></span><span class="name">Winner SF2</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+
+                <!-- 3rd Place Match -->
+                <div class="match-box" style="top: 800px; left: 1000px;" data-match-id="third">
+                    <div class="player-slot" data-slot-id="third-p1"><span class="flag"></span><span class="name">Loser SF1</span><span class="score" contenteditable="true">0</span></div>
+                    <div class="player-slot" data-slot-id="third-p2"><span class="flag"></span><span class="name">Loser SF2</span><span class="score" contenteditable="true">0</span></div>
+                </div>
+
+                <!-- Connectors -->
+                <div class="connector" style="top: 145px; left: 400px; width: 150px; height: 100px; border-width: 4px 4px 4px 0; border-radius: 0 10px 10px 0;"></div>
+                <div class="connector" style="top: 245px; left: 400px; width: 50px; height: 0; border-top: 4px solid;"></div>
+                <div class="connector" style="top: 245px; left: 450px; width: 0; height: 100px; border-right: 4px solid;"></div>
+
+                <div class="connector" style="top: 345px; left: 400px; width: 150px; height: 100px; border-width: 0 4px 4px 0; border-radius: 0 0 10px 0;"></div>
+
+                <div class="connector" style="top: 595px; left: 400px; width: 150px; height: 100px; border-width: 4px 4px 4px 0; border-radius: 0 10px 10px 0;"></div>
+                <div class="connector" style="top: 695px; left: 400px; width: 50px; height: 0; border-top: 4px solid;"></div>
+                <div class="connector" style="top: 695px; left: 450px; width: 0; height: 100px; border-right: 4px solid;"></div>
+
+                <div class="connector" style="top: 795px; left: 400px; width: 150px; height: 100px; border-width: 0 4px 4px 0; border-radius: 0 0 10px 0;"></div>
+
+                <div class="connector" style="top: 245px; left: 850px; width: 150px; height: 225px; border-width: 4px 4px 4px 0; border-radius: 0 10px 10px 0;"></div>
+                <div class="connector" style="top: 470px; left: 850px; width: 50px; height: 0; border-top: 4px solid;"></div>
+
+                <div class="connector" style="top: 695px; left: 850px; width: 150px; height: 225px; border-width: 0 4px 4px 0; border-radius: 0 0 10px 0;"></div>
+            </div>
+        `;
     }
 
-
-    // --- TEMPLATE RENDERING ---
-
-    function renderPreview() {
-        const contentArea = document.querySelector('#render-area .content');
-        contentArea.innerHTML = '';
-
-        if (currentMode === 'bracket') {
-            contentArea.className = 'content bracket-layout';
-            renderBracketTemplate(contentArea);
+    function render(mode) {
+        const contentArea = document.querySelector('#canvas .content-area');
+        if (mode === 'bracket') {
+            renderBracketCanvas(contentArea);
         } else {
-            contentArea.className = 'content groups-layout';
-            renderGroupsTemplate(contentArea);
+            renderGroupsCanvas(contentArea);
         }
-
-        // Apply advanced styling
-        applyRandomBackground();
-        addRandomLeaves();
-        addBackgroundBlobs(contentArea);
+        applyDecorations();
     }
 
-    function renderBracketTemplate(container) {
-        // Renders a simple 8-player bracket
-        const rounds = {
-            'Quarter Finals': 4,
-            'Semi Finals': 2,
-            'Final': 1
-        };
-
-        let roundHtml = '';
-        let playersInRound = [...players];
-
-        for (const [roundName, matchCount] of Object.entries(rounds)) {
-            let matchesHtml = '';
-            for (let i = 0; i < matchCount; i++) {
-                const player1 = playersInRound.shift() || { name: '...', flag: defaultFlag, score: 0 };
-                const player2 = playersInRound.shift() || { name: '...', flag: defaultFlag, score: 0 };
-                matchesHtml += `
-                    <div class="content-box match">
-                        <div class="player">
-                            <img src="${player1.flag}">
-                            <span>${player1.name}</span>
-                            <span class="score">${player1.score || 0}</span>
-                        </div>
-                        <div class="player">
-                            <img src="${player2.flag}">
-                            <span>${player2.name}</span>
-                            <span class="score">${player2.score || 0}</span>
-                        </div>
-                    </div>
-                `;
+    function renderGroupsCanvas(container) {
+        let columnsHtml = '';
+        const groups = ['A', 'B'];
+        groups.forEach(groupLetter => {
+            let column = `<div class="group-column">
+                <h2 class="group-title">GROUP ${groupLetter}</h2>`;
+            for (let i = 1; i <= 8; i++) {
+                const slotId = `group-${groupLetter.toLowerCase()}-${i}`;
+                column += `
+                    <div class="player-slot" data-slot-id="${slotId}">
+                        <span class="avatar"></span>
+                        <span class="name">Player ${i}</span>
+                        <span class="flag"></span>
+                    </div>`;
             }
-            roundHtml += `<div class="round"><h2>${roundName}</h2>${matchesHtml}</div>`;
-        }
-        container.innerHTML = roundHtml;
-    }
-
-    function renderGroupsTemplate(container) {
-        const groups = { A: [], B: [], C: [], D: [] };
-        players.forEach((player, index) => {
-            const groupName = String.fromCharCode(65 + (index % 4));
-            groups[groupName].push(player);
+            column += `</div>`;
+            columnsHtml += column;
         });
 
-        let groupsHtml = '';
-        for (const groupName in groups) {
-            const playersHtml = groups[groupName].map(player => `
-                <div class="player">
-                    <img src="${player.flag}">
-                    <span>${player.name}</span>
+        const finalHtml = `
+            <div class="groups-view">
+                <div class="logo-area">
+                    <img src="Media/Logo_main-min.png" alt="Logo">
+                    <h1 contenteditable="true">MAIN EVENT<br>GROUPS</h1>
                 </div>
-            `).join('') || '<div class="player"><span>...</span></div>';
-
-            groupsHtml += `
-                <div class="content-box group-box">
-                    <h3>Group ${groupName}</h3>
-                    ${playersHtml}
+                <div class="groups-area">
+                    ${columnsHtml}
                 </div>
-            `;
-        }
-        container.innerHTML = groupsHtml;
+            </div>
+        `;
+        container.innerHTML = finalHtml;
     }
 
 
     // --- INITIALIZATION ---
     function init() {
-        // Add a few players by default for demonstration
-        for(let i=0; i<4; i++) {
-            handleAddPlayer();
-        }
-        renderPlayerList();
-        renderPreview();
-        resizePreview();
+        addPlayerBtn.addEventListener('click', handleAddPlayer);
+        playerListEl.addEventListener('click', handlePlayerBankClick);
+        window.addEventListener('resize', resizeCanvas);
+        canvas.addEventListener('click', handleCanvasClick);
+        document.getElementById('player-assign-list').addEventListener('click', handlePlayerAssign);
+        document.getElementById('export-png').addEventListener('click', exportToPng);
+
+        document.querySelectorAll('input[name="mode"]').forEach(radio => {
+            radio.addEventListener('change', e => {
+                render(e.target.value);
+            });
+        });
+
+        // Add some default players for testing
+        for(let i=0; i<8; i++) { handleAddPlayer(); }
+
+        resizeCanvas();
+        render('bracket'); // Initial render
     }
 
-    // --- EXPORT ---
     function exportToPng() {
-        const originalTransform = renderArea.style.transform;
-        renderArea.style.transform = 'scale(1)'; // Temporarily reset scale for full-res capture
+        const originalTransform = canvas.style.transform;
+        canvas.style.transform = 'scale(1)';
 
-        html2canvas(renderArea, {
+        html2canvas(canvas, {
             width: 1920,
             height: 1080,
-            backgroundColor: null, // Use transparent background
+            backgroundColor: null,
             useCORS: true,
-            logging: true,
-        }).then(canvas => {
+        }).then(canvasImg => {
             const link = document.createElement('a');
-            link.download = `${currentMode}-graphic.png`;
-            link.href = canvas.toDataURL('image/png');
+            link.download = 'tournament-graphic.png';
+            link.href = canvasImg.toDataURL('image/png');
             link.click();
-
-            // Restore original scale
-            renderArea.style.transform = originalTransform;
+            canvas.style.transform = originalTransform;
         }).catch(err => {
-            console.error("Failed to export PNG:", err);
-            // Restore original scale even on error
-            renderArea.style.transform = originalTransform;
+            console.error("PNG Export failed:", err);
+            canvas.style.transform = originalTransform;
         });
     }
-
-    document.getElementById('export-png').addEventListener('click', exportToPng);
 
     init();
 });
