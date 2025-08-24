@@ -128,7 +128,7 @@ body {
     width: 100%;
     height: 100%;
     /* Add padding to prevent touching the edges */
-    padding: 50px 150px;
+    padding: 50px 200px;
     box-sizing: border-box;
     position: relative;
 }
@@ -185,25 +185,21 @@ body {
     border-color: rgba(255, 210, 125, 0.5);
     background: rgba(0,0,0,0.4);
 }
-.groups-view .player-slot .flag {
-    height: 100%;
-    width: auto;
-    object-fit: cover;
-    margin-right: 15px;
-}
 .groups-view .player-slot .avatar {
     width: 45px; /* Slightly smaller to fit new height */
     height: 45px;
     border-radius: 50%;
     background: #555;
-    margin-left: auto; /* Pushes avatar to the far right */
+    margin-left: 20px; /* Use margin-left now */
     object-fit: cover;
 }
 .groups-view .player-slot .name {
+    flex-grow: 1; /* Allow name to fill space, pushing avatar to the right */
     font-family: var(--font-display);
     font-size: 1.8rem; /* Larger font */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Add shadow for readability */
+    padding-left: 20px; /* Give some space from the absolute edge */
 }
 
 /* --- BRACKET VIEW --- */
@@ -270,6 +266,7 @@ body {
     max-width: 300px;
     width: 70%;
     height: auto;
+    margin-left: 50px; /* Move it a bit to the right */
 }
 
 .bracket-logo {
@@ -295,6 +292,7 @@ body {
     flex-direction: column;
     justify-content: space-around;
     overflow: hidden;
+    flex-shrink: 0; /* Prevent match box from shrinking */
 }
 
 .third-match {
@@ -413,6 +411,23 @@ body {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+}
+
+/* For Groups View */
+.groups-view .player-slot .flag-background {
+    top: 0;
+    left: 0; /* Position on the left */
+    width: 100%; /* Cover the entire cell */
+    height: 100%;
+    opacity: 0.7; /* Make it a bit more subtle */
+}
+.groups-view .player-slot .flag-background::after {
+    /* Gradient fades from transparent on left to opaque on right */
+    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 70%);
+}
+.groups-view .player-slot .avatar,
+.groups-view .player-slot .name {
+    z-index: 1; /* Ensure avatar and name are on top of the flag background */
 }
 
 
