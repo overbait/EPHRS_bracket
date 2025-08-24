@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             third_date: 'July 13', third_best: 'Best of 5',
             final_time: '17:00 GMT', third_time: '15:00 GMT',
         },
-        mainTitle_bracket: 'BRACKETS',
+        mainTitle_bracket: 'PLAYOFFS',
         mainTitle_groups: 'GROUPS',
         viewMode: 'bracket',
         nextPlayerId: 1,
@@ -265,8 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
         const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
 
-        const score1 = player1 ? (state.scores[p1_slot_id] || 0) : '';
-        const score2 = player2 ? (state.scores[p2_slot_id] || 0) : '';
+        // Ensure scores are never 'undefined'. Default to 0 for players, '' for empty slots.
+        const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
+        const score2 = player2 ? (state.scores[p2_slot_id] !== undefined ? state.scores[p2_slot_id] : 0) : '';
 
         let p1_class = 'player-slot';
         let p2_class = 'player-slot';

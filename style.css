@@ -108,7 +108,7 @@ body {
     z-index: 1;
     background-size: cover;
     background-position: center;
-    transform: scale(1.05); /* Slightly enlarge the background to fill edges */
+    /* transform: scale(1.05); */ /* Removed to align background with border */
 }
 #decorations-container { z-index: 2; }
 #canvas .overlay { z-index: 3; }
@@ -300,7 +300,7 @@ body {
 }
 
 .third-match {
-    margin-top: 20px; /* Spacing from the final match */
+    margin-top: 10px; /* Reduced spacing from the final match */
 }
 
 .bracket-view .player-slot {
@@ -414,14 +414,15 @@ body {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+    /* Stronger gradient to make flag edge disappear */
+    background: linear-gradient(to right, transparent 30%, var(--content-box-bg) 95%);
 }
 
 /* For Groups View */
 .groups-view .player-slot .flag-background {
     top: 0;
-    left: 0;
-    width: 30%;
+    left: 15px; /* Shifted right to prevent cutoff */
+    width: 35%;
     height: 100%;
     background-size: cover;
     background-position: center;
@@ -451,5 +452,6 @@ body {
 }
 .match-box .flag-background::after {
     /* Gradient fades from transparent on left to opaque on right */
-    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 80%);
+    /* Stronger gradient for smoother fade-out */
+    background: linear-gradient(to right, transparent 15%, var(--content-box-bg) 75%);
 }
