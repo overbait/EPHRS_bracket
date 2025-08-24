@@ -27,8 +27,8 @@ body {
 #main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
 #canvas-wrapper {
-    width: 100%; /* Fill available space */
-    max-width: none; /* Do not limit width */
+    width: 95%;
+    max-width: 1400px;
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
@@ -37,7 +37,6 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
-    margin: auto; /* Center the wrapper itself */
 }
 #canvas {
     width: 1920px;
@@ -170,7 +169,7 @@ body {
 .groups-view .player-slot {
     display: flex;
     align-items: center;
-    height: 65px; /* Set fixed height */
+    height: 50px; /* Further reduced height */
     padding: 10px 20px;
     margin: 8px 0;
     border: 1px solid rgba(255, 210, 125, 0.2);
@@ -234,26 +233,19 @@ body {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
     padding: 8px 8px 8px 30px;
     box-sizing: border-box;
-    position: relative; /* Ensure it's a positioning context for the flags */
-    overflow: hidden; /* This will clip the flag backgrounds */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    position: relative; /* For positioning flag backgrounds */
+    overflow: hidden; /* To clip flag backgrounds */
 }
 .bracket-view .player-slot {
     display: flex;
     align-items: center;
-    height: 50%; /* Each slot takes up half the height */
+    height: 48%; /* Use slightly less than 50% to ensure space */
     cursor: pointer;
-    position: absolute; /* Position slots absolutely within the match-box */
-    left: 0;
-    width: 100%;
-    padding: 0 8px 0 30px; /* Re-apply padding here */
-    box-sizing: border-box;
+    position: relative; /* For z-indexing content on top of flags */
     transition: all 0.2s ease-in-out;
-}
-.bracket-view .player-slot:first-of-type {
-    top: 0;
-}
-.bracket-view .player-slot:last-of-type {
-    bottom: 0;
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
@@ -268,7 +260,9 @@ body {
     font-size: 1.4rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 10px; /* Give space from left edge */
+    padding-left: 20px; /* More padding to push it right */
+    position: relative;
+    z-index: 1;
 }
 .bracket-view .player-slot .score {
     font-size: 2rem; /* Increased size for the new font */
@@ -366,8 +360,8 @@ body {
     height: 100%;
 }
 .groups-view .player-slot .flag-background::after {
-    /* Gradient fades from the left to transparent on the right */
-    background: linear-gradient(to right, var(--content-box-bg) 20%, transparent 80%);
+    /* Sharper gradient that starts fully opaque */
+    background: linear-gradient(to right, rgba(44,28,17,1) 40%, transparent 75%);
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
@@ -381,9 +375,9 @@ body {
     overflow: hidden; /* This will clip the flag backgrounds */
 }
 .match-box .flag-background {
-    width: 100%; /* Fill the full width of the match-box */
-    height: 50%; /* Fill the full height of its half */
-    left: 0; /* Align to the left */
+    width: 50%; /* Smaller, sits behind the player name */
+    height: 50%;
+    left: 0;
 }
 .match-box .p1-flag-bg {
     top: 0;
@@ -392,6 +386,6 @@ body {
     bottom: 0;
 }
 .match-box .flag-background::after {
-    /* Gradient fades from the right to transparent on the left */
-    background: linear-gradient(to left, var(--content-box-bg) 20%, transparent 80%);
+    /* Gradient fades from opaque on left to transparent on right */
+    background: linear-gradient(to right, rgba(44,28,17,0.8) 20%, transparent 95%);
 }
