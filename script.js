@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         state.players.push(newPlayer);
         markDirty();
-        renderPlayerBank();
+        render(); // Rerender everything to update all views
     }
 
     function handleDeletePlayer(id) { /* ... implementation ... */ }
@@ -147,8 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!editingPlayer) return;
         editingPlayer.name = document.getElementById('edit-player-name').value;
         markDirty();
-        renderPlayerBank();
-        // render(); // Will be needed later
+        render(); // Rerender everything to update all views
         closeEditModal();
     }
 
@@ -167,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (state.assignments[slotId] === playerId) delete state.assignments[slotId];
                 });
                 markDirty();
-                renderPlayerBank();
-                // render(); // Will be needed later
+                render(); // Rerender everything to update all views
             }
         }
     }
@@ -221,27 +219,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBracketCanvas(container) {
         container.innerHTML = `
             <div class="bracket-view">
-                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo" style="top: auto; bottom: 40px; right: auto; left: 40px;">
-                <div class="round-title" style="top: 40px; left: 140px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 40px; left: 700px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 40px; left: 1260px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
+                <div class="round-title" style="top: 80px; left: 190px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 750px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 1310px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
 
                 <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 120px; left: 100px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 320px; left: 100px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 600px; left: 100px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 800px; left: 100px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: 160px; left: 150px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: 350px; left: 150px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 610px; left: 150px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 800px; left: 150px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 220px; left: 660px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 700px; left: 660px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: 255px; left: 710px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 705px; left: 710px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 460px; left: 1220px;" data-match-id="final"></div>
+                <div class="match-box" style="top: 480px; left: 1270px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="round-title" style="top: 750px; left: 1255px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-                <div class="match-box" style="top: 830px; left: 1220px;" data-match-id="third-place"></div>
+                <div class="round-title" style="top: 850px; left: 1305px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="match-box" style="top: 930px; left: 1270px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
         drawBracketConnectors(container.querySelector('.bracket-view'));
@@ -309,17 +307,19 @@ document.addEventListener('DOMContentLoaded', () => {
         function getPortPoint(matchId, port) {
             const el = container.querySelector(`[data-match-id="${matchId}"]`);
             if (!el) return null;
-            const rect = el.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
 
-            const relTop = rect.top - containerRect.top;
-            const relLeft = rect.left - containerRect.left;
+            // Using offset properties for coordinates relative to the container,
+            // which are not affected by CSS transforms/scaling.
+            const relTop = el.offsetTop;
+            const relLeft = el.offsetLeft;
+            const relWidth = el.offsetWidth;
+            const relHeight = el.offsetHeight;
 
             switch(port) {
-                case 'right': return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
-                case 'left-top': return { x: relLeft, y: relTop + rect.height * 0.25 };
-                case 'left-bottom': return { x: relLeft, y: relTop + rect.height * 0.75 };
-                default: return { x: relLeft, y: relTop + rect.height / 2 }; // 'left'
+                case 'right': return { x: relLeft + relWidth, y: relTop + relHeight / 2 };
+                case 'left-top': return { x: relLeft, y: relTop + relHeight * 0.25 };
+                case 'left-bottom': return { x: relLeft, y: relTop + relHeight * 0.75 };
+                default: return { x: relLeft, y: relTop + relHeight / 2 }; // 'left'
             }
         }
 
