@@ -163,39 +163,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function render() {
         renderPlayerBank();
-        if (state.viewMode === 'bracket') renderBracketCanvas(contentArea);
-        else renderGroupsCanvas(contentArea);
-        applyDecorations();
+        if (state.viewMode === 'bracket') {
+            renderBracketCanvas(contentArea);
+        } else {
+            renderGroupsCanvas(contentArea);
+        }
     }
 
     function renderGroupsCanvas(container) {
-        let columnsHtml = '';
+        let groupsHtml = '';
         const groups = ['A', 'B', 'C', 'D'];
 
-        for(let i = 0; i < groups.length; i++) {
-            const groupLetter = groups[i];
-            let column = `<div class="group-column">
+        for(const groupLetter of groups) {
+            let group = `<div class="content-box">
                 <h2 class="group-title" data-title-id="group-title-${groupLetter}" contenteditable="true">${state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`}</h2>`;
             for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
                 const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
                 const assignedPlayerId = state.assignments[slotId];
                 const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
-                column += `
+                group += `
                     <div class="player-slot" data-slot-id="${slotId}">
                         <img src="${player.avatar}" class="avatar">
                         <span class="name">${player.name}</span>
                         <img src="${player.flag}" class="flag">
                     </div>`;
             }
-            column += `</div>`;
-            columnsHtml += column;
-
-            if (i === 1) {
-                columnsHtml += `<div class="logo-column"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
-            }
+            group += `</div>`;
+            groupsHtml += group;
         }
 
-        container.innerHTML = `<div class="groups-view">${columnsHtml}</div>`;
+        const logoHtml = `<div class="logo-column"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+
+        container.innerHTML = `<div class="groups-view">${groupsHtml}${logoHtml}</div>`;
+        initCardGradients();
     }
 
     function renderBracketCanvas(container) {
@@ -214,19 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="match-box" style="top: 680px; left: 650px;" data-match-id="sf2"></div>
                 <div class="match-box" style="top: 440px; left: 1200px;" data-match-id="final"></div>
                 <div class="match-box" style="top: 950px; left: 650px;" data-match-id="third-place"></div>
-                <div class="connector" style="top: 145px; left: 420px; width: 230px; height: 100px; border-width: 4px 4px 0 0; border-radius: 0 10px 0 0;"></div>
-                <div class="connector" style="top: 245px; left: 420px; width: 230px; border-top: 4px solid;"></div>
-                <div class="connector" style="top: 245px; left: 420px; height: 100px; border-left: 4px solid;"></div>
-                <div class="connector" style="top: 345px; left: 420px; width: 230px; border-top: 4px solid;"></div>
-                <div class="connector" style="top: 625px; left: 420px; width: 230px; height: 100px; border-width: 0 4px 4px 0; border-radius: 0 0 10px 0;"></div>
-                <div class="connector" style="top: 725px; left: 420px; width: 230px; border-top: 4px solid;"></div>
-                <div class="connector" style="top: 625px; left: 420px; height: 100px; border-left: 4px solid;"></div>
-                <div class="connector" style="top: 245px; left: 970px; width: 230px; height: 240px; border-width: 4px 4px 0 0; border-radius: 0 10px 0 0;"></div>
-                <div class="connector" style="top: 485px; left: 970px; width: 230px; border-top: 4px solid;"></div>
-                <div class="connector" style="top: 725px; left: 970px; width: 230px; height: 240px; border-width: 0 0 4px 4px; border-radius: 0 0 0 10px;"></div>
-                <div class="connector" style="top: 485px; left: 970px; height: 240px; border-left: 4px solid;"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
+        drawBracketConnectors(container.querySelector('.bracket-view'));
     }
 
     function populateMatchBox(box) {
@@ -250,9 +240,123 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
     }
 
+    function drawBracketConnectors(container) {
+        const oldSvg = container.querySelector('.bracket-svg');
+        if (oldSvg) oldSvg.remove();
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('bracket-svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+
+        const connections = [
+            { from: ['qf1', 'qf2'], to: 'sf1' },
+            { from: ['qf3', 'qf4'], to: 'sf2' },
+            { from: ['sf1', 'sf2'], to: 'final' },
+            { from: ['sf1', 'sf2'], to: 'third-place', thirdPlace: true },
+        ];
+
+        function getElCenter(matchId, side = 'right') {
+            const el = container.querySelector(`[data-match-id="${matchId}"]`);
+            if (!el) return null;
+            const rect = el.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const y = rect.top - containerRect.top + rect.height / 2;
+            let x;
+            if (side === 'right') {
+                x = rect.right - containerRect.left;
+            } else { // left
+                x = rect.left - containerRect.left;
+            }
+            return { x, y };
+        }
+
+        connections.forEach(conn => {
+            const toEl = container.querySelector(`[data-match-id="${conn.to}"]`);
+            if (!toEl) return;
+
+            const endPoint = getElCenter(conn.to, 'left');
+
+            conn.from.forEach((fromId, index) => {
+                const fromEl = container.querySelector(`[data-match-id="${fromId}"]`);
+                if (!fromEl) return;
+
+                const startPoint = getElCenter(fromId, 'right');
+                if (!startPoint || !endPoint) return;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const midX = startPoint.x + (endPoint.x - startPoint.x) / 2;
+
+                let d;
+                if(conn.thirdPlace) {
+                    // Custom logic for the 3rd place match connector
+                    const yOffset = (index === 0) ? -50 : 50; // Move line away from sf connector
+                     d = `M ${startPoint.x},${startPoint.y} L ${midX},${startPoint.y} L ${midX},${endPoint.y + yOffset} L ${endPoint.x},${endPoint.y + yOffset}`;
+                     // This is a simplified logic, real third place matches might need more complex routing
+                } else {
+                     d = `M ${startPoint.x},${startPoint.y} L ${midX},${startPoint.y} L ${midX},${endPoint.y} L ${endPoint.x},${endPoint.y}`;
+                }
+
+                path.setAttribute('d', d);
+                path.classList.add('bracket-connector-path');
+                svg.appendChild(path);
+            });
+        });
+
+        container.prepend(svg);
+    }
+
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
     const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
+
+    function initCardGradients({
+      blobsPerCard = 3,
+      sizeMin = 400,
+      sizeMax = 1000,
+      blurPx = 80,
+      opacity = 0.10,
+      colors = [
+        ['#C9CBA3', '#FFE1A8'],
+        ['#E26D5C', '#723D46'],
+        ['#472D30', '#E26D5C'],
+        ['#FFE1A8', '#E26D5C']
+      ]
+    } = {}) {
+      document.querySelectorAll('.content-box').forEach(card => {
+        let bgContainer = card.querySelector('.card-bg-container');
+        if (bgContainer) bgContainer.remove(); // Clear old gradients
+
+        bgContainer = document.createElement('div');
+        bgContainer.className = 'card-bg-container';
+        card.prepend(bgContainer);
+
+        const bg = document.createElement('div');
+        bg.className = 'card-bg';
+
+        for (let i = 0; i < blobsPerCard; i++) {
+          const shape = document.createElement('div');
+          const size = Math.random() * (sizeMax - sizeMin) + sizeMin;
+          const [c1, c2] = colors[Math.floor(Math.random() * colors.length)];
+
+          Object.assign(shape.style, {
+            position: 'absolute',
+            width: `${size}px`,
+            height: `${size}px`,
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: `${Math.random() * 100}% ${Math.random() * 100}%`,
+            background: `radial-gradient(ellipse at center, ${c1} 0%, ${c2} 100%)`,
+            filter: `blur(${blurPx}px)`,
+            opacity: String(opacity)
+          });
+
+          bg.appendChild(shape);
+        }
+        bgContainer.appendChild(bg);
+      });
+    }
 
     function applyDecorations() {
         const bgElement = document.querySelector('#canvas .background');
@@ -318,6 +422,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- CANVAS SCALING ---
+    function scaleCanvas() {
+        const wrapper = document.getElementById('canvas-wrapper');
+        const canvas = document.getElementById('canvas');
+        if (!wrapper || !canvas) return;
+
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+
+        const canvasWidth = 1920;
+        const canvasHeight = 1080;
+
+        const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
+
+        canvas.style.transform = `scale(${scale})`;
+    }
+
+
     // --- INITIALIZATION ---
     function init() {
         loadState();
@@ -325,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toolbar & Modals
         saveBtn.addEventListener('click', saveState);
         addPlayerBtn.addEventListener('click', handleAddPlayer);
+        document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
         playerListEl.addEventListener('click', handlePlayerBankClick);
         document.getElementById('save-player-changes-btn').addEventListener('click', handleSaveChanges);
         document.getElementById('cancel-player-edit-btn').addEventListener('click', closeEditModal);
@@ -340,10 +463,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Canvas
         canvas.addEventListener('click', handleCanvasClick);
         canvas.addEventListener('focusout', handleCanvasBlur);
+        window.addEventListener('resize', scaleCanvas);
+
 
         console.log('Application initialized.');
         document.querySelector(`input[name="mode"][value="${state.viewMode}"]`).checked = true;
         render();
+        scaleCanvas(); // Initial scale
+        applyDecorations(); // Initial decorations
 
         setInterval(() => { if (state.isDirty) saveState(); }, 30000);
     }

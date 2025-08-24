@@ -26,8 +26,23 @@ body {
 #player-bank { width: 300px; background-color: #1a1a1a; padding: 20px; border-right: 2px solid var(--accent-color); display: flex; flex-direction: column; }
 #main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
-#canvas-wrapper { width: 95%; max-width: 1400px; aspect-ratio: 16 / 9; border: 1px solid var(--primary-color); position: relative; overflow: hidden; }
-#canvas { width: 1920px; height: 1080px; transform-origin: top left; position: relative; }
+#canvas-wrapper {
+    width: 95%;
+    max-width: 1400px;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--primary-color);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#canvas {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: center;
+    position: relative;
+}
 
 /* --- SAVE BUTTON --- */
 #save-btn.saved {
@@ -65,10 +80,54 @@ body {
 #canvas .content-area { z-index: 5; }
 
 /* --- GROUPS VIEW --- */
-.groups-view { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; gap: 20px; padding: 40px; box-sizing: border-box; }
-.group-column { background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; width: 350px; }
+.groups-view {
+    display: grid;
+    grid-template-columns: repeat(2, 370px);
+    grid-template-rows: repeat(2, auto);
+    gap: 60px 180px;
+    justify-content: center;
+    align-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Базовая карточка */
+.content-box {
+  background-color: var(--content-box-bg); /* полупрозрачный темный */
+  border: 1px solid rgba(255, 210, 125, 0.4); /* тонкая золотистая рамка */
+  padding: 25px 35px;
+  border-radius: 6px;
+  position: relative; /* важно для фонового слоя */
+  z-index: 1;
+}
+
+/* Слои для градиентных пятен */
+.card-bg-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  z-index: -1; /* уходит под контент карточки */
+}
+.card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
 .group-title { font-family: var(--font-display); color: var(--primary-color); text-align: center; font-size: 2.5rem; margin: 10px 0; }
-.logo-column { width: 400px; text-align: center; }
+.logo-column {
+    width: 400px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+}
 .logo-column img { max-width: 100%; }
 .groups-view .player-slot { display: flex; align-items: center; padding: 8px; margin: 4px 0; background: #333; border-radius: 5px; cursor: pointer; }
 .groups-view .player-slot:hover { background: #444; }
@@ -85,7 +144,22 @@ body {
 .bracket-view .player-slot .flag { width: 30px; height: 22px; margin-right: 10px; object-fit: cover; }
 .bracket-view .player-slot .name { flex-grow: 1; font-family: var(--font-title); }
 .bracket-view .player-slot .score { font-size: 1.5rem; font-weight: bold; width: 40px; text-align: center; cursor: text; }
-.connector { position: absolute; border-color: var(--primary-color); border-style: solid; }
+
+.bracket-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Make sure it doesn't block clicks on matches */
+    z-index: 0;
+}
+
+.bracket-connector-path {
+    stroke: var(--primary-color);
+    stroke-width: 4px;
+    fill: none;
+}
 
 #player-assign-modal { position: absolute; z-index: 100; background: #222; border: 1px solid var(--primary-color); }
 #player-assign-modal div { padding: 8px; cursor: pointer; }
