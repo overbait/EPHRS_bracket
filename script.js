@@ -228,41 +228,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        // Centered and more compact layout
-        const qf_left = 150;
-        const sf_left = 570;
-        const f_left = 990;
-        const tp_left = 1410; // 3rd place
+        const { w: CW } = getCanvasBaseSize();
+
+        // Columns as fractions of the canvas width
+        const col = {
+            qf: CW * 0.08,  // ~150px on a 1910px canvas
+            sf: CW * 0.30,  // ~570px
+            f:  CW * 0.52,  // ~990px
+            tp: CW * 0.74   // ~1410px
+        };
+
+        const matchHeight = 120; // A base height for vertical spacing calculations
+        const verticalGap = 40; // Gap between matches
+
+        // Vertical positions
+        const qf1_top = 200;
+        const qf2_top = qf1_top + matchHeight + verticalGap;
+        const sf1_top = (qf1_top + qf2_top) / 2;
+
+        const qf3_top = 600;
+        const qf4_top = qf3_top + matchHeight + verticalGap;
+        const sf2_top = (qf3_top + qf4_top) / 2;
+
+        const final_top = (sf1_top + sf2_top) / 2;
+        const tp_top = qf4_top + matchHeight - 20;
 
         container.innerHTML = `
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-
                 <!-- Titles -->
-                <div class="round-title" style="top: 150px; left: ${qf_left + 70}px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 265px; left: ${sf_left + 70}px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 425px; left: ${f_left + 70}px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
-                <div class="round-title" style="top: 755px; left: ${tp_left + 70}px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="round-title" style="top: ${qf1_top - 60}px; left: ${col.qf + 60}px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: ${sf1_top - 60}px; left: ${col.sf + 60}px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: ${final_top - 60}px; left: ${col.f + 60}px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: ${tp_top - 60}px; left: ${col.tp + 60}px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
 
                 <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 200px; left: ${qf_left}px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 330px; left: ${qf_left}px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 640px; left: ${qf_left}px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 770px; left: ${qf_left}px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: ${qf1_top}px; left: ${col.qf}px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: ${qf2_top}px; left: ${col.qf}px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: ${qf3_top}px; left: ${col.qf}px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: ${qf4_top}px; left: ${col.qf}px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 315px; left: ${sf_left}px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 705px; left: ${sf_left}px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: ${sf1_top}px; left: ${col.sf}px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: ${sf2_top}px; left: ${col.sf}px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 510px; left: ${f_left}px;" data-match-id="final"></div>
+                <div class="match-box" style="top: ${final_top}px; left: ${col.f}px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="match-box" style="top: 810px; left: ${tp_left}px;" data-match-id="third-place"></div>
+                <div class="match-box" style="top: ${tp_top}px; left: ${col.tp}px;" data-match-id="third-place"></div>
+
+                <svg class="bracket-svg"></svg>
             </div>`;
+
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
+
         setTimeout(() => {
-            drawBracketConnectors(container.querySelector('.bracket-view'));
+            const view = container.querySelector('.bracket-view');
+            if (view) drawBracketConnectors(view);
         }, 0);
     }
 
@@ -381,13 +404,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-            // Use smooth, curved lines for a more modern look
-            const offset = 90; // Controls the curve of the connector
+            // Use straight angled lines as requested
+            const offset = 60; // The length of the horizontal part of the connector
             const p2x = startPoint.x + offset;
             const p3x = endPoint.x - offset;
 
-            // M = Move to, C = Cubic Bezier Curve
-            const d = `M ${startPoint.x} ${startPoint.y} C ${p2x} ${startPoint.y}, ${p3x} ${endPoint.y}, ${endPoint.x} ${endPoint.y}`;
+            const d = `M ${startPoint.x} ${startPoint.y} H ${p2x} L ${p3x} ${endPoint.y} H ${endPoint.x}`;
 
             path.setAttribute('d', d);
             path.classList.add('bracket-connector-path');
@@ -397,16 +419,21 @@ document.addEventListener('DOMContentLoaded', () => {
         container.prepend(svg);
     }
 
+    function redrawConnectorsIfBracket(){
+      const view = document.querySelector('.bracket-view');
+      if (view) drawBracketConnectors(view);
+    }
+
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
     const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
 
     function initCardGradients({
       blobsPerCard = 3,
-      sizeMin = 600,      // Increased for larger blobs
-      sizeMax = 1200,     // Increased for larger blobs
-      blurPx = 90,        // Increased for softer edges
-      opacity = 0.08,     // Decreased for more subtlety
+      sizeMin = 400,
+      sizeMax = 1000,
+      blurPx = 80,
+      opacity = 0.10,
       colors = [
         ['#C9CBA3', '#FFE1A8'],
         ['#E26D5C', '#723D46'],
@@ -544,20 +571,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CANVAS SCALING ---
+    function getCanvasBaseSize(){
+      const styles = getComputedStyle(document.documentElement);
+      const w = parseInt(styles.getPropertyValue('--canvas-w'), 10) || 1920;
+      const h = parseInt(styles.getPropertyValue('--canvas-h'), 10) || 1080;
+      return { w, h };
+    }
+
     function scaleCanvas() {
-        const wrapper = document.getElementById('canvas-wrapper');
-        const canvas = document.getElementById('canvas');
-        if (!wrapper || !canvas) return;
+      const wrapper = document.getElementById('canvas-wrapper');
+      const canvas = document.getElementById('canvas');
+      if (!wrapper || !canvas) return;
 
-        const wrapperWidth = wrapper.clientWidth;
-        const wrapperHeight = wrapper.clientHeight;
+      const { w: CW, h: CH } = getCanvasBaseSize();
+      const ww = wrapper.clientWidth;
+      const wh = wrapper.clientHeight;
 
-        const canvasWidth = 1920;
-        const canvasHeight = 1080;
-
-        const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
-
-        canvas.style.transform = `scale(${scale})`;
+      const scale = Math.min(ww / CW, wh / CH);
+      canvas.style.transform = `scale(${scale})`;
     }
 
 
@@ -622,7 +653,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Canvas
         canvas.addEventListener('click', handleCanvasClick);
         canvas.addEventListener('focusout', handleCanvasBlur);
-        window.addEventListener('resize', scaleCanvas);
+
+        window.addEventListener('resize', () => {
+          scaleCanvas();
+          redrawConnectorsIfBracket();
+        });
+
+        window.addEventListener('load', () => {
+          scaleCanvas();
+          redrawConnectorsIfBracket();
+        });
 
         document.getElementById('main-title').addEventListener('focusout', (e) => {
             const newTitle = e.target.textContent;

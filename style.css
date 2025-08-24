@@ -1,5 +1,7 @@
 /* --- ROOT VARIABLES & FONT DEFINITIONS --- */
 :root {
+    --canvas-w: 1910;
+    --canvas-h: 1080;
     --primary-color: #ffd27d;
     --accent-color: #e06636;
     --content-box-bg: rgba(44, 28, 17, .8);
@@ -29,7 +31,7 @@ body {
 #canvas-wrapper {
     width: 95%;
     max-width: 1400px;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: calc(var(--canvas-w) / var(--canvas-h));
     border: 1px solid var(--primary-color);
     position: relative;
     overflow: hidden;
@@ -39,12 +41,12 @@ body {
     box-sizing: border-box;
 }
 #canvas {
-    width: 1920px;
-    height: 1080px;
+    width: calc(var(--canvas-w) * 1px);
+    height: calc(var(--canvas-h) * 1px);
     transform-origin: center;
     position: relative;
     box-sizing: border-box;
-    overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    overflow: hidden;
 }
 
 /* --- SAVE BUTTON --- */
@@ -108,7 +110,6 @@ body {
     z-index: 1;
     background-size: cover;
     background-position: center;
-    transform: scale(1.05); /* Slightly enlarge the background to fill edges */
 }
 #decorations-container { z-index: 2; }
 #canvas .overlay { z-index: 3; }
@@ -207,10 +208,9 @@ body {
 
 .bracket-logo {
     position: absolute;
-    top: 50px; /* Centered and moved up */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300px; /* Slightly smaller to fit */
+    top: 40px;
+    right: 60px;
+    width: 350px;
     z-index: 1;
 }
 
@@ -229,8 +229,8 @@ body {
 
 .match-box {
     position: absolute;
-    width: 360px; /* Made boxes narrower for a more compact layout */
-    height: 110px; /* A bit shorter */
+    width: 400px;
+    height: 120px;
     background-color: var(--content-box-bg);
     border: 1px solid var(--primary-color);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
@@ -263,7 +263,7 @@ body {
     font-size: 1.4rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px; /* More padding to push it right */
+    padding-left: 20px; /* More padding to push it right */
     position: relative;
     z-index: 1;
 }
@@ -363,8 +363,8 @@ body {
     height: 100%;
 }
 .groups-view .player-slot .flag-background::after {
-    /* Smoother gradient that fades to the background color */
-    background: linear-gradient(to right, var(--content-box-bg) 30%, transparent 80%);
+    /* Sharper gradient that starts fully opaque */
+    background: linear-gradient(to right, rgba(44,28,17,1) 40%, transparent 75%);
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
@@ -389,6 +389,6 @@ body {
     bottom: 0;
 }
 .match-box .flag-background::after {
-    /* Gradient fades from transparent on left to opaque on right */
-    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 80%);
+    /* Gradient fades from opaque on left to transparent on right */
+    background: linear-gradient(to right, rgba(44,28,17,0.8) 20%, transparent 95%);
 }
