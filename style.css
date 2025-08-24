@@ -37,6 +37,9 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    /* Background styles moved here */
+    background-size: cover;
+    background-position: center;
 }
 #canvas {
     width: 1920px;
@@ -105,10 +108,9 @@ body {
 /* --- CANVAS LAYERS --- */
 #canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 #canvas .background {
+    /* This element is no longer used for the main background */
+    display: none;
     z-index: 1;
-    background-size: cover;
-    background-position: center;
-    /* transform: scale(1.05); */ /* Removed to align background with border */
 }
 #decorations-container { z-index: 2; }
 #canvas .overlay { z-index: 3; }
@@ -406,7 +408,6 @@ body {
     position: absolute;
     z-index: 0; /* Behind text content */
     background-size: cover;
-    background-position: center;
     background-image: var(--flag-image); /* Set via JS */
     pointer-events: none;
 }
@@ -414,18 +415,18 @@ body {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    /* Stronger gradient to make flag edge disappear */
-    background: linear-gradient(to right, transparent 30%, var(--content-box-bg) 95%);
+    /* More aggressive gradient to ensure flag edge is transparent */
+    background: linear-gradient(to right, transparent 25%, var(--content-box-bg) 70%);
 }
 
 /* For Groups View */
 .groups-view .player-slot .flag-background {
     top: 0;
-    left: 15px; /* Shifted right to prevent cutoff */
-    width: 35%;
+    left: 0; /* Align to the very edge of the parent slot */
+    width: 30%;
     height: 100%;
     background-size: cover;
-    background-position: center;
+    background-position: left center; /* Align image to the left */
     opacity: 0.5;
 }
 .groups-view .player-slot .avatar,
@@ -443,6 +444,7 @@ body {
     width: 50%; /* Smaller, sits behind the player name */
     height: 50%;
     left: 0;
+    background-position: left center; /* Align image to the left */
 }
 .match-box .p1-flag-bg {
     top: 0;
@@ -452,6 +454,6 @@ body {
 }
 .match-box .flag-background::after {
     /* Gradient fades from transparent on left to opaque on right */
-    /* Stronger gradient for smoother fade-out */
-    background: linear-gradient(to right, transparent 15%, var(--content-box-bg) 75%);
+    /* More aggressive gradient to ensure flag edge is transparent */
+    background: linear-gradient(to right, transparent 10%, var(--content-box-bg) 50%);
 }
