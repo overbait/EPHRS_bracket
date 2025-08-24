@@ -53,7 +53,7 @@ body {
 
 /* --- MODAL STYLES --- */
 .modal-hidden { display: none !important; }
-.modal-content { width: 400px; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid var(--primary-color); }
+.modal-content { background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid var(--primary-color); }
 #player-edit-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 101; }
 #player-edit-modal input[type="text"], #player-edit-modal input[type="file"] { width: 95%; padding: 8px; margin: 10px 0; }
 #edit-current-flag {
@@ -103,7 +103,7 @@ body {
 #canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 #canvas .background {
     z-index: 1;
-    background-size: 100% 100%; /* Stretch to fill canvas exactly */
+    background-size: cover;
     background-position: center;
 }
 #decorations-container { z-index: 2; }
@@ -116,7 +116,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 370px);
     grid-template-rows: repeat(2, auto);
-    gap: 80px 350px;
+    gap: 80px 450px; /* Increased horizontal gap */
     justify-content: center;
     align-content: center;
     width: 100%;
@@ -177,12 +177,7 @@ body {
     border-color: rgba(255, 210, 125, 0.5);
 }
 .groups-view .player-slot .avatar { width: 40px; height: 40px; border-radius: 50%; background: #555; margin-right: 15px; object-fit: cover; }
-.groups-view .player-slot .name {
-    flex-grow: 1;
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    color: var(--primary-color);
-}
+.groups-view .player-slot .name { flex-grow: 1; }
 .groups-view .player-slot .flag { width: 30px; object-fit: cover; }
 
 /* --- BRACKET VIEW --- */
@@ -206,10 +201,9 @@ body {
     border: 1px solid rgba(255, 210, 125, 0.4);
     padding: 10px 25px;
     border-radius: 6px;
-    white-space: nowrap;
 }
 
-.match-box { position: absolute; width: 360px; height: 110px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 15px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 25px; box-sizing: border-box; }
+.match-box { position: absolute; width: 320px; height: 90px; background-color: var(--content-box-bg); border: 1px solid var(--primary-color); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 15px 50%); display: flex; flex-direction: column; justify-content: space-around; padding: 8px 8px 8px 25px; box-sizing: border-box; }
 .bracket-view .player-slot { display: flex; align-items: center; height: 45%; cursor: pointer; }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
@@ -219,12 +213,7 @@ body {
     background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
 }
 .bracket-view .player-slot .flag { width: 30px; height: 22px; margin-right: 10px; object-fit: cover; }
-.bracket-view .player-slot .name {
-    flex-grow: 1;
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    color: var(--primary-color);
-}
+.bracket-view .player-slot .name { flex-grow: 1; font-family: var(--font-title); }
 .bracket-view .player-slot .score {
     font-size: 2rem; /* Increased size for the new font */
     font-family: var(--font-display);
@@ -263,7 +252,7 @@ body {
     right: 0;
     height: 150px; /* Adjust as needed */
     background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-    z-index: 10;
+    z-index: 4; /* Lowered to be below content-area but above decorations */
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -272,6 +261,14 @@ body {
 
 #bottom-branding img {
     height: 50px; /* Adjust as needed */
+}
+
+.hosted-by-text {
+    color: white;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    margin-right: 15px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 #main-title {

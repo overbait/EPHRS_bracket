@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         state.players.push(newPlayer);
         markDirty();
-        render(); // Rerender everything to update all views
+        renderPlayerBank();
     }
 
     function handleDeletePlayer(id) { /* ... implementation ... */ }
@@ -147,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!editingPlayer) return;
         editingPlayer.name = document.getElementById('edit-player-name').value;
         markDirty();
-        render(); // Rerender everything to update all views
+        renderPlayerBank();
+        // render(); // Will be needed later
         closeEditModal();
     }
 
@@ -166,10 +167,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (state.assignments[slotId] === playerId) delete state.assignments[slotId];
                 });
                 markDirty();
-                render(); // Rerender everything to update all views
+                renderPlayerBank();
+                // render(); // Will be needed later
             }
         }
     }
+
+    const bracketProgression = {
+        'qf1': { winnerTo: 'sf1-p1' },
+        'qf2': { winnerTo: 'sf1-p2' },
+        'qf3': { winnerTo: 'sf2-p1' },
+        'qf4': { winnerTo: 'sf2-p2' },
+        'sf1': { winnerTo: 'final-p1', loserTo: 'third-place-p1' },
+        'sf2': { winnerTo: 'final-p2', loserTo: 'third-place-p2' },
+    };
 
     // --- CANVAS & RENDERING ---
     const canvas = document.getElementById('canvas');
@@ -220,26 +231,26 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = `
             <div class="bracket-view">
                 <img src="Media/Logo_main-min.png" class="bracket-logo" alt="Logo">
-                <div class="round-title" style="top: 80px; left: 190px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 750px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
-                <div class="round-title" style="top: 80px; left: 1310px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
+                <div class="round-title" style="top: 80px; left: 230px;" data-title-id="qf-title" contenteditable="true">${state.titles['qf-title'] || 'QUARTERFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 700px;" data-title-id="sf-title" contenteditable="true">${state.titles['sf-title'] || 'SEMIFINALS'}</div>
+                <div class="round-title" style="top: 80px; left: 1170px;" data-title-id="f-title" contenteditable="true">${state.titles['f-title'] || 'GRAND FINAL'}</div>
 
                 <!-- QUARTERFINALS -->
-                <div class="match-box" style="top: 160px; left: 150px;" data-match-id="qf1"></div>
-                <div class="match-box" style="top: 350px; left: 150px;" data-match-id="qf2"></div>
-                <div class="match-box" style="top: 610px; left: 150px;" data-match-id="qf3"></div>
-                <div class="match-box" style="top: 800px; left: 150px;" data-match-id="qf4"></div>
+                <div class="match-box" style="top: 150px; left: 200px;" data-match-id="qf1"></div>
+                <div class="match-box" style="top: 320px; left: 200px;" data-match-id="qf2"></div>
+                <div class="match-box" style="top: 560px; left: 200px;" data-match-id="qf3"></div>
+                <div class="match-box" style="top: 730px; left: 200px;" data-match-id="qf4"></div>
 
                 <!-- SEMIFINALS -->
-                <div class="match-box" style="top: 255px; left: 710px;" data-match-id="sf1"></div>
-                <div class="match-box" style="top: 705px; left: 710px;" data-match-id="sf2"></div>
+                <div class="match-box" style="top: 235px; left: 670px;" data-match-id="sf1"></div>
+                <div class="match-box" style="top: 645px; left: 670px;" data-match-id="sf2"></div>
 
                 <!-- FINAL -->
-                <div class="match-box" style="top: 480px; left: 1270px;" data-match-id="final"></div>
+                <div class="match-box" style="top: 440px; left: 1140px;" data-match-id="final"></div>
 
                 <!-- 3RD PLACE -->
-                <div class="round-title" style="top: 850px; left: 1305px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
-                <div class="match-box" style="top: 930px; left: 1270px;" data-match-id="third-place"></div>
+                <div class="round-title" style="top: 750px; left: 1170px;" data-title-id="3p-title" contenteditable="true">${state.titles['3p-title'] || '3RD PLACE'}</div>
+                <div class="match-box" style="top: 830px; left: 1140px;" data-match-id="third-place"></div>
             </div>`;
         document.querySelectorAll('.match-box').forEach(box => populateMatchBox(box));
         drawBracketConnectors(container.querySelector('.bracket-view'));
@@ -283,6 +294,46 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
     }
 
+    function updateBracketProgression(matchId) {
+        const progression = bracketProgression[matchId];
+        if (!progression) return; // Not a match that progresses
+
+        const p1_slot_id = `${matchId}-p1`;
+        const p2_slot_id = `${matchId}-p2`;
+
+        const score1 = parseInt(state.scores[p1_slot_id], 10) || 0;
+        const score2 = parseInt(state.scores[p2_slot_id], 10) || 0;
+
+        if (score1 === score2) return; // No winner yet, or a tie
+
+        const winner_slot_id = score1 > score2 ? p1_slot_id : p2_slot_id;
+        const loser_slot_id = score1 > score2 ? p2_slot_id : p1_slot_id;
+
+        const winner_player_id = state.assignments[winner_slot_id];
+        const loser_player_id = state.assignments[loser_slot_id];
+
+        // Use a temp object to avoid modifying state before all checks
+        const newAssignments = {};
+
+        if (progression.winnerTo) {
+            // If a player is already in the destination slot, don't overwrite.
+            // This allows for manual overrides.
+            // However, for this feature, we probably DO want to overwrite.
+            // Let's assume we overwrite.
+            newAssignments[progression.winnerTo] = winner_player_id;
+        }
+
+        if (progression.loserTo) {
+            newAssignments[progression.loserTo] = loser_player_id;
+        }
+
+        // Apply changes if any were determined
+        if (Object.keys(newAssignments).length > 0) {
+            Object.assign(state.assignments, newAssignments);
+            markDirty();
+        }
+    }
+
     function drawBracketConnectors(container) {
         const oldSvg = container.querySelector('.bracket-svg');
         if (oldSvg) oldSvg.remove();
@@ -307,19 +358,17 @@ document.addEventListener('DOMContentLoaded', () => {
         function getPortPoint(matchId, port) {
             const el = container.querySelector(`[data-match-id="${matchId}"]`);
             if (!el) return null;
+            const rect = el.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
 
-            // Using offset properties for coordinates relative to the container,
-            // which are not affected by CSS transforms/scaling.
-            const relTop = el.offsetTop;
-            const relLeft = el.offsetLeft;
-            const relWidth = el.offsetWidth;
-            const relHeight = el.offsetHeight;
+            const relTop = rect.top - containerRect.top;
+            const relLeft = rect.left - containerRect.left;
 
             switch(port) {
-                case 'right': return { x: relLeft + relWidth, y: relTop + relHeight / 2 };
-                case 'left-top': return { x: relLeft, y: relTop + relHeight * 0.25 };
-                case 'left-bottom': return { x: relLeft, y: relTop + relHeight * 0.75 };
-                default: return { x: relLeft, y: relTop + relHeight / 2 }; // 'left'
+                case 'right': return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
+                case 'left-top': return { x: relLeft, y: relTop + rect.height * 0.25 };
+                case 'left-bottom': return { x: relLeft, y: relTop + rect.height * 0.75 };
+                default: return { x: relLeft, y: relTop + rect.height / 2 }; // 'left'
             }
         }
 
@@ -453,7 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerSlot = e.target.closest('.player-slot');
         if (playerSlot) {
             activeSlotId = playerSlot.dataset.slotId;
-            const availablePlayers = state.players.filter(p => !Object.values(state.assignments).includes(p.id) || state.assignments[activeSlotId] === p.id);
+            // Show all players to allow assigning the same player to multiple slots.
+            const availablePlayers = state.players;
             let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
             optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
             playerAssignModal.innerHTML = optionsHtml;
@@ -480,8 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleCanvasBlur(e) {
         const scoreEl = e.target.closest('.score');
         if (scoreEl) {
-            state.scores[scoreEl.dataset.scoreId] = scoreEl.textContent;
+            const slotId = scoreEl.dataset.scoreId;
+            state.scores[slotId] = scoreEl.textContent;
+
+            const matchId = slotId.substring(0, slotId.lastIndexOf('-'));
+            updateBracketProgression(matchId);
+
             markDirty();
+            render(); // Re-render to show winner/loser highlighting and trigger progression
         }
         const titleEl = e.target.closest('.round-title');
         if (titleEl) {
