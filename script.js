@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const assignedPlayerId = state.assignments[slotId];
                 const player = state.players.find(p => p.id === assignedPlayerId) || { name: '...', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
                 group += `
-                    <div class="player-slot" data-slot-id="${slotId}" style="--flag-image: url('${player.flag}')">
+                    <div class="player-slot" data-slot-id="${slotId}">
+                        <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
                         <img src="${player.avatar}" class="avatar">
                         <span class="name">${player.name}</span>
                     </div>`;
@@ -285,11 +286,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         box.innerHTML = `
-            <div class="${p1_class}" data-slot-id="${p1_slot_id}" style="--flag-image: url('${player1.flag}')">
+            <!-- Flag backgrounds are now direct children of match-box for correct clipping -->
+            <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1.flag}')"></div>
+            <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2.flag}')"></div>
+
+            <div class="${p1_class}" data-slot-id="${p1_slot_id}">
                 <span class="name">${player1.name}</span>
                 <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${state.scores[p1_slot_id] || 0}</span>
             </div>
-            <div class="${p2_class}" data-slot-id="${p2_slot_id}" style="--flag-image: url('${player2.flag}')">
+            <div class="${p2_class}" data-slot-id="${p2_slot_id}">
                 <span class="name">${player2.name}</span>
                 <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${state.scores[p2_slot_id] || 0}</span>
             </div>`;
@@ -370,14 +375,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-            // Use cubic Bezier curves for smooth connectors
-            const handleOffset = 100; // Controls the "S" shape of the curve
-            const cp1x = startPoint.x + handleOffset;
-            const cp1y = startPoint.y;
-            const cp2x = endPoint.x - handleOffset;
-            const cp2y = endPoint.y;
+            // Use straight angled lines as requested
+            const offset = 60; // The length of the horizontal part of the connector
+            const p2x = startPoint.x + offset;
+            const p3x = endPoint.x - offset;
 
-            const d = `M ${startPoint.x} ${startPoint.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endPoint.x} ${endPoint.y}`;
+            const d = `M ${startPoint.x} ${startPoint.y} H ${p2x} L ${p3x} ${endPoint.y} H ${endPoint.x}`;
 
             path.setAttribute('d', d);
             path.classList.add('bracket-connector-path');
@@ -440,15 +443,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyDecorations() {
-        // Apply the main background to the body for a full-screen effect
+        const bgElement = document.querySelector('#canvas .background');
+        if (!bgElement) return;
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
-        document.body.style.backgroundImage = `url('${randomBg}')`;
-
-        // Clear the old background element just in case
-        const oldBgElement = document.querySelector('#canvas .background');
-        if (oldBgElement) {
-            oldBgElement.style.backgroundImage = 'none';
-        }
+        bgElement.style.backgroundImage = `url('${randomBg}')`;
 
         const decorationsContainer = document.getElementById('decorations-container');
         decorationsContainer.innerHTML = '';

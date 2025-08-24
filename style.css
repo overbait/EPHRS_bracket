@@ -21,10 +21,6 @@ body {
     color: var(--text-color);
     font-family: var(--font-main);
     margin: 0;
-    /* Styles for the full-screen background image */
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; /* Prevents the background from scrolling */
 }
 #app-container { display: flex; height: 100vh; }
 #player-bank { width: 300px; background-color: #1a1a1a; padding: 20px; border-right: 2px solid var(--accent-color); display: flex; flex-direction: column; }
@@ -108,7 +104,7 @@ body {
 .btn-primary { font-family: var(--font-title); background-color: var(--primary-color); color: var(--dark-bg); border: none; padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
 
 /* --- CANVAS LAYERS --- */
-#canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+#canvas .background, #canvas .overlay, #canvas .edge-vignette, #decorations-container, #canvas .content-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 #canvas .background {
     z-index: 1;
     background-size: cover;
@@ -183,15 +179,11 @@ body {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     position: relative;
-    background-size: cover, auto;
-    background-position: center, 0 0;
-    background-repeat: no-repeat;
-    /* Gradient on top of the --flag-image variable */
-    background-image: linear-gradient(to right, rgba(44,28,17,1) 5%, rgba(44,28,17,0.7) 25%, transparent 50%), var(--flag-image);
+    background: rgba(0,0,0,0.2);
 }
 .groups-view .player-slot:hover {
     border-color: rgba(255, 210, 125, 0.5);
-    transform: scale(1.02);
+    background: rgba(0,0,0,0.4);
 }
 .groups-view .player-slot .avatar {
     width: 45px; /* Slightly smaller to fit new height */
@@ -241,36 +233,14 @@ body {
     height: 45%;
     cursor: pointer;
     position: relative;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    /* R-T-L Gradient on top of the --flag-image variable. Note the base background is transparent. */
-    background-image: linear-gradient(to left, rgba(44,28,17,1) 5%, rgba(44,28,17,0.7) 25%, transparent 50%), var(--flag-image);
     transition: all 0.2s ease-in-out;
 }
-.bracket-view .player-slot:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 15px rgba(255, 210, 125, 0.3);
-}
+.bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
-    /* Use a pseudo-element for the glow so it doesn't conflict with the background image */
-}
-.bracket-view .player-slot.winner::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0; bottom: 0; left: 0;
     background: radial-gradient(circle at 90% 50%, rgba(60, 179, 113, 0.3) 0%, rgba(60, 179, 113, 0) 60%);
-    pointer-events: none;
 }
 .bracket-view .player-slot.loser {
-    /* Use a pseudo-element for the glow so it doesn't conflict with the background image */
-}
-.bracket-view .player-slot.loser::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0; bottom: 0; left: 0;
     background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
-    pointer-events: none;
 }
 .bracket-view .player-slot .name {
     flex-grow: 1;
@@ -316,7 +286,7 @@ body {
     position: absolute;
     bottom: 0;
     left: 0;
-    right: 0;
+    width: 100%; /* Explicitly set width */
     height: 150px; /* Adjust as needed */
     background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
     z-index: 4; /* Lowered to be below content-area but above decorations */
@@ -350,4 +320,56 @@ body {
     z-index: 10;
     margin: 0;
     padding: 0 20px;
+}
+
+/* --- FLAG BACKGROUND STYLES --- */
+.flag-background {
+    position: absolute;
+    z-index: 0; /* Behind text content */
+    background-size: cover;
+    background-position: center;
+    background-image: var(--flag-image); /* Set via JS */
+    pointer-events: none;
+}
+.flag-background::after { /* Pseudo-element for the gradient overlay */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+}
+
+/* For Groups View */
+.groups-view .player-slot .flag-background {
+    top: 0;
+    left: 0;
+    width: 60%;
+    height: 100%;
+}
+.groups-view .player-slot .flag-background::after {
+    background: linear-gradient(to right, transparent 60%, var(--content-box-bg));
+}
+.groups-view .player-slot .avatar,
+.groups-view .player-slot .name {
+    z-index: 1; /* Ensure avatar and name are on top of the flag background */
+}
+
+
+/* For Brackets View */
+.match-box {
+    position: relative; /* Ensure it's a positioning context for the flags */
+    overflow: hidden; /* This will clip the flag backgrounds */
+}
+.match-box .flag-background {
+    width: 55%;
+    height: 49%; /* Less than 50% to avoid overlap/bleed */
+    right: 0;
+}
+.match-box .p1-flag-bg {
+    top: 0;
+}
+.match-box .p2-flag-bg {
+    bottom: 0;
+}
+.match-box .flag-background::after {
+     background: linear-gradient(to left, transparent 40%, var(--content-box-bg));
 }
