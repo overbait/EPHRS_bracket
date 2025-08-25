@@ -39,7 +39,7 @@ body {
     box-sizing: border-box;
 }
 #canvas {
-    width: 1840px; /* Cropped width to align with branding */
+    width: 100%;
     height: 1080px;
     transform-origin: center;
     position: relative;
@@ -118,7 +118,7 @@ body {
 /* --- GROUPS VIEW --- */
 .groups-view {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     width: 100%;
     height: 100%;
@@ -209,7 +209,7 @@ body {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 50px 100px;
+    padding: 50px 40px; /* Reduced horizontal padding */
     box-sizing: border-box;
 }
 
@@ -263,6 +263,17 @@ body {
     color: var(--accent-color);
     font-weight: bold;
 }
+
+.round-header .date:not(:empty),
+.round-header .best-of:not(:empty),
+.round-header .time:not(:empty) {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
 .third-header {
     margin-top: 40px; /* Reduced margin */
 }
@@ -270,7 +281,7 @@ body {
     max-width: 250px;
     width: 60%;
     height: auto;
-    align-self: center;
+    align-self: flex-end; /* Was center */
     margin-bottom: 20px;
 }
 .bracket-logo {
@@ -369,9 +380,9 @@ body {
     background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
     z-index: 4;
     display: flex;
-    justify-content: flex-start; /* Aligned to the left */
+    justify-content: center; /* Centered content */
     align-items: flex-end;
-    padding: 0 0 20px 40px; /* Add left padding */
+    padding: 0 0 20px 0; /* Removed left padding */
     box-sizing: border-box;
 }
 
@@ -414,7 +425,8 @@ body {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+    /* Smoother gradient that starts fading earlier and blends into the card background */
+    background: linear-gradient(to right, transparent 30%, var(--content-box-bg) 90%);
 }
 
 /* For Groups View */
@@ -451,5 +463,5 @@ body {
 }
 .match-box .flag-background::after {
     /* Gradient fades from transparent on left to opaque on right */
-    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 80%);
+    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 95%);
 }
