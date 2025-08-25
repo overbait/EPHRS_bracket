@@ -129,9 +129,7 @@ body {
 
 /* --- GROUPS VIEW --- */
 .groups-view {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: block;
     width: 100%;
     height: 100%;
     padding: 50px 0; /* Removed horizontal padding to maximize space */
@@ -170,6 +168,18 @@ body {
     justify-content: center;
     gap: 40px;
     width: 420px; /* Width of a single group box */
+}
+.group-column.left {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.group-column.right {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
 }
 .logo-column-main {
     position: absolute;
@@ -246,7 +256,6 @@ body {
 .bracket-final-group {
     right: -5%;
     top: 60px; /* Position from top */
-    /* align-items is removed to allow children to stretch and center text */
 }
 
 .bracket-third-place-group {
@@ -352,10 +361,10 @@ body {
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
-    background-color: rgba(60, 179, 113, 0.15);
+    background: linear-gradient(to right, transparent 50%, rgba(60, 179, 113, 0.15) 50%);
 }
 .bracket-view .player-slot.loser {
-    background-color: rgba(220, 20, 60, 0.1);
+    background: linear-gradient(to right, transparent 50%, rgba(220, 20, 60, 0.1) 50%);
 }
 .bracket-view .player-slot .name {
     flex-grow: 1;
@@ -390,6 +399,11 @@ body {
 .bracket-connector-path {
     stroke: var(--primary-color);
     stroke-width: 4px;
+    fill: none;
+}
+
+.bracket-winner-path {
+    stroke-width: 10px;
     fill: none;
 }
 
