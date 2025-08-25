@@ -296,10 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        let html = '<div class="bracket-view">';
+        let html = '<div class="bracket-view">'; // This will be a position: relative container
+
+        // --- Absolutely Positioned Columns ---
 
         // Quarterfinals Column
-        html += '<div class="round-column qf-column">';
+        html += '<div class="bracket-column bracket-qf-column">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
         html += renderMatch('qf1');
         html += renderMatch('qf2');
@@ -308,24 +310,27 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
 
         // Semifinals Column
-        html += '<div class="round-column sf-column">';
+        html += '<div class="bracket-column bracket-sf-column">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
         html += renderMatch('sf1');
         html += renderMatch('sf2');
         html += '</div>';
 
-        // Final & 3rd Place Column
-        html += '<div class="round-column final-column">';
+        // Grand Final Group
+        html += '<div class="bracket-column bracket-final-group">';
         html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
+        html += '</div>';
+
+        // 3rd Place Group
+        html += '<div class="bracket-column bracket-third-place-group">';
         html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
-        // The redraw is handled by the main render() function now
     }
 
     function updateBracketProgression(matchId) {
