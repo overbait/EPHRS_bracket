@@ -27,8 +27,8 @@ body {
 #main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
 #canvas-wrapper {
-    width: 95%;
-    max-width: 1400px;
+    width: 100%;
+    /* max-width: 1400px; */
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
@@ -40,11 +40,11 @@ body {
 }
 #canvas {
     width: 100%;
-    height: 1080px;
-    transform-origin: center;
+    height: 100%;
     position: relative;
     box-sizing: border-box;
     overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    transform: none !important; /* Override JS scaling */
 }
 
 /* --- SAVE BUTTON --- */
@@ -420,13 +420,8 @@ body {
     background-position: center;
     background-image: var(--flag-image); /* Set via JS */
     pointer-events: none;
-}
-.flag-background::after { /* Pseudo-element for the gradient overlay */
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* Smoother gradient that starts fading earlier and blends into the card background */
-    background: linear-gradient(to right, transparent 30%, var(--content-box-bg) 90%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
 }
 
 /* For Groups View */
@@ -460,8 +455,4 @@ body {
 }
 .match-box .p2-flag-bg {
     bottom: 0;
-}
-.match-box .flag-background::after {
-    /* Gradient fades from transparent on left to opaque on right */
-    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 95%);
 }
