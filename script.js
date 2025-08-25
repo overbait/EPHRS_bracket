@@ -316,11 +316,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Final & 3rd Place Column
         html += '<div class="round-column final-column">';
+        // Grand Final Group
+        html += '<div class="grand-final-group">';
         html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
+        html += '</div>';
+        // 3rd Place Group
+        html += '<div class="third-place-group">';
         html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
         html += renderMatch('third-place', 'third-match');
+        html += '</div>';
         html += '</div>';
 
         html += '</div>'; // Close .bracket-view
