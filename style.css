@@ -37,6 +37,8 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    background-size: cover;
+    background-position: center;
 }
 #canvas {
     width: 1840px; /* Cropped width to align with branding */
@@ -123,8 +125,9 @@ body {
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 50px 20px; /* Further reduced horizontal padding */
+    padding: 50px 0; /* Removed horizontal padding to maximize space */
     box-sizing: border-box;
+    position: relative;
 }
 
 /* Базовая карточка */
@@ -160,10 +163,13 @@ body {
     width: 420px; /* Width of a single group box */
 }
 .logo-column-main {
-    flex-shrink: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 .logo-column-main img {
-    width: 300px;
+    width: 400px; /* Increased size */
     height: auto;
 }
 .groups-view .player-slot {
@@ -206,44 +212,43 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 50px 40px; /* Reduced horizontal padding */
-    box-sizing: border-box;
 }
 
-.round-column {
+.bracket-column {
+    position: absolute;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    gap: 20px; /* Default gap */
-    width: 20%; /* Further reduced to create more space */
+    gap: 20px;
+    width: 26%; /* A default width */
 }
 
-.qf-column, .sf-column {
-    justify-content: center;
+.bracket-qf-column {
+    left: 0;
+    top: 48%;
+    transform: translateY(-50%);
 }
 
-.final-column {
-    justify-content: space-between; /* Align groups vertically */
-    align-items: stretch; /* Allow children to self-align */
-    position: relative;
-    padding-top: 20px;
-    padding-bottom: 20px;
+.bracket-sf-column {
+    left: 48%;
+    top: 45%;
+    transform: translate(-50%, -50%);
 }
 
-.grand-final-group {
-    display: flex;
-    flex-direction: column;
+.bracket-final-group {
+    right: 0;
+    top: 60px; /* Position from top */
     align-items: flex-end; /* Align content of this group to the right */
 }
 
-.third-place-group {
-    display: flex;
-    flex-direction: column;
+.bracket-third-place-group {
+    left: 55%;
+    bottom: 40px; /* Position from bottom */
+    transform: translateX(-50%);
     align-items: center; /* Align content of this group to the center */
+}
+
+.final-logo {
+    align-self: flex-end; /* Re-apply logo alignment within its new parent */
 }
 
 .round-header {
@@ -315,7 +320,7 @@ body {
     background-color: var(--content-box-bg);
     border: 1px solid var(--primary-color);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
-    padding: 8px 8px 8px 30px;
+    padding: 12px 8px 12px 30px; /* Increased vertical padding */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -325,13 +330,13 @@ body {
 }
 
 .third-match {
-    margin-top: 20px; /* Spacing from the final match */
+    margin-top: 10px; /* Spacing from the final match */
 }
 
 .bracket-view .player-slot {
     display: flex;
     align-items: center;
-    min-height: 50px; /* Ensure a minimum height */
+    min-height: 55px; /* Increased height */
     cursor: pointer;
     position: relative;
     transition: all 0.2s ease-in-out;
