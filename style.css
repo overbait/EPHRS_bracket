@@ -159,6 +159,14 @@ body {
     gap: 40px;
     width: 420px; /* Width of a single group box */
 }
+
+.group-column.left {
+    margin-left: -50px;
+}
+
+.group-column.right {
+    margin-right: -50px;
+}
 .logo-column-main {
     flex-shrink: 0;
 }
@@ -217,20 +225,20 @@ body {
 }
 
 .bracket-qf-column {
-    left: 10px;
-    top: 50%;
+    left: -20px;
+    top: 48%;
     transform: translateY(-50%);
 }
 
 .bracket-sf-column {
-    left: 50%;
-    top: 50%;
+    left: 48%;
+    top: 48%;
     transform: translate(-50%, -50%);
 }
 
 .bracket-final-group {
-    right: 10px;
-    top: 80px; /* Position from top */
+    right: -20px;
+    top: 60px; /* Position from top */
     align-items: flex-end; /* Align content of this group to the right */
 }
 
@@ -324,7 +332,7 @@ body {
 }
 
 .third-match {
-    margin-top: 20px; /* Spacing from the final match */
+    margin-top: 10px; /* Spacing from the final match */
 }
 
 .bracket-view .player-slot {
