@@ -45,6 +45,7 @@ body {
     position: relative;
     box-sizing: border-box;
     overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    z-index: 10; /* Ensure canvas is on top of decorations */
 }
 
 /* --- SAVE BUTTON --- */
@@ -380,9 +381,9 @@ body {
     background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
     z-index: 4;
     display: flex;
-    justify-content: center; /* Centered content */
+    justify-content: flex-end; /* Aligned to the right */
     align-items: flex-end;
-    padding: 0 0 20px 0; /* Removed left padding */
+    padding: 0 40px 20px 0; /* Added right padding */
     box-sizing: border-box;
 }
 
@@ -449,6 +450,7 @@ body {
     width: 50%; /* Smaller, sits behind the player name */
     height: 50%;
     left: 0;
+    opacity: 0.5; /* Match opacity of group view flags */
 }
 .match-box .p1-flag-bg {
     top: 0;
