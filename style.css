@@ -46,8 +46,17 @@ body {
     transform-origin: center;
     position: relative;
     box-sizing: border-box;
-    overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    overflow: visible; /* Allow content to spill out for positioning */
     z-index: 10; /* Ensure canvas is on top of decorations */
+}
+
+#layout-area {
+    position: absolute;
+    width: 110%;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
 }
 
 /* --- SAVE BUTTON --- */
@@ -223,25 +232,25 @@ body {
 }
 
 .bracket-qf-column {
-    left: 0;
+    left: -5%;
     top: 48%;
     transform: translateY(-50%);
 }
 
 .bracket-sf-column {
     left: 48%;
-    top: 45%;
+    top: 42%;
     transform: translate(-50%, -50%);
 }
 
 .bracket-final-group {
-    right: 0;
+    right: -5%;
     top: 60px; /* Position from top */
     align-items: flex-end; /* Align content of this group to the right */
 }
 
 .bracket-third-place-group {
-    left: 55%;
+    left: 60%;
     bottom: 40px; /* Position from bottom */
     transform: translateX(-50%);
     align-items: center; /* Align content of this group to the center */
@@ -330,7 +339,7 @@ body {
 }
 
 .third-match {
-    margin-top: 10px; /* Spacing from the final match */
+    margin-top: 5px; /* Spacing from the final match */
 }
 
 .bracket-view .player-slot {

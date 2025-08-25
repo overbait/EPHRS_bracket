@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
 
         // Use `groups-view` as the main class for the 3-column layout
-        container.innerHTML = `<div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
+        container.innerHTML = `<div id="layout-area"><div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div></div>`;
         initCardGradients();
     }
 
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        let html = '<div class="bracket-view">'; // This will be a position: relative container
+        let html = '<div id="layout-area"><div class="bracket-view">'; // This will be a position: relative container
 
         // --- Absolutely Positioned Columns ---
 
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
-        html += '</div>'; // Close .bracket-view
+        html += '</div></div>'; // Close .bracket-view and #layout-area
         container.innerHTML = html;
     }
 
