@@ -569,8 +569,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CANVAS SCALING ---
-    // The scaleCanvas function has been removed as it was causing issues with the layout.
-    // The canvas is now scaled using CSS, which is more reliable.
+    function scaleCanvas() {
+        const wrapper = document.getElementById('canvas-wrapper');
+        const canvas = document.getElementById('canvas');
+        if (!wrapper || !canvas) return;
+
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+
+        const canvasWidth = 1840;
+        const canvasHeight = 1080;
+
+        const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
+
+        canvas.style.transform = `scale(${scale})`;
+    }
 
 
     // --- INITIALIZATION ---
@@ -634,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Canvas
         canvas.addEventListener('click', handleCanvasClick);
         canvas.addEventListener('focusout', handleCanvasBlur);
-        // window.addEventListener('resize', scaleCanvas); // Removed
+        window.addEventListener('resize', scaleCanvas);
 
         document.getElementById('main-title').addEventListener('focusout', (e) => {
             const newTitle = e.target.textContent;
@@ -649,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Application initialized.');
         document.querySelector(`input[name="mode"][value="${state.viewMode}"]`).checked = true;
         render();
-        // scaleCanvas(); // Initial scale // Removed
+        scaleCanvas(); // Initial scale
         applyDecorations(); // Initial decorations
 
         setInterval(() => { if (state.isDirty) saveState(); }, 30000);
