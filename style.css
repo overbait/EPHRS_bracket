@@ -125,6 +125,7 @@ body {
     height: 100%;
     padding: 50px 0; /* Removed horizontal padding to maximize space */
     box-sizing: border-box;
+    position: relative;
 }
 
 /* Базовая карточка */
@@ -159,16 +160,11 @@ body {
     gap: 40px;
     width: 420px; /* Width of a single group box */
 }
-
-.group-column.left {
-    margin-left: -50px;
-}
-
-.group-column.right {
-    margin-right: -50px;
-}
 .logo-column-main {
-    flex-shrink: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 .logo-column-main img {
     width: 340px; /* Increased size */
@@ -225,7 +221,7 @@ body {
 }
 
 .bracket-qf-column {
-    left: -20px;
+    left: 0;
     top: 48%;
     transform: translateY(-50%);
 }
@@ -237,7 +233,7 @@ body {
 }
 
 .bracket-final-group {
-    right: -20px;
+    right: 0;
     top: 60px; /* Position from top */
     align-items: flex-end; /* Align content of this group to the right */
 }
