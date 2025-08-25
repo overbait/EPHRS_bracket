@@ -45,6 +45,7 @@ body {
     position: relative;
     box-sizing: border-box;
     overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    z-index: 10; /* Ensure canvas is on top of decorations */
 }
 
 /* --- SAVE BUTTON --- */
@@ -122,7 +123,7 @@ body {
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 50px;
+    padding: 50px 20px; /* Further reduced horizontal padding */
     box-sizing: border-box;
 }
 
@@ -209,7 +210,7 @@ body {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 50px 100px;
+    padding: 50px 40px; /* Reduced horizontal padding */
     box-sizing: border-box;
 }
 
@@ -218,7 +219,7 @@ body {
     flex-direction: column;
     height: 100%;
     gap: 20px; /* Default gap */
-    width: 28%;
+    width: 20%; /* Further reduced to create more space */
 }
 
 .qf-column, .sf-column {
@@ -226,10 +227,23 @@ body {
 }
 
 .final-column {
-    justify-content: flex-start; /* Align content to the top */
+    justify-content: space-between; /* Align groups vertically */
+    align-items: stretch; /* Allow children to self-align */
     position: relative;
-    padding-top: 20px; /* Small padding to push content down from the top edge */
-    gap: 15px; /* Tighter gap for final column */
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.grand-final-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align content of this group to the right */
+}
+
+.third-place-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Align content of this group to the center */
 }
 
 .round-header {
@@ -263,6 +277,17 @@ body {
     color: var(--accent-color);
     font-weight: bold;
 }
+
+.round-header .date:not(:empty),
+.round-header .best-of:not(:empty),
+.round-header .time:not(:empty) {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
 .third-header {
     margin-top: 40px; /* Reduced margin */
 }
@@ -270,7 +295,7 @@ body {
     max-width: 250px;
     width: 60%;
     height: auto;
-    align-self: center;
+    align-self: flex-end; /* Was center */
     margin-bottom: 20px;
 }
 .bracket-logo {
@@ -371,7 +396,7 @@ body {
     display: flex;
     justify-content: flex-start; /* Aligned to the left */
     align-items: flex-end;
-    padding: 0 0 20px 40px; /* Add left padding */
+    padding: 0 0 20px 40px; /* Added left padding */
     box-sizing: border-box;
 }
 
@@ -409,12 +434,8 @@ body {
     background-position: center;
     background-image: var(--flag-image); /* Set via JS */
     pointer-events: none;
-}
-.flag-background::after { /* Pseudo-element for the gradient overlay */
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to right, transparent 50%, var(--content-box-bg));
+    -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
+    mask-image: linear-gradient(to right, black 40%, transparent 100%);
 }
 
 /* For Groups View */
@@ -442,14 +463,11 @@ body {
     width: 50%; /* Smaller, sits behind the player name */
     height: 50%;
     left: 0;
+    opacity: 0.5; /* Match opacity of group view flags */
 }
 .match-box .p1-flag-bg {
     top: 0;
 }
 .match-box .p2-flag-bg {
     bottom: 0;
-}
-.match-box .flag-background::after {
-    /* Gradient fades from transparent on left to opaque on right */
-    background: linear-gradient(to right, transparent 20%, var(--content-box-bg) 80%);
 }
