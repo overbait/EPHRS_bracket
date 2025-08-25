@@ -52,7 +52,7 @@ body {
 
 #layout-area {
     position: absolute;
-    width: 110%;
+    width: 120%;
     height: 100%;
     left: 50%;
     top: 0;
@@ -238,7 +238,7 @@ body {
 }
 
 .bracket-sf-column {
-    left: 48%;
+    left: 50%;
     top: 42%;
     transform: translate(-50%, -50%);
 }
@@ -246,7 +246,7 @@ body {
 .bracket-final-group {
     right: -5%;
     top: 60px; /* Position from top */
-    align-items: flex-end; /* Align content of this group to the right */
+    /* align-items is removed to allow children to stretch and center text */
 }
 
 .bracket-third-place-group {
@@ -352,10 +352,10 @@ body {
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
-    background: radial-gradient(circle at 90% 50%, rgba(60, 179, 113, 0.3) 0%, rgba(60, 179, 113, 0) 60%);
+    background-color: rgba(60, 179, 113, 0.15);
 }
 .bracket-view .player-slot.loser {
-    background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
+    background-color: rgba(220, 20, 60, 0.1);
 }
 .bracket-view .player-slot .name {
     flex-grow: 1;
