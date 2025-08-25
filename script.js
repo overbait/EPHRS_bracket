@@ -211,23 +211,25 @@ document.addEventListener('DOMContentLoaded', () => {
             right: ['B', 'D']
         };
 
-        let leftColumnHtml = '<div class="group-column left">';
-        let rightColumnHtml = '<div class="group-column right">';
-
+        let leftColumnHtml = '';
         for (const groupLetter of groups.left) {
             leftColumnHtml += renderGroup(groupLetter);
         }
+
+        let rightColumnHtml = '';
         for (const groupLetter of groups.right) {
             rightColumnHtml += renderGroup(groupLetter);
         }
 
-        leftColumnHtml += '</div>';
-        rightColumnHtml += '</div>';
+        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
 
-        const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+        let html = '<div class="groups-view">'; // This will be position: relative
+        html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
+        html += `<div class="groups-logo-col logo-column-main">${logoHtml}</div>`;
+        html += `<div class="groups-right-col group-column">${rightColumnHtml}</div>`;
+        html += '</div>';
 
-        // Use `groups-view` as the main class for the 3-column layout
-        container.innerHTML = `<div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
+        container.innerHTML = html;
         initCardGradients();
     }
 
