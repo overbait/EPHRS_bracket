@@ -37,6 +37,8 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    background-size: cover;
+    background-position: center;
 }
 #canvas {
     width: 1840px; /* Cropped width to align with branding */
@@ -167,7 +169,7 @@ body {
     transform: translate(-50%, -50%);
 }
 .logo-column-main img {
-    width: 340px; /* Increased size */
+    width: 400px; /* Increased size */
     height: auto;
 }
 .groups-view .player-slot {
@@ -228,7 +230,7 @@ body {
 
 .bracket-sf-column {
     left: 48%;
-    top: 48%;
+    top: 45%;
     transform: translate(-50%, -50%);
 }
 
