@@ -349,15 +349,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function createPath(startSlot, endSlot, matchId, canvasRect) {
+    function createPath(startSlot, endSlot, matchId, canvasRect, scale) {
         const startRect = startSlot.getBoundingClientRect();
         const endRect = endSlot.getBoundingClientRect();
 
-        // Get coords from the slots' vertical center and edges
-        const startX = startRect.right - canvasRect.left;
-        const startY = startRect.top + startRect.height / 2 - canvasRect.top;
-        const endX = endRect.left - canvasRect.left;
-        const endY = endRect.top + endRect.height / 2 - canvasRect.top;
+        // Get coords from the slots' vertical center and edges, and un-scale them
+        const startX = (startRect.right - canvasRect.left) / scale;
+        const startY = (startRect.top + startRect.height / 2 - canvasRect.top) / scale;
+        const endX = (endRect.left - canvasRect.left) / scale;
+        const endY = (endRect.top + endRect.height / 2 - canvasRect.top) / scale;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
@@ -391,6 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvasRect = canvas.getBoundingClientRect();
         if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
 
+        // Calculate the scale factor
+        const scale = canvasRect.width / canvas.offsetWidth;
+        if (scale === 0) return; // Avoid division by zero if canvas is not rendered
+
         const matches = document.querySelectorAll('.match-box[data-match-id]');
         matches.forEach(matchBox => {
             const matchId = matchBox.dataset.matchId;
@@ -418,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const endSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
 
             if (winnerSlot && endSlot) {
-                const path = createPath(winnerSlot, endSlot, matchId, canvasRect);
+                const path = createPath(winnerSlot, endSlot, matchId, canvasRect, scale);
                 svg.appendChild(path);
             }
         });
