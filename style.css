@@ -173,7 +173,7 @@ body {
     flex-direction: column;
     justify-content: center;
     gap: 40px;
-    width: 380px; /* Width of a single group box */
+    width: 340px; /* Width of a single group box */
 }
 .logo-column-main {
     flex-shrink: 0;
@@ -234,25 +234,25 @@ body {
 
 .bracket-qf-column {
     left: -150px; /* Push strongly left */
-    top: 50%;
+    top: 48%;
     transform: translateY(-50%);
 }
 
 .bracket-sf-column {
     left: 50%;
-    top: 50%;
+    top: 48%;
     transform: translate(-50%, -50%);
     width: 26%; /* Keep SF narrower */
 }
 
 .bracket-final-group {
-    right: -150px; /* Push strongly right */
-    top: 80px;
+    right: -180px; /* Push strongly right */
+    top: 60px;
     align-items: flex-end;
 }
 
 .bracket-third-place-group {
-    left: 58%; /* A bit to the right of center */
+    left: 60%; /* A bit to the right of center */
     bottom: 40px;
     transform: translateX(-50%);
     align-items: center;
