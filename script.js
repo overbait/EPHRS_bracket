@@ -345,8 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
 
-        // Delay drawing to ensure DOM is ready after render
-        setTimeout(() => drawProgressionLines(), 0);
+        // Delay drawing to ensure DOM is ready after render, using rAF for reliability
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                drawProgressionLines();
+            });
+        });
     }
 
     function createPath(startHook, endHook, matchId, canvasRect) {
