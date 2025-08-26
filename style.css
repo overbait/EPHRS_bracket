@@ -121,15 +121,13 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
 }
 
 .groups-left-col {
-    /* Styles removed for flexbox */
+    position: absolute;
+    left: -100px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .groups-logo-col {
@@ -140,7 +138,10 @@ body {
 }
 
 .groups-right-col {
-    /* Styles removed for flexbox */
+    position: absolute;
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 /* Базовая карточка */
@@ -252,7 +253,7 @@ body {
 }
 
 .bracket-third-place-group {
-    left: 60%; /* A bit to the right of center */
+    left: 62%; /* A bit to the right of center */
     bottom: 40px;
     transform: translateX(-50%);
     align-items: center;
@@ -263,7 +264,9 @@ body {
 }
 
 .round-header {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 20px;
     font-family: var(--font-title);
 }
