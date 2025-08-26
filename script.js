@@ -337,26 +337,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawWinnerLines() {
-        const decorationsContainer = document.getElementById('decorations-container');
-        const existingSvg = decorationsContainer.querySelector('.winner-lines-svg');
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return;
+
+        // Remove previous lines from the canvas
+        const existingSvg = canvas.querySelector('.winner-lines-svg');
         if (existingSvg) {
             existingSvg.remove();
         }
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('winner-lines-svg');
+        // Style the SVG to overlay the entire canvas correctly
         svg.style.position = 'absolute';
         svg.style.top = '0';
         svg.style.left = '0';
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '2';
+        svg.style.zIndex = '4'; // Place it below content-area (5) but above other layers
 
-        const canvas = document.getElementById('canvas');
-        if (!canvas) return;
-        const contentRect = canvas.getBoundingClientRect();
-
+        const canvasRect = canvas.getBoundingClientRect();
         const winners = document.querySelectorAll('.player-slot.winner');
 
         winners.forEach(winnerSlot => {
@@ -374,22 +375,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 const startRect = winnerSlot.getBoundingClientRect();
                 const endRect = destinationSlot.getBoundingClientRect();
 
-                const startX = startRect.right - contentRect.left;
-                const startY = startRect.top + startRect.height / 2 - contentRect.top;
-                const endX = endRect.left - contentRect.left;
-                const endY = endRect.top + endRect.height / 2 - contentRect.top;
+                // Coordinates are relative to the viewport, so we adjust them to be relative to the canvas
+                const startX = startRect.right - canvasRect.left;
+                const startY = (startRect.top + startRect.bottom) / 2 - canvasRect.top;
+                const endX = endRect.left - canvasRect.left;
+                const endY = (endRect.top + endRect.bottom) / 2 - canvasRect.top;
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const midX = startX + (endX - startX) / 2;
+
+                // A path with a 90-degree turn
+                const midX = startX + 30; // Extend 30px before turning
                 const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+
                 path.setAttribute('d', d);
                 path.classList.add('winner-line');
                 svg.appendChild(path);
             }
         });
 
+        // Add the SVG to the canvas only if it contains lines
         if (svg.children.length > 0) {
-            decorationsContainer.appendChild(svg);
+            canvas.appendChild(svg);
         }
     }
 
