@@ -125,7 +125,7 @@ body {
 
 .groups-left-col {
     position: absolute;
-    left: 20px;
+    left: -50px;
     top: 50%;
     transform: translateY(-50%);
 }
@@ -139,7 +139,7 @@ body {
 
 .groups-right-col {
     position: absolute;
-    right: 20px;
+    right: -50px;
     top: 50%;
     transform: translateY(-50%);
 }
@@ -234,25 +234,25 @@ body {
 }
 
 .bracket-qf-column {
-    left: 10px;
+    left: -20px;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .bracket-sf-column {
-    left: 50%;
+    left: 38%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
 
 .bracket-final-group {
-    right: 10px;
+    right: -50px;
     top: 80px; /* Position from top */
     align-items: flex-end; /* Align content of this group to the right */
 }
 
 .bracket-third-place-group {
-    left: 55%;
+    left: 65%;
     bottom: 40px; /* Position from bottom */
     transform: translateX(-50%);
     align-items: center; /* Align content of this group to the center */
@@ -305,7 +305,7 @@ body {
     margin-bottom: 4px;
 }
 .third-header {
-    margin-top: 40px; /* Reduced margin */
+    margin-top: 10px; /* Reduced margin */
 }
 .final-logo {
     max-width: 250px;
@@ -417,7 +417,7 @@ body {
 }
 
 #bottom-branding img {
-    height: 50px; /* Adjust as needed */
+    height: 40px; /* Adjust as needed */
 }
 
 .hosted-by-text {

@@ -364,66 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
         markDirty();
     }
 
-    function drawBracketConnectors(container) {
-        const oldSvg = container.querySelector('.bracket-svg');
-        if (oldSvg) oldSvg.remove();
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('bracket-svg');
-        container.prepend(svg);
-
-        function createConnectorPath(sourceEl, destEl, containerEl) {
-            if (!sourceEl || !destEl || !containerEl) return '';
-            const sourceRect = sourceEl.getBoundingClientRect();
-            const destRect = destEl.getBoundingClientRect();
-            const containerRect = containerEl.getBoundingClientRect();
-
-            const startX = sourceRect.right - containerRect.left;
-            const startY = sourceRect.top + sourceRect.height / 2 - containerRect.top;
-            const endX = destRect.left - containerRect.left;
-            const endY = destRect.top + destRect.height / 2 - containerRect.top;
-
-            const midX = startX + 40; // Controls the horizontal length of the connector line
-
-            return `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
-        }
-
-        const connections = [
-            { from: 'qf1', to: 'sf1-p1' }, { from: 'qf2', to: 'sf1-p2' },
-            { from: 'qf3', to: 'sf2-p1' }, { from: 'qf4', to: 'sf2-p2' },
-            { from: 'sf1', to: 'final-p1', loserTo: 'third-place-p1' },
-            { from: 'sf2', to: 'final-p2', loserTo: 'third-place-p2' },
-        ];
-
-        connections.forEach(conn => {
-            const fromMatchEl = container.querySelector(`[data-match-id="${conn.from}"]`);
-            if (!fromMatchEl) return;
-
-            // Connect winner
-            const winnerSlot = fromMatchEl.querySelector('.winner');
-            const destSlot = container.querySelector(`[data-slot-id="${conn.to}"]`);
-            if (winnerSlot && destSlot) {
-                const pathString = createConnectorPath(winnerSlot, destSlot, container);
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', pathString);
-                path.classList.add('bracket-connector-path');
-                svg.appendChild(path);
-            }
-
-            // Connect loser (for semifinals)
-            if (conn.loserTo) {
-                const loserSlot = fromMatchEl.querySelector('.loser');
-                const loserDestSlot = container.querySelector(`[data-slot-id="${conn.loserTo}"]`);
-                if (loserSlot && loserDestSlot) {
-                    const pathString = createConnectorPath(loserSlot, loserDestSlot, container);
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', pathString);
-                    path.classList.add('bracket-connector-path');
-                    svg.appendChild(path);
-                }
-            }
-        });
-    }
 
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
