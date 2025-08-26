@@ -121,27 +121,23 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    box-sizing: border-box;
 }
 
 .groups-left-col {
-    position: absolute;
-    left: -50px;
-    top: 50%;
-    transform: translateY(-50%);
+    /* Styles removed for flexbox */
 }
 
 .groups-logo-col {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    /* Styles removed for flexbox */
 }
 
 .groups-right-col {
-    position: absolute;
-    right: -50px;
-    top: 50%;
-    transform: translateY(-50%);
+    /* Styles removed for flexbox */
 }
 
 /* Базовая карточка */
@@ -223,39 +219,47 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .bracket-column {
-    position: absolute;
+    /* position: absolute; REMOVED */
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 26%; /* A default width */
+    /* width: 26%; REMOVED */
+    height: 100%; /* Make column fill the grid cell height */
+    justify-content: center; /* Center content vertically */
 }
 
 .bracket-qf-column {
-    left: -20px;
-    top: 50%;
-    transform: translateY(-50%);
+    grid-column: 1;
+    grid-row: 1 / 3; /* Span both rows */
 }
 
 .bracket-sf-column {
-    left: 38%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    grid-column: 2;
+    grid-row: 1 / 3; /* Span both rows */
 }
 
 .bracket-final-group {
-    right: -50px;
-    top: 80px; /* Position from top */
-    align-items: flex-end; /* Align content of this group to the right */
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end; /* Align to the top of the cell */
+    align-items: flex-end;
 }
 
 .bracket-third-place-group {
-    left: 65%;
-    bottom: 40px; /* Position from bottom */
-    transform: translateX(-50%);
-    align-items: center; /* Align content of this group to the center */
+    grid-column: 3;
+    grid-row: 2;
+    justify-content: flex-start; /* Align to the bottom of the cell */
+    align-items: center;
 }
 
 .final-logo {
