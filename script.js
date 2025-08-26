@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
                 // Stagger midpoints to prevent overlap
-                const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -15, 'sf2': 15 };
+                const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -80, 'sf2': 80 };
                 const offset = offsets[matchId] || 0;
                 const midX = startX + (endX - startX) / 2 + offset;
 
