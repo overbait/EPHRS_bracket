@@ -101,9 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             li.className = 'player-bank-item';
             li.dataset.id = player.id;
             li.innerHTML = `
-                <img src="${player.avatar}" class="player-avatar-bank" crossorigin="anonymous">
+                <img src="${player.avatar}" class="player-avatar-bank">
                 <span class="player-name-bank">${player.name}</span>
-                <img src="${player.flag}" class="player-flag-bank" crossorigin="anonymous">
+                <img src="${player.flag}" class="player-flag-bank">
                 <div class="player-bank-actions">
                     <button class="edit-player-btn">✏️</button>
                     <button class="delete-player-btn">🗑️</button>
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredFlags = countryFlags.filter(code => code.toLowerCase().includes(searchTerm.toLowerCase()));
 
         optionsContainer.innerHTML = filteredFlags.map(code =>
-            `<img src="countryflags/${code}.png" data-flag-code="${code}" alt="${code}" title="${code}" crossorigin="anonymous">`
+            `<img src="countryflags/${code}.png" data-flag-code="${code}" alt="${code}" title="${code}">`
         ).join('');
     }
 
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rightColumnHtml += renderGroup(groupLetter);
         }
 
-        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo" crossorigin="anonymous">`;
+        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
 
         let html = '<div class="groups-view">'; // This will be position: relative
         html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="player-slot" data-slot-id="${slotId}">
                     <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
                     <span class="name">${player.name}</span>
-                    <img src="${player.avatar}" class="avatar" crossorigin="anonymous">
+                    <img src="${player.avatar}" class="avatar">
                 </div>`;
         }
         groupHtml += `</div>`;
@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Grand Final Group
         html += '<div class="bracket-column bracket-final-group">';
-        html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo" crossorigin="anonymous">';
+        html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
         html += '</div>';
