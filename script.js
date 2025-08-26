@@ -333,6 +333,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
+        drawWinnerLines();
+    }
+
+    function drawWinnerLines() {
+        const decorationsContainer = document.getElementById('decorations-container');
+        const existingSvg = decorationsContainer.querySelector('.winner-lines-svg');
+        if (existingSvg) {
+            existingSvg.remove();
+        }
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('winner-lines-svg');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.pointerEvents = 'none';
+        svg.style.zIndex = '2';
+
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return;
+        const contentRect = canvas.getBoundingClientRect();
+
+        const winners = document.querySelectorAll('.player-slot.winner');
+
+        winners.forEach(winnerSlot => {
+            const matchBox = winnerSlot.closest('.match-box');
+            if (!matchBox) return;
+
+            const matchId = matchBox.dataset.matchId;
+            const progression = bracketProgression[matchId];
+            if (!progression || !progression.winnerTo) return;
+
+            const destinationSlotId = progression.winnerTo;
+            const destinationSlot = document.querySelector(`[data-slot-id='${destinationSlotId}']`);
+
+            if (destinationSlot) {
+                const startRect = winnerSlot.getBoundingClientRect();
+                const endRect = destinationSlot.getBoundingClientRect();
+
+                const startX = startRect.right - contentRect.left;
+                const startY = startRect.top + startRect.height / 2 - contentRect.top;
+                const endX = endRect.left - contentRect.left;
+                const endY = endRect.top + endRect.height / 2 - contentRect.top;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const midX = startX + (endX - startX) / 2;
+                const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+                path.setAttribute('d', d);
+                path.classList.add('winner-line');
+                svg.appendChild(path);
+            }
+        });
+
+        if (svg.children.length > 0) {
+            decorationsContainer.appendChild(svg);
+        }
     }
 
     function updateBracketProgression(matchId) {

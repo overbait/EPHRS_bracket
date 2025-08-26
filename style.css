@@ -497,3 +497,13 @@ body {
 .bracket-final-group .match-box {
     width: 100%;
 }
+
+/* --- WINNER LINES --- */
+.winner-line {
+    stroke: var(--primary-color);
+    stroke-width: 3px;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 5px var(--primary-color));
+}
