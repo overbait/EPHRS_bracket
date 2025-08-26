@@ -333,70 +333,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
-        drawWinnerLines();
+        drawProgressionLines();
     }
 
-    function drawWinnerLines() {
+    function createPath(startSlot, endSlot, matchId, type, canvasRect) {
+        const startRect = startSlot.getBoundingClientRect();
+        const endRect = endSlot.getBoundingClientRect();
+
+        const startX = startRect.right - canvasRect.left;
+        const startY = (startRect.top + startRect.bottom) / 2 - canvasRect.top;
+        const endX = endRect.left - canvasRect.left;
+        const endY = (endRect.top + endRect.bottom) / 2 - canvasRect.top;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d = '';
+
+        const offsets = {
+            'qf1': -25, 'qf2': -15, 'qf3': 15, 'qf4': 25,
+            'sf1-winner': -40, 'sf2-winner': 40,
+            'sf1-loser': -40, 'sf2-loser': 40
+        };
+        const key = `${matchId}-${type}`;
+        const offset = offsets[key] || offsets[matchId] || 0;
+        let midX;
+
+        if (matchId.startsWith('qf')) {
+            midX = startX + (endX - startX) / 2 + offset;
+        } else if (matchId.startsWith('sf')) {
+            midX = startX + 100 + offset; // Use a fixed horizontal extension for SF
+        }
+
+        d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+
+        path.setAttribute('d', d);
+        path.classList.add('progression-line');
+        if (type === 'winner') {
+            path.classList.add('winner-line');
+        } else {
+            path.classList.add('loser-line');
+        }
+        return path;
+    }
+
+
+    function drawProgressionLines() {
         const canvas = document.getElementById('canvas');
         if (!canvas) return;
 
-        // Remove previous lines from the canvas
-        const existingSvg = canvas.querySelector('.winner-lines-svg');
+        const existingSvg = canvas.querySelector('.progression-lines-svg');
         if (existingSvg) {
             existingSvg.remove();
         }
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('winner-lines-svg');
-        // Style the SVG to overlay the entire canvas correctly
+        svg.classList.add('progression-lines-svg');
         svg.style.position = 'absolute';
         svg.style.top = '0';
         svg.style.left = '0';
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '4'; // Place it below content-area (5) but above other layers
+        svg.style.zIndex = '4';
 
         const canvasRect = canvas.getBoundingClientRect();
-        const winners = document.querySelectorAll('.player-slot.winner');
 
-        winners.forEach(winnerSlot => {
-            const matchBox = winnerSlot.closest('.match-box');
-            if (!matchBox) return;
-
+        const matches = document.querySelectorAll('.match-box[data-match-id]');
+        matches.forEach(matchBox => {
             const matchId = matchBox.dataset.matchId;
+            if (!matchId.startsWith('qf') && !matchId.startsWith('sf')) {
+                return; // Only process QF and SF matches
+            }
+
+            const p1_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
+            const p2_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p2']`);
+            if (!p1_slot || !p2_slot) return;
+
+            const p1_score_el = p1_slot.querySelector('.score');
+            const p2_score_el = p2_slot.querySelector('.score');
+            if (!p1_score_el || !p2_score_el) return;
+
+            const p1_score = parseInt(p1_score_el.textContent, 10) || 0;
+            const p2_score = parseInt(p2_score_el.textContent, 10) || 0;
+
+            if (p1_score === p2_score) return; // No winner/loser yet
+
+            const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
+            const loserSlot = p1_score > p2_score ? p2_slot : p1_slot;
+
             const progression = bracketProgression[matchId];
-            if (!progression || !progression.winnerTo) return;
+            if (!progression) return;
 
-            const destinationSlotId = progression.winnerTo;
-            const destinationSlot = document.querySelector(`[data-slot-id='${destinationSlotId}']`);
+            // Draw winner line
+            if (progression.winnerTo) {
+                const destSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
+                if (destSlot) {
+                    const path = createPath(winnerSlot, destSlot, matchId, 'winner', canvasRect);
+                    svg.appendChild(path);
+                }
+            }
 
-            if (destinationSlot) {
-                const startRect = winnerSlot.getBoundingClientRect();
-                const endRect = destinationSlot.getBoundingClientRect();
-
-                // Coordinates are relative to the viewport, so we adjust them to be relative to the canvas
-                const startX = startRect.right - canvasRect.left;
-                const startY = (startRect.top + startRect.bottom) / 2 - canvasRect.top;
-                const endX = endRect.left - canvasRect.left;
-                const endY = (endRect.top + endRect.bottom) / 2 - canvasRect.top;
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-
-                // Stagger midpoints to prevent overlap
-                const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -80, 'sf2': 80 };
-                const offset = offsets[matchId] || 0;
-                const midX = startX + (endX - startX) / 2 + offset;
-
-                // A simple path with a 90-degree turn, but with a staggered midpoint
-                const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
-                path.setAttribute('d', d);
-                path.classList.add('winner-line');
-                svg.appendChild(path);
+            // Draw loser line (for SF to 3rd place)
+            if (progression.loserTo) {
+                const destSlot = document.querySelector(`[data-slot-id='${progression.loserTo}']`);
+                if (destSlot) {
+                    const path = createPath(loserSlot, destSlot, matchId, 'loser', canvasRect);
+                    svg.appendChild(path);
+                }
             }
         });
 
-        // Add the SVG to the canvas only if it contains lines
         if (svg.children.length > 0) {
             canvas.appendChild(svg);
         }

@@ -499,11 +499,17 @@ body {
 }
 
 /* --- WINNER LINES --- */
-.winner-line {
-    stroke: var(--primary-color);
-    stroke-width: 5px;
+.progression-line {
+    stroke-width: 4px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 2px var(--primary-color));
+}
+.winner-line {
+    stroke: var(--primary-color);
+    filter: drop-shadow(0 0 3px var(--primary-color));
+}
+.loser-line {
+    stroke: #b0b0b0; /* Light gray */
+    stroke-dasharray: 8, 6;
 }
