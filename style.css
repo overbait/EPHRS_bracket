@@ -505,5 +505,5 @@ body {
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 5px var(--primary-color));
+    filter: drop-shadow(0 0 2px var(--primary-color));
 }
