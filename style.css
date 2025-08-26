@@ -44,7 +44,7 @@ body {
     transform-origin: center;
     position: relative;
     box-sizing: border-box;
-    overflow: hidden; /* Ensure background scaling doesn't bleed out */
+    /* overflow: hidden; */ /* Ensure background scaling doesn't bleed out */
     z-index: 10; /* Ensure canvas is on top of decorations */
 }
 
