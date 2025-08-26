@@ -211,23 +211,25 @@ document.addEventListener('DOMContentLoaded', () => {
             right: ['B', 'D']
         };
 
-        let leftColumnHtml = '<div class="group-column left">';
-        let rightColumnHtml = '<div class="group-column right">';
-
+        let leftColumnHtml = '';
         for (const groupLetter of groups.left) {
             leftColumnHtml += renderGroup(groupLetter);
         }
+
+        let rightColumnHtml = '';
         for (const groupLetter of groups.right) {
             rightColumnHtml += renderGroup(groupLetter);
         }
 
-        leftColumnHtml += '</div>';
-        rightColumnHtml += '</div>';
+        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
 
-        const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+        let html = '<div class="groups-view">'; // This will be position: relative
+        html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
+        html += `<div class="groups-logo-col logo-column-main">${logoHtml}</div>`;
+        html += `<div class="groups-right-col group-column">${rightColumnHtml}</div>`;
+        html += '</div>';
 
-        // Use `groups-view` as the main class for the 3-column layout
-        container.innerHTML = `<div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div>`;
+        container.innerHTML = html;
         initCardGradients();
     }
 
@@ -296,10 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        let html = '<div class="bracket-view">';
+        let html = '<div class="bracket-view">'; // This will be a position: relative container
+
+        // --- Absolutely Positioned Columns ---
 
         // Quarterfinals Column
-        html += '<div class="round-column qf-column">';
+        html += '<div class="bracket-column bracket-qf-column">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
         html += renderMatch('qf1');
         html += renderMatch('qf2');
@@ -308,24 +312,27 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
 
         // Semifinals Column
-        html += '<div class="round-column sf-column">';
+        html += '<div class="bracket-column bracket-sf-column">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
         html += renderMatch('sf1');
         html += renderMatch('sf2');
         html += '</div>';
 
-        // Final & 3rd Place Column
-        html += '<div class="round-column final-column">';
+        // Grand Final Group
+        html += '<div class="bracket-column bracket-final-group">';
         html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
         html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
+        html += '</div>';
+
+        // 3rd Place Group
+        html += '<div class="bracket-column bracket-third-place-group">';
         html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
-        // The redraw is handled by the main render() function now
     }
 
     function updateBracketProgression(matchId) {
@@ -357,66 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
         markDirty();
     }
 
-    function drawBracketConnectors(container) {
-        const oldSvg = container.querySelector('.bracket-svg');
-        if (oldSvg) oldSvg.remove();
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('bracket-svg');
-        container.prepend(svg);
-
-        function createConnectorPath(sourceEl, destEl, containerEl) {
-            if (!sourceEl || !destEl || !containerEl) return '';
-            const sourceRect = sourceEl.getBoundingClientRect();
-            const destRect = destEl.getBoundingClientRect();
-            const containerRect = containerEl.getBoundingClientRect();
-
-            const startX = sourceRect.right - containerRect.left;
-            const startY = sourceRect.top + sourceRect.height / 2 - containerRect.top;
-            const endX = destRect.left - containerRect.left;
-            const endY = destRect.top + destRect.height / 2 - containerRect.top;
-
-            const midX = startX + 40; // Controls the horizontal length of the connector line
-
-            return `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
-        }
-
-        const connections = [
-            { from: 'qf1', to: 'sf1-p1' }, { from: 'qf2', to: 'sf1-p2' },
-            { from: 'qf3', to: 'sf2-p1' }, { from: 'qf4', to: 'sf2-p2' },
-            { from: 'sf1', to: 'final-p1', loserTo: 'third-place-p1' },
-            { from: 'sf2', to: 'final-p2', loserTo: 'third-place-p2' },
-        ];
-
-        connections.forEach(conn => {
-            const fromMatchEl = container.querySelector(`[data-match-id="${conn.from}"]`);
-            if (!fromMatchEl) return;
-
-            // Connect winner
-            const winnerSlot = fromMatchEl.querySelector('.winner');
-            const destSlot = container.querySelector(`[data-slot-id="${conn.to}"]`);
-            if (winnerSlot && destSlot) {
-                const pathString = createConnectorPath(winnerSlot, destSlot, container);
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', pathString);
-                path.classList.add('bracket-connector-path');
-                svg.appendChild(path);
-            }
-
-            // Connect loser (for semifinals)
-            if (conn.loserTo) {
-                const loserSlot = fromMatchEl.querySelector('.loser');
-                const loserDestSlot = container.querySelector(`[data-slot-id="${conn.loserTo}"]`);
-                if (loserSlot && loserDestSlot) {
-                    const pathString = createConnectorPath(loserSlot, loserDestSlot, container);
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', pathString);
-                    path.classList.add('bracket-connector-path');
-                    svg.appendChild(path);
-                }
-            }
-        });
-    }
 
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
