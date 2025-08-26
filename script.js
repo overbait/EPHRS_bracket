@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
                 // A path with a 90-degree turn
-                const midX = startX + 30; // Extend 30px before turning
+                const midX = startX + (endX - startX) / 2;
                 const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
 
                 path.setAttribute('d', d);

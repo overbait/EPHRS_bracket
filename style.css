@@ -501,7 +501,7 @@ body {
 /* --- WINNER LINES --- */
 .winner-line {
     stroke: var(--primary-color);
-    stroke-width: 3px;
+    stroke-width: 5px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
