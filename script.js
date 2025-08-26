@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Coordinates are relative to the viewport, so we adjust them to be relative to the canvas
                 const startX = startRect.right - canvasRect.left;
-                const startY = startRect.bottom - canvasRect.top;
+                const startY = (startRect.top + startRect.bottom) / 2 - canvasRect.top;
                 const endX = endRect.left - canvasRect.left;
                 const endY = (endRect.top + endRect.bottom) / 2 - canvasRect.top;
 
@@ -388,14 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const offset = offsets[matchId] || 0;
                 const midX = startX + (endX - startX) / 2 + offset;
 
-                // Create a more complex path: down, across, vertical, across
-                const p1 = `${startX},${startY}`;
-                const p2 = `${startX},${startY + 10}`; // Down
-                const p3 = `${midX},${p2.split(',')[1]}`; // Across
-                const p4 = `${midX},${endY}`; // Vertical
-                const p5 = `${endX},${endY}`; // Across to destination
-
-                const d = `M ${p1} L ${p2} L ${p3} L ${p4} L ${p5}`;
+                // A simple path with a 90-degree turn, but with a staggered midpoint
+                const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
                 path.setAttribute('d', d);
                 path.classList.add('winner-line');
                 svg.appendChild(path);
