@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-        const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -40, 'sf2': 40 };
+        const offsets = { 'qf1': -40, 'qf2': -20, 'qf3': 20, 'qf4': 40, 'sf1': -40, 'sf2': 40 };
         const offset = offsets[matchId] || 0;
 
         const midX = startX + (endX - startX) / 2 + offset;
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '6'; // Ensure lines are on top
+        svg.style.zIndex = '4'; // Place lines behind content area (z-index: 5)
 
         const canvasRect = canvas.getBoundingClientRect();
         if (canvasRect.width === 0) return; // Don't draw if canvas is not visible

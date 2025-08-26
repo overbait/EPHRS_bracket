@@ -309,7 +309,7 @@ body {
 }
 .third-header {
     margin-top: 10px; /* Reduced margin */
-    margin-bottom: 5px;
+    margin-bottom: -10px; /* Move closer to match box */
 }
 .final-logo {
     max-width: 250px;
