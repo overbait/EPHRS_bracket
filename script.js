@@ -294,16 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1Flag}')"></div>
                 <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2Flag}')"></div>
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
-                    <div class="line-hook" data-hook-id="${p1_slot_id}-left"></div>
                     <span class="name">${player1Name}</span>
                     <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
-                    <div class="line-hook" data-hook-id="${p1_slot_id}-right"></div>
                 </div>
                 <div class="${p2_class}" data-slot-id="${p2_slot_id}">
-                    <div class="line-hook" data-hook-id="${p2_slot_id}-left"></div>
                     <span class="name">${player2Name}</span>
                     <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
-                    <div class="line-hook" data-hook-id="${p2_slot_id}-right"></div>
                 </div>
             </div>`;
     }
@@ -353,14 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function createPath(startHook, endHook, matchId, canvasRect) {
-        const startRect = startHook.getBoundingClientRect();
-        const endRect = endHook.getBoundingClientRect();
+    function createPath(startSlot, endSlot, matchId, canvasRect) {
+        const startRect = startSlot.getBoundingClientRect();
+        const endRect = endSlot.getBoundingClientRect();
 
-        // Get the center of the hook elements
-        const startX = startRect.left + startRect.width / 2 - canvasRect.left;
+        // Get coords from the slots' vertical center and edges
+        const startX = startRect.right - canvasRect.left;
         const startY = startRect.top + startRect.height / 2 - canvasRect.top;
-        const endX = endRect.left + endRect.width / 2 - canvasRect.left;
+        const endX = endRect.left - canvasRect.left;
         const endY = endRect.top + endRect.height / 2 - canvasRect.top;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -390,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '6';
+        svg.style.zIndex = '6'; // Ensure lines are on top
 
         const canvasRect = canvas.getBoundingClientRect();
         if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
@@ -416,16 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (p1_score === p2_score) return;
 
             const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
-            const winnerSlotId = winnerSlot.dataset.slotId;
-
             const progression = bracketProgression[matchId];
             if (!progression || !progression.winnerTo) return;
 
-            const startHook = document.querySelector(`[data-hook-id='${winnerSlotId}-right']`);
-            const endHook = document.querySelector(`[data-hook-id='${progression.winnerTo}-left']`);
+            const endSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
 
-            if (startHook && endHook) {
-                const path = createPath(startHook, endHook, matchId, canvasRect);
+            if (winnerSlot && endSlot) {
+                const path = createPath(winnerSlot, endSlot, matchId, canvasRect);
                 svg.appendChild(path);
             }
         });
