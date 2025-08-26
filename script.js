@@ -9,6 +9,9 @@ window.onerror = function(message, source, lineno, colno, error) {
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
     let state = {};
+    let loadedImageAssets = new Map(); // To store preloaded Image objects
+    let clickableAreas = []; // For canvas interaction
+
     const defaultState = {
         players: [],
         assignments: {},
@@ -24,8 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         mainTitle_groups: 'GROUPS',
         viewMode: 'bracket',
         nextPlayerId: 1,
+        decorations: [],
+        backgroundSrc: null,
         isDirty: false,
     };
+
+    // --- ASSET DEFINITIONS ---
+    const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
+    const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
 
     function loadState() {
         try {
@@ -80,6 +89,63 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.classList.add('saved');
             saveBtn.textContent = 'Saved';
         }
+    }
+
+    // --- ASSET PRELOADING ---
+    async function preloadAssets() {
+        console.log('Preloading assets...');
+        const imageMap = new Map();
+        const promises = [];
+
+        // Font
+        const font = new FontFace('SouthParkFont', 'url(Media/fonts_spfont 2.ttf)');
+        promises.push(
+            font.load().then(f => {
+                document.fonts.add(f);
+                console.log('Font loaded: SouthParkFont');
+            }).catch(e => console.error("Font load error:", e))
+        );
+
+        // Images
+        const imageSources = [
+            ...backgroundImages,
+            ...leafImages,
+            'Media/Logo_main-min.png',
+            'Media/text new-min.png'
+        ];
+
+        state.players.forEach(player => {
+            imageSources.push(player.flag);
+            imageSources.push(player.avatar);
+        });
+
+        const uniqueImageSources = [...new Set(imageSources.filter(Boolean))];
+
+        uniqueImageSources.forEach(src => {
+            const promise = new Promise(resolve => {
+                const img = new Image();
+                // For external images, we need to handle CORS to avoid tainted canvas
+                if (!src.startsWith('data:')) {
+                    img.crossOrigin = "Anonymous";
+                }
+
+                img.src = src;
+
+                img.onload = () => {
+                    imageMap.set(src, img);
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load image: ${src}`);
+                    resolve(); // Resolve anyway to not block the app
+                };
+            });
+            promises.push(promise);
+        });
+
+        await Promise.all(promises);
+        console.log('Asset preloading complete.');
+        return imageMap;
     }
 
 
@@ -154,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editingPlayer.name = document.getElementById('edit-player-name').value;
         markDirty();
         renderPlayerBank();
-        // render(); // Will be needed later
+        render(); // Re-draw canvas with updated player info
         closeEditModal();
     }
 
@@ -174,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 markDirty();
                 renderPlayerBank();
-                // render(); // Will be needed later
+                render(); // Re-draw canvas to remove the player
             }
         }
     }
@@ -189,247 +255,543 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- CANVAS & RENDERING ---
-    const canvas = document.getElementById('canvas');
-    const contentArea = document.querySelector('.content-area');
+    const canvasEl = document.getElementById('tournament-canvas');
+    const ctx = canvasEl.getContext('2d');
 
     function render() {
-        // Clear any existing progression lines whenever a re-render happens.
-        // This prevents lines from persisting between view modes or during updates.
-        const existingLines = document.querySelector('.progression-lines-svg');
-        if (existingLines) {
-            existingLines.remove();
+        // Ensure we don't render before assets are loaded
+        if (loadedImageAssets.size === 0) {
+            console.log("Assets not loaded yet, skipping render.");
+            return;
         }
 
+        // 0. Render player bank (this is outside the canvas)
         renderPlayerBank();
-        const mainTitleEl = document.getElementById('main-title');
 
+        // 1. Clear the canvas and clickable areas
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        clickableAreas = [];
+
+        // Set default text styles
+        ctx.fillStyle = 'white';
+        ctx.font = '24px "Cinzel"';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+
+        // 2. Render background
+        renderBackground();
+
+        // 3. Render main content (bracket or groups)
         if (state.viewMode === 'bracket') {
-            mainTitleEl.textContent = state.mainTitle_bracket;
-            renderBracketCanvas(contentArea);
+            renderBracket();
         } else {
-            mainTitleEl.textContent = state.mainTitle_groups;
-            renderGroupsCanvas(contentArea);
+            renderGroups();
+        }
+
+        // 4. Render decorations on top
+        renderDecorations();
+
+        // 5. Render branding and titles on top of everything
+        renderBranding();
+
+        console.log("Canvas rendering complete.");
+    }
+
+    function renderBackground() {
+        if (!state.backgroundSrc) {
+            return; // Don't draw if no background is set
+        }
+        const bgImg = loadedImageAssets.get(state.backgroundSrc);
+        if (bgImg) {
+            ctx.drawImage(bgImg, 0, 0, canvasEl.width, canvasEl.height);
+        } else {
+            // Fallback if image not loaded
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
         }
     }
 
-    function renderGroupsCanvas(container) {
-        const groups = {
-            left: ['A', 'C'],
-            right: ['B', 'D']
-        };
+    function renderBracket() {
+        // Layout Constants
+        const COLUMN_WIDTH = 400;
+        const MATCH_HEIGHT = 110;
+        const MATCH_V_GAP = 40;
+        const QF_X = 50;
+        const SF_X = QF_X + COLUMN_WIDTH + 120;
+        const FINAL_X = SF_X + COLUMN_WIDTH + 120;
+        const THIRD_X = SF_X + COLUMN_WIDTH / 2;
 
-        let leftColumnHtml = '';
-        for (const groupLetter of groups.left) {
-            leftColumnHtml += renderGroup(groupLetter);
+        const QF_HEADER_Y = 50;
+        const QF_START_Y = QF_HEADER_Y + 80;
+
+        // --- Draw Headers ---
+        drawRoundHeader(QF_X, QF_HEADER_Y, COLUMN_WIDTH, 'Quarterfinals', 'qf_date', 'qf_best');
+        drawRoundHeader(SF_X, QF_HEADER_Y, COLUMN_WIDTH, 'Semifinals', 'sf_date', 'sf_best');
+        const finalLogo = loadedImageAssets.get('Media/Logo_main-min.png');
+        if (finalLogo) ctx.drawImage(finalLogo, FINAL_X, QF_HEADER_Y, 250, (finalLogo.height/finalLogo.width)*250);
+        drawRoundHeader(FINAL_X, QF_HEADER_Y + 180, COLUMN_WIDTH, 'Grand Final', 'final_date', 'final_best', 'final_time');
+        drawRoundHeader(THIRD_X, QF_START_Y + 4 * (MATCH_HEIGHT + MATCH_V_GAP) + 20, COLUMN_WIDTH, '3rd Place Match', 'third_date', 'third_best', 'third_time');
+
+        // --- Draw Match Boxes ---
+        const matchPositions = {}; // Store center Y coords for line drawing
+
+        // QF
+        for (let i = 0; i < 4; i++) {
+            const y = QF_START_Y + i * (MATCH_HEIGHT + MATCH_V_GAP);
+            const matchId = `qf${i+1}`;
+            drawMatchBox(QF_X, y, COLUMN_WIDTH, MATCH_HEIGHT, matchId);
+            matchPositions[matchId] = { x: QF_X + COLUMN_WIDTH, y: y + MATCH_HEIGHT / 2 };
         }
+        // SF
+        const sf1_y = (matchPositions['qf1'].y + matchPositions['qf2'].y) / 2 - MATCH_HEIGHT / 2;
+        drawMatchBox(SF_X, sf1_y, COLUMN_WIDTH, MATCH_HEIGHT, 'sf1');
+        matchPositions['sf1'] = { x: SF_X + COLUMN_WIDTH, y: sf1_y + MATCH_HEIGHT / 2 };
+        const sf2_y = (matchPositions['qf3'].y + matchPositions['qf4'].y) / 2 - MATCH_HEIGHT / 2;
+        drawMatchBox(SF_X, sf2_y, COLUMN_WIDTH, MATCH_HEIGHT, 'sf2');
+        matchPositions['sf2'] = { x: SF_X + COLUMN_WIDTH, y: sf2_y + MATCH_HEIGHT / 2 };
+        // Final
+        const final_y = (matchPositions['sf1'].y + matchPositions['sf2'].y) / 2 - MATCH_HEIGHT / 2;
+        drawMatchBox(FINAL_X, final_y, COLUMN_WIDTH, MATCH_HEIGHT, 'final');
+        matchPositions['final'] = { x: FINAL_X, y: final_y + MATCH_HEIGHT / 2 };
+        // 3rd Place
+        const third_y = QF_START_Y + 4 * (MATCH_HEIGHT + MATCH_V_GAP) + 120;
+        drawMatchBox(THIRD_X, third_y, COLUMN_WIDTH, MATCH_HEIGHT, 'third-place');
+        matchPositions['third-place'] = { x: THIRD_X, y: third_y + MATCH_HEIGHT / 2 };
 
-        let rightColumnHtml = '';
-        for (const groupLetter of groups.right) {
-            rightColumnHtml += renderGroup(groupLetter);
-        }
-
-        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
-
-        let html = '<div class="groups-view">'; // This will be position: relative
-        html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
-        html += `<div class="groups-logo-col logo-column-main">${logoHtml}</div>`;
-        html += `<div class="groups-right-col group-column">${rightColumnHtml}</div>`;
-        html += '</div>';
-
-        container.innerHTML = html;
-        initCardGradients();
+        // --- Draw Lines ---
+        drawBracketLines(matchPositions);
     }
 
-    function renderGroup(groupLetter) {
-        let groupHtml = `<div class="content-box">
-            <h2 class="group-title" data-title-id="group-title-${groupLetter}" contenteditable="true">${state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`}</h2>`;
-        for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
-            const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
-            const assignedPlayerId = state.assignments[slotId];
-            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
-            groupHtml += `
-                <div class="player-slot" data-slot-id="${slotId}">
-                    <img class="flag-image" src="${player.flag}" alt="">
-                    <span class="name">${player.name}</span>
-                    <img src="${player.avatar}" class="avatar">
-                </div>`;
+    function drawRoundHeader(x, y, width, title, dateId, bestOfId, timeId) {
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        const date = state.titles[dateId] || '';
+        const bestOf = state.titles[bestOfId] || '';
+        const time = state.titles[timeId] || '';
+
+        // Title
+        ctx.font = '32px "SouthParkFont"';
+        ctx.fillStyle = '#ffd27d';
+        ctx.fillText(title, x + width / 2, y + 30);
+
+        // Date, Best Of, Time
+        const smallFont = '16px "Cinzel"';
+        const smallFontHeight = 16;
+        ctx.font = smallFont;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+        if (dateId) {
+            const metrics = ctx.measureText(date);
+            const textX = x + width / 2 - metrics.width / 2;
+            ctx.fillText(date, x + width / 2, y);
+            clickableAreas.push({ x: textX, y: y, width: metrics.width, height: smallFontHeight, type: 'title', id: dateId, font: smallFont, color: 'white' });
         }
-        groupHtml += `</div>`;
-        return groupHtml;
+        if (bestOfId) {
+            const metrics = ctx.measureText(bestOf);
+            const textX = x + width / 2 - metrics.width / 2;
+            ctx.fillText(bestOf, x + width / 2, y + 65);
+            clickableAreas.push({ x: textX, y: y + 65, width: metrics.width, height: smallFontHeight, type: 'title', id: bestOfId, font: smallFont, color: 'white' });
+        }
+        if (timeId) {
+            ctx.fillStyle = '#e06636';
+            const metrics = ctx.measureText(time);
+            const textX = x + width / 2 - metrics.width / 2;
+            ctx.fillText(time, x + width / 2, y + 85);
+            clickableAreas.push({ x: textX, y: y + 85, width: metrics.width, height: smallFontHeight, type: 'title', id: timeId, font: smallFont, color: '#e06636' });
+        }
+        ctx.restore();
     }
 
-    function renderMatch(matchId, extraClass = '') {
+    function drawMatchBox(x, y, width, height, matchId) {
+        ctx.save();
+        // Draw the clipped polygon shape
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y);
+        ctx.lineTo(x + width, y);
+        ctx.lineTo(x + width, y + height);
+        ctx.lineTo(x + 20, y + height);
+        ctx.lineTo(x, y + height / 2);
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(44, 28, 17, .8)';
+        ctx.fill();
+        ctx.strokeStyle = '#ffd27d';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw player slots inside
         const p1_slot_id = `${matchId}-p1`;
         const p2_slot_id = `${matchId}-p2`;
-
-        const p1_id = state.assignments[p1_slot_id];
-        const p2_id = state.assignments[p2_slot_id];
-
-        const player1 = state.players.find(p => p.id === p1_id);
-        const player2 = state.players.find(p => p.id === p2_id);
-
-        const player1Name = player1 ? player1.name : '';
-        const player2Name = player2 ? player2.name : '';
-
-        const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
-        const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
-
-        // Ensure scores are never 'undefined'. Default to 0 for players, '' for empty slots.
-        const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
-        const score2 = player2 ? (state.scores[p2_slot_id] !== undefined ? state.scores[p2_slot_id] : 0) : '';
-
-        let p1_class = 'player-slot';
-        let p2_class = 'player-slot';
-
-        if (score1 > score2) {
-            p1_class += ' winner';
-            p2_class += ' loser';
-        } else if (score2 > score1) {
-            p2_class += ' winner';
-            p1_class += ' loser';
-        }
-
-        return `
-            <div class="match-box ${extraClass}" data-match-id="${matchId}">
-                <img class="flag-image p1-flag-img" src="${player1Flag}" alt="">
-                <img class="flag-image p2-flag-img" src="${player2Flag}" alt="">
-                <div class="${p1_class}" data-slot-id="${p1_slot_id}">
-                    <span class="name">${player1Name}</span>
-                    <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
-                </div>
-                <div class="${p2_class}" data-slot-id="${p2_slot_id}">
-                    <span class="name">${player2Name}</span>
-                    <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
-                </div>
-            </div>`;
+        drawPlayerSlotInBracket(x, y, width, height / 2, p1_slot_id);
+        drawPlayerSlotInBracket(x, y + height / 2, width, height / 2, p2_slot_id);
     }
 
-    function renderBracketCanvas(container) {
-        let html = '<div class="bracket-view">'; // This will be a position: relative container
+    function drawPlayerSlotInBracket(x, y, width, height, slotId) {
+        // Register clickable area for the whole slot
+        clickableAreas.push({ x, y, width, height, type: 'playerSlot', id: slotId });
 
-        // --- Absolutely Positioned Columns ---
+        // Register a more specific area for the score
+        const scoreWidth = 60;
+        clickableAreas.push({
+            x: x + width - scoreWidth,
+            y: y,
+            width: scoreWidth,
+            height: height,
+            type: 'score',
+            id: slotId
+        });
 
-        // Quarterfinals Column
-        html += '<div class="bracket-column bracket-qf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
-        html += renderMatch('qf1');
-        html += renderMatch('qf2');
-        html += renderMatch('qf3');
-        html += renderMatch('qf4');
-        html += '</div>';
+        const assignedPlayerId = state.assignments[slotId];
+        const player = state.players.find(p => p.id === assignedPlayerId);
+        const score = player ? (state.scores[slotId] !== undefined ? state.scores[slotId] : 0) : '';
 
-        // Semifinals Column
-        html += '<div class="bracket-column bracket-sf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
-        html += renderMatch('sf1');
-        html += renderMatch('sf2');
-        html += '</div>';
+        // Winner/loser background highlight
+        const matchId = slotId.substring(0, slotId.lastIndexOf('-'));
+        const p1_score = parseInt(state.scores[`${matchId}-p1`], 10) || 0;
+        const p2_score = parseInt(state.scores[`${matchId}-p2`], 10) || 0;
+        const isP1 = slotId.endsWith('-p1');
 
-        // Grand Final Group
-        html += '<div class="bracket-column bracket-final-group">';
-        html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
-        html += renderMatch('final');
-        html += '</div>';
+        if (p1_score !== p2_score) {
+            const isWinner = (isP1 && p1_score > p2_score) || (!isP1 && p2_score > p1_score);
+            ctx.save();
+            const grad = ctx.createRadialGradient(x + width - 50, y + height/2, 0, x + width - 50, y + height/2, 150);
+            if (isWinner) {
+                grad.addColorStop(0, 'rgba(60, 179, 113, 0.3)');
+            } else {
+                grad.addColorStop(0, 'rgba(220, 20, 60, 0.2)');
+            }
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.fillRect(x, y, width, height);
+            ctx.restore();
+        }
 
-        // 3rd Place Group
-        html += '<div class="bracket-column bracket-third-place-group">';
-        html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
-        html += renderMatch('third-place', 'third-match');
-        html += '</div>';
+        if (player) {
+            // Flag
+            const flagImg = loadedImageAssets.get(player.flag);
+            if (flagImg) {
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.beginPath();
+                ctx.moveTo(x, y + height);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + width * 0.5, y);
+                ctx.lineTo(x + width * 0.5, y + height);
+                ctx.clip();
+                ctx.drawImage(flagImg, x, y, width * 0.5, height);
+                ctx.restore();
+            }
 
-        html += '</div>'; // Close .bracket-view
-        container.innerHTML = html;
+            // Name
+            ctx.save();
+            ctx.font = '22px "SouthParkFont"';
+            ctx.fillStyle = '#ffd27d';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(player.name, x + 40, y + height / 2);
+            ctx.restore();
 
-        // Delay drawing to ensure DOM is ready after render, using rAF for reliability
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                drawProgressionLines();
-            });
+            // Score
+            ctx.save();
+            ctx.font = '32px "SouthParkFont"';
+            ctx.fillStyle = '#ffd27d';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(score, x + width - 20, y + height / 2);
+            ctx.restore();
+        }
+    }
+
+    function drawBracketLines(matchPositions) {
+        ctx.save();
+        ctx.strokeStyle = '#ffd27d';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#ffd27d';
+        ctx.shadowBlur = 3;
+
+        Object.keys(bracketProgression).forEach(matchId => {
+            const p1_score = parseInt(state.scores[`${matchId}-p1`], 10) || 0;
+            const p2_score = parseInt(state.scores[`${matchId}-p2`], 10) || 0;
+            if (p1_score === p2_score) return; // No winner
+
+            const progression = bracketProgression[matchId];
+            const winnerToId = progression.winnerTo;
+            const loserToId = progression.loserTo;
+
+            const startPos = matchPositions[matchId];
+
+            if (winnerToId) {
+                const endPos = matchPositions[winnerToId.substring(0, winnerToId.lastIndexOf('-'))];
+                if (startPos && endPos) {
+                    const midX = startPos.x + (endPos.x - startPos.x) / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(midX, startPos.y);
+                    ctx.lineTo(midX, endPos.y);
+                    ctx.lineTo(endPos.x, endPos.y);
+                    ctx.stroke();
+                }
+            }
+            if (loserToId) {
+                 const endPos = matchPositions[loserToId.substring(0, loserToId.lastIndexOf('-'))];
+                 if (startPos && endPos) {
+                    const midX = startPos.x + 30; // Just a little nudge out
+                    const midY = endPos.y - 30;
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(midX, startPos.y);
+                    ctx.lineTo(midX, midY);
+                    ctx.lineTo(endPos.x, midY);
+                    ctx.lineTo(endPos.x, endPos.y);
+                    ctx.stroke();
+                 }
+            }
+        });
+        ctx.restore();
+    }
+
+    function renderGroups() {
+        const logoImg = loadedImageAssets.get('Media/Logo_main-min.png');
+        const logoWidth = 340;
+        const logoHeight = logoImg ? (logoImg.height / logoImg.width) * logoWidth : 340;
+        const logoX = (canvasEl.width - logoWidth) / 2;
+        const logoY = (canvasEl.height - logoHeight) / 2;
+        if (logoImg) {
+            ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+        }
+
+        // Layout constants
+        const colWidth = 420;
+        const colGap = 80;
+        const boxHeight = 400;
+        const boxGap = 60;
+        const leftColX = logoX - colGap - colWidth;
+        const rightColX = logoX + logoWidth + colGap;
+        const topBoxY = (canvasEl.height - (2 * boxHeight + boxGap)) / 2;
+        const bottomBoxY = topBoxY + boxHeight + boxGap;
+
+        // Draw the 4 group boxes
+        drawGroup(leftColX, topBoxY, colWidth, boxHeight, 'A');
+        drawGroup(leftColX, bottomBoxY, colWidth, boxHeight, 'C');
+        drawGroup(rightColX, topBoxY, colWidth, boxHeight, 'B');
+        drawGroup(rightColX, bottomBoxY, colWidth, boxHeight, 'D');
+    }
+
+    function drawGroup(x, y, width, height, groupLetter) {
+        // Draw content box
+        ctx.save();
+        ctx.fillStyle = 'rgba(44, 28, 17, .8)';
+        ctx.strokeStyle = 'rgba(255, 210, 125, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeRect(x, y, width, height);
+        ctx.restore();
+
+        // Draw title
+        ctx.save();
+        ctx.font = '40px "SouthParkFont"';
+        ctx.fillStyle = '#ffd27d';
+        ctx.textAlign = 'center';
+        const title = state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`;
+        ctx.fillText(title, x + width / 2, y + 25);
+        ctx.restore();
+
+        // Draw player slots
+        const slotHeight = 70;
+        const slotStartY = y + 90;
+        for (let i = 0; i < 4; i++) {
+            const slotId = `group-${groupLetter.toLowerCase()}-${i + 1}`;
+            const slotY = slotStartY + i * slotHeight;
+            drawPlayerSlotInGroup(x + 20, slotY, width - 40, slotHeight - 10, slotId);
+        }
+    }
+
+    function drawPlayerSlotInGroup(x, y, width, height, slotId) {
+        clickableAreas.push({ x, y, width, height, type: 'playerSlot', id: slotId });
+
+        const assignedPlayerId = state.assignments[slotId];
+        const player = state.players.find(p => p.id === assignedPlayerId);
+
+        // Draw slot background
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.strokeStyle = 'rgba(255, 210, 125, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeRect(x, y, width, height);
+        ctx.restore();
+
+        if (player) {
+            // Draw flag
+            const flagImg = loadedImageAssets.get(player.flag);
+            if (flagImg) {
+                ctx.save();
+                // Mask for the fade effect
+                const maskGradient = ctx.createLinearGradient(x, y, x + width * 0.5, y);
+                maskGradient.addColorStop(0, 'rgba(0,0,0,1)');
+                maskGradient.addColorStop(0.8, 'rgba(0,0,0,1)');
+                maskGradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = maskGradient;
+                ctx.globalCompositeOperation = 'destination-in';
+                ctx.fillRect(x, y, width, height);
+
+                // Draw the flag itself
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(flagImg, x, y, width * 0.3, height);
+                ctx.restore();
+            }
+
+            // Draw avatar
+            const avatarImg = loadedImageAssets.get(player.avatar);
+            if (avatarImg) {
+                ctx.save();
+                const avatarSize = height - 10;
+                // Clip to a circle
+                ctx.beginPath();
+                ctx.arc(x + width - (avatarSize/2) - 5, y + height/2, avatarSize/2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(avatarImg, x + width - avatarSize - 5, y + 5, avatarSize, avatarSize);
+                ctx.restore();
+            }
+
+            // Draw name
+            ctx.save();
+            ctx.font = '28px "SouthParkFont"';
+            ctx.fillStyle = '#ffd27d';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
+            ctx.fillText(player.name, x + 40, y + height / 2);
+            ctx.restore();
+        }
+    }
+
+    function renderDecorations() {
+        if (!state.decorations || state.decorations.length === 0) {
+            return;
+        }
+
+        state.decorations.forEach(deco => {
+            const leafImg = loadedImageAssets.get(deco.src);
+            if (leafImg) {
+                ctx.save();
+                ctx.globalAlpha = deco.opacity;
+                ctx.translate(deco.x, deco.y);
+                ctx.rotate(deco.rotation);
+                ctx.scale(deco.scale, deco.scale);
+                ctx.drawImage(leafImg, -leafImg.width / 2, -leafImg.height / 2);
+                ctx.restore();
+            }
         });
     }
 
-    function createPath(startSlot, endSlot, matchId, canvasRect, scale) {
-        const startRect = startSlot.getBoundingClientRect();
-        const endRect = endSlot.getBoundingClientRect();
+    function renderBranding() {
+        // 1. Main Title
+        ctx.save();
+        ctx.font = '80px "SouthParkFont"';
+        ctx.fillStyle = '#ffd27d';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 8;
 
-        // Get coords from the slots' vertical center and edges, and un-scale them
-        const startX = (startRect.right - canvasRect.left) / scale;
-        const startY = (startRect.top + startRect.height / 2 - canvasRect.top) / scale;
-        const endX = (endRect.left - canvasRect.left) / scale;
-        const endY = (endRect.top + endRect.height / 2 - canvasRect.top) / scale;
+        const mainTitle = state.viewMode === 'bracket' ? state.mainTitle_bracket : state.mainTitle_groups;
+        ctx.fillText(mainTitle, canvasEl.width / 2, 30);
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        // Register clickable area for the title
+        const titleMetrics = ctx.measureText(mainTitle);
+        const titleHeight = 80; // Approximation of font height
+        clickableAreas.push({
+            x: canvasEl.width / 2 - titleMetrics.width / 2,
+            y: 30,
+            width: titleMetrics.width,
+            height: titleHeight,
+            type: 'title',
+            id: state.viewMode === 'bracket' ? 'mainTitle_bracket' : 'mainTitle_groups',
+            font: '80px "SouthParkFont"',
+            color: '#ffd27d'
+        });
+        ctx.restore();
 
-        const offsets = { 'qf1': -40, 'qf2': -20, 'qf3': 20, 'qf4': 40, 'sf1': -40, 'sf2': 40 };
-        const offset = offsets[matchId] || 0;
+        // 2. Bottom Branding
+        ctx.save();
+        // "Hosted by" text
+        ctx.font = '24px "Cinzel"'; // 1.5rem approx
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
 
-        const midX = startX + (endX - startX) / 2 + offset;
-        const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+        const hostedByText = "Hosted by ";
+        const hostedByMetrics = ctx.measureText(hostedByText);
+        const hostedByY = canvasEl.height - 20;
+        const hostedByX = 40;
+        ctx.fillText(hostedByText, hostedByX, hostedByY);
 
-        path.setAttribute('d', d);
-        path.classList.add('progression-line');
-        path.classList.add('winner-line');
-        return path;
+        // Branding logo
+        const brandLogoImg = loadedImageAssets.get('Media/text new-min.png');
+        if (brandLogoImg) {
+            const logoHeight = 40;
+            const logoWidth = (brandLogoImg.width / brandLogoImg.height) * logoHeight;
+            const logoX = hostedByX + hostedByMetrics.width + 15; // 15px margin
+            const logoY = hostedByY - logoHeight;
+            ctx.drawImage(brandLogoImg, logoX, logoY, logoWidth, logoHeight);
+        }
+        ctx.restore();
     }
 
+
+    function randomizeAssets() {
+        // Random background
+        state.backgroundSrc = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+
+        // Random leaves
+        state.decorations = [];
+        const numLeaves = 8;
+        const gridCols = 4;
+        const gridRows = 3;
+        const cellWidth = canvasEl.width / gridCols;
+        const cellHeight = canvasEl.height / gridRows;
+
+        let availableCells = Array.from({ length: gridCols * gridRows }, (_, i) => i);
+
+        for (let i = 0; i < numLeaves; i++) {
+            if (availableCells.length === 0) break;
+
+            const randomCellIndex = Math.floor(Math.random() * availableCells.length);
+            const cell = availableCells.splice(randomCellIndex, 1)[0];
+
+            const col = cell % gridCols;
+            const row = Math.floor(cell / gridRows);
+
+            // Position within the cell
+            const x = col * cellWidth + Math.random() * cellWidth;
+            const y = row * cellHeight + Math.random() * cellHeight;
+
+            state.decorations.push({
+                src: leafImages[Math.floor(Math.random() * leafImages.length)],
+                x: x,
+                y: y,
+                rotation: Math.random() * 2 * Math.PI, // in radians
+                scale: Math.random() * 0.25 + 0.25,
+                opacity: Math.random() * 0.4 + 0.3
+            });
+        }
+
+        markDirty();
+        render();
+    }
 
     function drawProgressionLines() {
-        const canvas = document.getElementById('canvas');
-        if (!canvas) return;
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('progression-lines-svg');
-        svg.style.position = 'absolute';
-        svg.style.top = '0';
-        svg.style.left = '0';
-        svg.style.width = '100%';
-        svg.style.height = '100%';
-        svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '4'; // Place lines behind content area (z-index: 5)
-
-        const canvasRect = canvas.getBoundingClientRect();
-        if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
-
-        // Calculate the scale factor
-        const scale = canvasRect.width / canvas.offsetWidth;
-        if (scale === 0) return; // Avoid division by zero if canvas is not rendered
-
-        const matches = document.querySelectorAll('.match-box[data-match-id]');
-        matches.forEach(matchBox => {
-            const matchId = matchBox.dataset.matchId;
-            if (!matchId.startsWith('qf') && !matchId.startsWith('sf')) {
-                return;
-            }
-
-            const p1_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
-            const p2_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p2']`);
-            if (!p1_slot || !p2_slot) return;
-
-            const p1_score_el = p1_slot.querySelector('.score');
-            const p2_score_el = p2_slot.querySelector('.score');
-            if (!p1_score_el || !p2_score_el) return;
-
-            const p1_score = parseInt(p1_score_el.textContent, 10) || 0;
-            const p2_score = parseInt(p2_score_el.textContent, 10) || 0;
-
-            if (p1_score === p2_score) return;
-
-            const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
-            const progression = bracketProgression[matchId];
-            if (!progression || !progression.winnerTo) return;
-
-            const endSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
-
-            if (winnerSlot && endSlot) {
-                const path = createPath(winnerSlot, endSlot, matchId, canvasRect, scale);
-                svg.appendChild(path);
-            }
-        });
-
-        if (svg.children.length > 0) {
-            canvas.appendChild(svg);
-        }
+        // This function will be rewritten to draw lines directly on the canvas.
+        // The old logic of appending an SVG element is no longer valid.
+        console.log("drawProgressionLines needs to be refactored for canvas.");
     }
 
     function updateBracketProgression(matchId) {
@@ -463,120 +825,126 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- DECORATIONS ---
-    const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
-    const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
-
-    function initCardGradients({
-      blobsPerCard = 3,
-      sizeMin = 600,      // Increased for larger blobs
-      sizeMax = 1200,     // Increased for larger blobs
-      blurPx = 90,        // Increased for softer edges
-      opacity = 0.08,     // Decreased for more subtlety
-      colors = [
-        ['#C9CBA3', '#FFE1A8'],
-        ['#E26D5C', '#723D46'],
-        ['#472D30', '#E26D5C'],
-        ['#FFE1A8', '#E26D5C']
-      ]
-    } = {}) {
-      document.querySelectorAll('.content-box').forEach(card => {
-        let bgContainer = card.querySelector('.card-bg-container');
-        if (bgContainer) bgContainer.remove(); // Clear old gradients
-
-        bgContainer = document.createElement('div');
-        bgContainer.className = 'card-bg-container';
-        card.prepend(bgContainer);
-
-        const bg = document.createElement('div');
-        bg.className = 'card-bg';
-
-        for (let i = 0; i < blobsPerCard; i++) {
-          const shape = document.createElement('div');
-          const size = Math.random() * (sizeMax - sizeMin) + sizeMin;
-          const [c1, c2] = colors[Math.floor(Math.random() * colors.length)];
-
-          Object.assign(shape.style, {
-            position: 'absolute',
-            width: `${size}px`,
-            height: `${size}px`,
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            transform: 'translate(-50%, -50%)',
-            borderRadius: `${Math.random() * 100}% ${Math.random() * 100}%`,
-            background: `radial-gradient(ellipse at center, ${c1} 0%, ${c2} 100%)`,
-            filter: `blur(${blurPx}px)`,
-            opacity: String(opacity)
-          });
-
-          bg.appendChild(shape);
-        }
-        bgContainer.appendChild(bg);
-      });
-    }
-
-    function applyDecorations() {
-        const bgElement = document.querySelector('#canvas-wrapper'); // Target wrapper for background
-        if (!bgElement) return;
-        const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
-        bgElement.style.backgroundImage = `url('${randomBg}')`;
-
-        const decorationsContainer = document.getElementById('decorations-container');
-        decorationsContainer.innerHTML = '';
-
-        // Grid placement logic to prevent overlaps
-        const numLeaves = 8;
-        const gridCols = 4;
-        const gridRows = 3;
-        const cellWidth = 100 / gridCols;
-        const cellHeight = 100 / gridRows;
-
-        let availableCells = Array.from({ length: gridCols * gridRows }, (_, i) => i);
-
-        for (let i = 0; i < numLeaves; i++) {
-            if (availableCells.length === 0) break; // Stop if we run out of cells
-
-            // Pick a random available cell and remove it from the list
-            const randomCellIndex = Math.floor(Math.random() * availableCells.length);
-            const cell = availableCells.splice(randomCellIndex, 1)[0];
-
-            const col = cell % gridCols;
-            const row = Math.floor(cell / gridCols);
-
-            // Calculate random position within the cell
-            const top = row * cellHeight + Math.random() * (cellHeight - 20); // -20 to avoid edges
-            const left = col * cellWidth + Math.random() * (cellWidth - 15);
-
-            const leaf = document.createElement('img');
-            leaf.className = 'leaf-decoration';
-            leaf.src = leafImages[Math.floor(Math.random() * leafImages.length)];
-            leaf.style.top = `${top}%`;
-            leaf.style.left = `${left}%`;
-            leaf.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.25 + 0.25})`;
-            leaf.style.opacity = `${Math.random() * 0.4 + 0.3}`;
-            decorationsContainer.appendChild(leaf);
-        }
-    }
+    // The old initCardGradients and applyDecorations functions are no longer needed,
+    // as this functionality is now handled by randomizeAssets and renderDecorations.
 
     // --- CANVAS INTERACTION ---
     const playerAssignModal = document.getElementById('player-assign-modal');
     let activeSlotId = null;
 
     function handleCanvasClick(e) {
-        const playerSlot = e.target.closest('.player-slot');
-        if (playerSlot) {
-            activeSlotId = playerSlot.dataset.slotId;
-            const availablePlayers = state.players; // Allow assigning same player multiple times
-            let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
-            optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
-            playerAssignModal.innerHTML = optionsHtml;
-            playerAssignModal.style.left = `${e.clientX}px`;
-            playerAssignModal.style.top = `${e.clientY}px`;
-            playerAssignModal.classList.remove('modal-hidden');
-            return;
-        }
-        if (!e.target.closest('#player-assign-modal')) {
+        // Get click coordinates, accounting for canvas scaling
+        const rect = canvasEl.getBoundingClientRect();
+        const scaleX = canvasEl.width / rect.width;
+        const scaleY = canvasEl.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        // Find the clicked area by checking in reverse (topmost first)
+        const clickedArea = clickableAreas.slice().reverse().find(area =>
+            x >= area.x && x <= area.x + area.width &&
+            y >= area.y && y <= area.y + area.height
+        );
+
+        if (clickedArea) {
+            console.log('Clicked on:', clickedArea);
+            if (clickedArea.type === 'playerSlot') {
+                handlePlayerSlotClick(clickedArea.id, e.clientX, e.clientY);
+            } else if (clickedArea.type === 'score' || clickedArea.type === 'title') {
+                handleScoreClick(clickedArea); // handleScoreClick just calls the overlay
+            }
+        } else {
+            // If clicking outside any interactive area, hide modals
             playerAssignModal.classList.add('modal-hidden');
         }
+    }
+
+    function handlePlayerSlotClick(slotId, clientX, clientY) {
+        activeSlotId = slotId;
+        const availablePlayers = state.players;
+        let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
+        optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
+        playerAssignModal.innerHTML = optionsHtml;
+        playerAssignModal.style.left = `${clientX}px`;
+        playerAssignModal.style.top = `${clientY}px`;
+        playerAssignModal.classList.remove('modal-hidden');
+    }
+
+    function handleScoreClick(area) {
+        createInputOverlay(area);
+    }
+
+    function createInputOverlay(area) {
+        // Remove existing input if any
+        const existingInput = document.getElementById('canvas-input-overlay');
+        if (existingInput) existingInput.remove();
+
+        const input = document.createElement('input');
+        input.id = 'canvas-input-overlay';
+        input.type = 'text';
+
+        // --- Calculate Position & Size ---
+        const rect = canvasEl.getBoundingClientRect();
+        const scaleX = rect.width / canvasEl.width;
+        const scaleY = rect.height / canvasEl.height;
+
+        input.style.position = 'absolute';
+        input.style.left = `${rect.left + area.x * scaleX}px`;
+        input.style.top = `${rect.top + area.y * scaleY}px`;
+        input.style.width = `${area.width * scaleX}px`;
+        input.style.height = `${area.height * scaleY}px`;
+
+        // --- Style the input to match canvas text ---
+        input.style.font = area.font || '32px "SouthParkFont"';
+        input.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        input.style.color = area.color || '#ffd27d';
+        input.style.border = '1px solid #ffd27d';
+        input.style.textAlign = 'center';
+        input.style.padding = '0';
+        input.style.boxSizing = 'border-box';
+
+        // --- Set initial value and event handlers ---
+        let initialValue;
+        if (area.type === 'score') {
+            initialValue = state.scores[area.id] || 0;
+        } else { // type is 'title' or 'mainTitle'
+            initialValue = area.id.startsWith('mainTitle') ? state[area.id] : state.titles[area.id] || '';
+        }
+        input.value = initialValue;
+
+        const onSave = () => {
+            const newValue = input.value;
+            if (area.type === 'score') {
+                if (state.scores[area.id] != newValue) {
+                    state.scores[area.id] = newValue;
+                    const matchId = area.id.substring(0, area.id.lastIndexOf('-'));
+                    updateBracketProgression(matchId);
+                    markDirty();
+                    render();
+                }
+            } else { // type is 'title' or 'mainTitle'
+                const targetObject = area.id.startsWith('mainTitle') ? state : state.titles;
+                if (targetObject[area.id] !== newValue) {
+                    targetObject[area.id] = newValue;
+                    markDirty();
+                    render();
+                }
+            }
+            input.remove();
+        };
+
+        input.addEventListener('blur', onSave);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            } else if (e.key === 'Escape') {
+                input.remove();
+            }
+        });
+
+        document.body.appendChild(input);
+        input.focus();
+        input.select();
     }
 
     function handleAssignPlayer(e) {
@@ -589,34 +957,11 @@ document.addEventListener('DOMContentLoaded', () => {
         playerAssignModal.classList.add('modal-hidden');
     }
 
-    function handleCanvasBlur(e) {
-        const scoreEl = e.target.closest('.score');
-        if (scoreEl) {
-            const slotId = scoreEl.dataset.scoreId;
-            state.scores[slotId] = scoreEl.textContent;
-            const matchId = slotId.substring(0, slotId.lastIndexOf('-'));
-            updateBracketProgression(matchId);
-            markDirty();
-            render(); // Re-render to show winner/loser styling and progression
-            return; // Exit to avoid handling other blurs
-        }
-
-        // Handle bracket metadata editing (dates, best-of, etc.)
-        const editedTitleEl = e.target.closest('[data-title-id]');
-        if (editedTitleEl) {
-            const titleId = editedTitleEl.dataset.titleId;
-            if (state.titles[titleId] !== editedTitleEl.textContent) {
-                state.titles[titleId] = editedTitleEl.textContent;
-                markDirty();
-            }
-        }
-    }
 
     // --- CANVAS SCALING ---
     function scaleCanvas() {
         const wrapper = document.getElementById('canvas-wrapper');
-        const canvas = document.getElementById('canvas');
-        if (!wrapper || !canvas) return;
+        if (!wrapper || !canvasEl) return;
 
         const wrapperWidth = wrapper.clientWidth;
         const wrapperHeight = wrapper.clientHeight;
@@ -626,52 +971,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
 
-        canvas.style.transform = `scale(${scale})`;
+        canvasEl.style.transform = `scale(${scale})`;
     }
 
 
     // --- INITIALIZATION ---
-    function init() {
+    async function init() {
         loadState();
+
+        loadedImageAssets = await preloadAssets();
+        console.log('Loaded assets map:', loadedImageAssets);
 
         // Toolbar & Modals
         saveBtn.addEventListener('click', saveState);
         addPlayerBtn.addEventListener('click', handleAddPlayer);
-        document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
+        document.getElementById('randomise-btn').addEventListener('click', randomizeAssets);
 
         document.getElementById('export-png').addEventListener('click', () => {
-            const canvasToExport = document.getElementById('canvas');
-            const originalScale = canvasToExport.style.transform;
-
-            // Temporarily reset scale for full-resolution capture
-            canvasToExport.style.transform = 'scale(1)';
-
-            html2canvas(canvasToExport, {
-                width: 1840,
-                height: 1080,
-                useCORS: true,
-                scale: 1,
-                onclone: (clonedDoc) => {
-                    // Ensure fonts and styles are applied in the cloned document
-                    const clonedCanvas = clonedDoc.getElementById('canvas');
-                    clonedCanvas.style.transform = 'scale(1)';
-                }
-            }).then(canvas => {
-                // Restore original scale
-                canvasToExport.style.transform = originalScale;
-
+            canvasEl.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.download = 'tournament-graphic.png';
-                link.href = canvas.toDataURL('image/png');
+                link.href = url;
+                link.download = 'tournament.png';
+
                 document.body.appendChild(link);
                 link.click();
+
                 document.body.removeChild(link);
-            }).catch(err => {
-                console.error("Error exporting canvas: ", err);
-                // Restore original scale even if there's an error
-                canvasToExport.style.transform = originalScale;
-                alert("Sorry, there was an error exporting the image.");
-            });
+                URL.revokeObjectURL(url);
+            }, 'image/png');
         });
 
         playerListEl.addEventListener('click', handlePlayerBankClick);
@@ -718,32 +1046,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dataUrl = event.target.result;
                     editingPlayer.avatar = dataUrl;
                     document.getElementById('edit-current-avatar').src = dataUrl;
-                    markDirty(); // Mark state as changed
+
+                    // Create a new Image object so the canvas can render it,
+                    // and add it to our asset map.
+                    const img = new Image();
+                    img.src = dataUrl;
+                    img.onload = () => {
+                        loadedImageAssets.set(dataUrl, img);
+                        markDirty();
+                        render(); // Re-render the canvas to show the new avatar
+                    };
                 };
                 reader.readAsDataURL(file);
             }
         });
 
         // Canvas
-        canvas.addEventListener('click', handleCanvasClick);
-        canvas.addEventListener('focusout', handleCanvasBlur);
+        canvasEl.addEventListener('click', handleCanvasClick);
         window.addEventListener('resize', scaleCanvas);
 
-        document.getElementById('main-title').addEventListener('focusout', (e) => {
-            const newTitle = e.target.textContent;
-            const key = `mainTitle_${state.viewMode}`;
-            if (state[key] !== newTitle) {
-                state[key] = newTitle;
-                markDirty();
-            }
-        });
+        // The main-title element is gone, so this listener is removed.
+        // Title editing will be handled via canvas interactions.
 
 
         console.log('Application initialized.');
         document.querySelector(`input[name="mode"][value="${state.viewMode}"]`).checked = true;
-        render();
+
+        // Initial randomization of background/decorations if not loaded from state
+        if (!state.backgroundSrc || !state.decorations || state.decorations.length === 0) {
+            randomizeAssets();
+        } else {
+            render();
+        }
+
         scaleCanvas(); // Initial scale
-        applyDecorations(); // Initial decorations
 
         setInterval(() => { if (state.isDirty) saveState(); }, 30000);
     }
