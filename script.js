@@ -294,12 +294,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1Flag}')"></div>
                 <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2Flag}')"></div>
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
+                    <div class="line-hook" data-hook-id="${p1_slot_id}-left"></div>
                     <span class="name">${player1Name}</span>
                     <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
+                    <div class="line-hook" data-hook-id="${p1_slot_id}-right"></div>
                 </div>
                 <div class="${p2_class}" data-slot-id="${p2_slot_id}">
+                    <div class="line-hook" data-hook-id="${p2_slot_id}-left"></div>
                     <span class="name">${player2Name}</span>
                     <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
+                    <div class="line-hook" data-hook-id="${p2_slot_id}-right"></div>
                 </div>
             </div>`;
     }
@@ -340,22 +344,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
-        drawProgressionLines();
+
+        // Delay drawing to ensure DOM is ready after render
+        setTimeout(() => drawProgressionLines(), 0);
     }
 
-    function createPath(startSlot, endSlot, matchId, canvasRect) {
-        const startRect = startSlot.getBoundingClientRect();
-        const endRect = endSlot.getBoundingClientRect();
+    function createPath(startHook, endHook, matchId, canvasRect) {
+        const startRect = startHook.getBoundingClientRect();
+        const endRect = endHook.getBoundingClientRect();
 
-        const startX = startRect.right - canvasRect.left;
-        const startY = (startRect.top + startRect.bottom) / 2 - canvasRect.top;
-        const endX = endRect.left - canvasRect.left;
-        const endY = (endRect.top + endRect.bottom) / 2 - canvasRect.top;
+        // Get the center of the hook elements
+        const startX = startRect.left + startRect.width / 2 - canvasRect.left;
+        const startY = startRect.top + startRect.height / 2 - canvasRect.top;
+        const endX = endRect.left + endRect.width / 2 - canvasRect.left;
+        const endY = endRect.top + endRect.height / 2 - canvasRect.top;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-        // Use a much larger offset for SF->Final connections to force them apart
-        const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -100, 'sf2': 100 };
+        const offsets = { 'qf1': -20, 'qf2': -10, 'qf3': 10, 'qf4': 20, 'sf1': -40, 'sf2': 40 };
         const offset = offsets[matchId] || 0;
 
         const midX = startX + (endX - startX) / 2 + offset;
@@ -363,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         path.setAttribute('d', d);
         path.classList.add('progression-line');
-        path.classList.add('winner-line'); // All lines are winner lines now
+        path.classList.add('winner-line');
         return path;
     }
 
@@ -383,12 +389,13 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.style.zIndex = '4';
 
         const canvasRect = canvas.getBoundingClientRect();
+        if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
 
         const matches = document.querySelectorAll('.match-box[data-match-id]');
         matches.forEach(matchBox => {
             const matchId = matchBox.dataset.matchId;
             if (!matchId.startsWith('qf') && !matchId.startsWith('sf')) {
-                return; // Only process QF and SF matches
+                return;
             }
 
             const p1_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
@@ -402,17 +409,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const p1_score = parseInt(p1_score_el.textContent, 10) || 0;
             const p2_score = parseInt(p2_score_el.textContent, 10) || 0;
 
-            if (p1_score === p2_score) return; // No winner/loser yet
+            if (p1_score === p2_score) return;
 
             const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
+            const winnerSlotId = winnerSlot.dataset.slotId;
 
             const progression = bracketProgression[matchId];
             if (!progression || !progression.winnerTo) return;
 
-            // Draw winner line
-            const destSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
-            if (destSlot) {
-                const path = createPath(winnerSlot, destSlot, matchId, canvasRect);
+            const startHook = document.querySelector(`[data-hook-id='${winnerSlotId}-right']`);
+            const endHook = document.querySelector(`[data-hook-id='${progression.winnerTo}-left']`);
+
+            if (startHook && endHook) {
+                const path = createPath(startHook, endHook, matchId, canvasRect);
                 svg.appendChild(path);
             }
         });

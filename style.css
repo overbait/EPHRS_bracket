@@ -509,3 +509,15 @@ body {
     stroke: var(--primary-color);
     filter: drop-shadow(0 0 3px var(--primary-color));
 }
+
+.line-hook {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* The data-hook-id attribute is like 'qf1-p1-left'. We select based on the suffix. */
+[data-hook-id$="-left"] { left: 0; }
+[data-hook-id$="-right"] { right: 0; }
