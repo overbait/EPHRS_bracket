@@ -638,6 +638,43 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.addEventListener('click', saveState);
         addPlayerBtn.addEventListener('click', handleAddPlayer);
         document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
+
+        document.getElementById('export-png').addEventListener('click', () => {
+            const canvasToExport = document.getElementById('canvas');
+            const originalScale = canvasToExport.style.transform;
+
+            // Temporarily reset scale for full-resolution capture
+            canvasToExport.style.transform = 'scale(1)';
+
+            html2canvas(canvasToExport, {
+                width: 1840,
+                height: 1080,
+                useCORS: true,
+                allowTaint: true,
+                scale: 1,
+                onclone: (clonedDoc) => {
+                    // Ensure fonts and styles are applied in the cloned document
+                    const clonedCanvas = clonedDoc.getElementById('canvas');
+                    clonedCanvas.style.transform = 'scale(1)';
+                }
+            }).then(canvas => {
+                // Restore original scale
+                canvasToExport.style.transform = originalScale;
+
+                const link = document.createElement('a');
+                link.download = 'tournament-graphic.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error("Error exporting canvas: ", err);
+                // Restore original scale even if there's an error
+                canvasToExport.style.transform = originalScale;
+                alert("Sorry, there was an error exporting the image.");
+            });
+        });
+
         playerListEl.addEventListener('click', handlePlayerBankClick);
         document.getElementById('save-player-changes-btn').addEventListener('click', handleSaveChanges);
         document.getElementById('cancel-player-edit-btn').addEventListener('click', closeEditModal);
