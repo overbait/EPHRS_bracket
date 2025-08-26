@@ -446,49 +446,43 @@ body {
     padding: 0 20px;
 }
 
-/* --- FLAG BACKGROUND STYLES --- */
-.flag-background {
+/* --- FLAG IMAGE STYLES --- */
+.flag-image {
     position: absolute;
-    z-index: 0; /* Behind text content */
-    background-size: cover;
-    background-position: center;
-    background-image: var(--flag-image); /* Set via JS */
+    z-index: 0;
+    object-fit: cover; /* Replaces background-size: cover */
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
     mask-image: linear-gradient(to right, black 40%, transparent 100%);
+    opacity: 0.5;
 }
 
 /* For Groups View */
-.groups-view .player-slot .flag-background {
+.groups-view .player-slot {
+    position: relative; /* Needed for absolute positioning of the flag image */
+    overflow: hidden;
+}
+.groups-view .player-slot .flag-image {
     top: 0;
     left: 0;
     width: 30%;
     height: 100%;
-    background-size: cover;
-    background-position: center;
-    opacity: 0.5;
 }
 .groups-view .player-slot .avatar,
 .groups-view .player-slot .name {
-    z-index: 1; /* Ensure avatar and name are on top of the flag background */
+    z-index: 1; /* Ensure avatar and name are on top of the flag */
 }
-
 
 /* For Brackets View */
-.match-box {
-    position: relative; /* Ensure it's a positioning context for the flags */
-    overflow: hidden; /* This will clip the flag backgrounds */
-}
-.match-box .flag-background {
-    width: 50%; /* Smaller, sits behind the player name */
+.match-box .flag-image {
+    width: 50%;
     height: 50%;
     left: 0;
-    opacity: 0.5; /* Match opacity of group view flags */
 }
-.match-box .p1-flag-bg {
+.match-box .p1-flag-img {
     top: 0;
 }
-.match-box .p2-flag-bg {
+.match-box .p2-flag-img {
     bottom: 0;
 }
 

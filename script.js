@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
             groupHtml += `
                 <div class="player-slot" data-slot-id="${slotId}">
-                    <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
+                    <img class="flag-image" src="${player.flag}" alt="">
                     <span class="name">${player.name}</span>
                     <img src="${player.avatar}" class="avatar">
                 </div>`;
@@ -291,8 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="match-box ${extraClass}" data-match-id="${matchId}">
-                <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1Flag}')"></div>
-                <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2Flag}')"></div>
+                <img class="flag-image p1-flag-img" src="${player1Flag}" alt="">
+                <img class="flag-image p2-flag-img" src="${player2Flag}" alt="">
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
                     <span class="name">${player1Name}</span>
                     <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
