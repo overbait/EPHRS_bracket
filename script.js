@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '4';
+        svg.style.zIndex = '6';
 
         const canvasRect = canvas.getBoundingClientRect();
         if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
