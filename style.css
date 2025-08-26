@@ -223,8 +223,9 @@ body {
     grid-template-columns: 1.1fr 0.9fr 1fr;
     grid-template-rows: auto auto;
     align-items: center;
-    gap: 20px;
-    padding: 20px;
+    column-gap: 20px;
+    row-gap: 5px;
+    padding: 20px 0; /* Vertical padding only */
     box-sizing: border-box;
 }
 
@@ -241,6 +242,8 @@ body {
 .bracket-qf-column {
     grid-column: 1;
     grid-row: 1 / 3; /* Span both rows */
+    justify-self: start;
+    margin-left: -40px;
 }
 
 .bracket-sf-column {
@@ -253,6 +256,8 @@ body {
     grid-row: 1;
     justify-content: flex-end; /* Align to the top of the cell */
     align-items: flex-end;
+    justify-self: end;
+    margin-right: -40px;
 }
 
 .bracket-third-place-group {
