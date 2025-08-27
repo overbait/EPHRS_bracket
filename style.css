@@ -32,7 +32,7 @@ body {
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
-    /* overflow: hidden; */ /* Removed to allow trophy icon to show */
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -187,7 +187,7 @@ body {
     display: flex;
     align-items: center;
     height: 50px;
-    padding: 10px 20px 10px 60px; /* Add significant left padding */
+    padding: 10px 20px;
     margin: 8px 0;
     border: 1px solid rgba(255, 210, 125, 0.2);
     border-radius: 4px;
@@ -206,7 +206,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 10px; /* Small padding, as the parent slot is now padded */
+    padding-left: 65px; /* Increased padding to avoid flag */
 }
 /* The old .flag class is no longer needed */
 
@@ -332,7 +332,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    /* overflow: hidden; */ /* Removed to allow trophy icon to show */
+    overflow: hidden;
     flex-shrink: 0; /* Prevent match box from shrinking */
 }
 
@@ -447,8 +447,8 @@ img[src=""] {
     z-index: 0;
     object-fit: cover; /* Replaces background-size: cover */
     pointer-events: none;
-    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
-    mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
+    mask-image: linear-gradient(to right, black 40%, transparent 100%);
     opacity: 0.5;
 }
 
@@ -459,8 +459,8 @@ img[src=""] {
 }
 .groups-view .player-slot .flag-image {
     top: 0;
-    left: 0; /* Position at the start of the padded container */
-    width: 45px; /* Fixed width for the flag area */
+    left: 20px; /* Pushed right to avoid clipping */
+    width: 30%;
     height: 100%;
 }
 .groups-view .player-slot .avatar,
@@ -499,6 +499,11 @@ img[src=""] {
     filter: drop-shadow(0 0 3px var(--primary-color));
 }
 
+.groups-view .player-slot.empty-slot,
+.bracket-view .player-slot.empty-slot {
+    background: linear-gradient(to right, rgba(245, 230, 200, 0.15), rgba(245, 230, 200, 0));
+}
+
 /* --- SPECIAL EFFECTS --- */
 .grand-final-winner {
     filter: drop-shadow(0 0 12px var(--primary-color));
@@ -506,16 +511,11 @@ img[src=""] {
 
 .trophy-icon {
     position: absolute;
-    right: -50px;
+    right: 10px; /* Positioned safely inside the container */
     top: 50%;
     transform: translateY(-50%) rotate(10deg);
-    width: 90px;
+    width: 60px; /* Slightly smaller to fit well */
     height: auto;
     z-index: 20;
     pointer-events: none;
-}
-
-.groups-view .player-slot.empty-slot,
-.bracket-view .player-slot.empty-slot {
-    background: linear-gradient(to right, rgba(245, 230, 200, 0.15), rgba(245, 230, 200, 0));
 }

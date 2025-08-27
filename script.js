@@ -160,15 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleReset() {
         if (confirm('Are you sure you want to reset everything? This will delete all players and clear all slots.')) {
-            // Reset state to a deep copy of the default state
             state = JSON.parse(JSON.stringify(defaultState));
-            // Explicitly mark as dirty to ensure the change is saved
             markDirty();
-            // Save the now-empty state to localStorage
             saveState();
-            // Re-render the entire UI
             render();
-            // Update the save button to show "Saved"
             updateSaveButton();
             console.log('State has been reset.');
         }
@@ -262,12 +257,15 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
             const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
             const assignedPlayerId = state.assignments[slotId];
-            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', flag: '' };
-            const slotClass = player.name ? 'player-slot' : 'player-slot empty-slot';
+            const player = state.players.find(p => p.id === assignedPlayerId);
+            const slotClass = player ? 'player-slot' : 'player-slot empty-slot';
+            const flagSrc = player ? player.flag : '';
+            const playerName = player ? player.name : '';
+
             groupHtml += `
                 <div class="${slotClass}" data-slot-id="${slotId}">
-                    <img class="flag-image" src="${player.flag}" alt="">
-                    <span class="name">${player.name}</span>
+                    <img class="flag-image" src="${flagSrc}" alt="">
+                    <span class="name">${playerName}</span>
                 </div>`;
         }
         groupHtml += `</div>`;
@@ -290,17 +288,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const player1Flag = player1 ? player1.flag : '';
         const player2Flag = player2 ? player2.flag : '';
 
-        // Ensure scores are never 'undefined'. Default to 0 for players, '' for empty slots.
         const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
         const score2 = player2 ? (state.scores[p2_slot_id] !== undefined ? state.scores[p2_slot_id] : 0) : '';
 
         let p1_class = player1 ? 'player-slot' : 'player-slot empty-slot';
         let p2_class = player2 ? 'player-slot' : 'player-slot empty-slot';
+
         let p1_trophy = '';
         let p2_trophy = '';
 
-        // This comparison works correctly because JS coerces the empty string '' to 0.
-        // This ensures winner/loser status is applied even if one slot is empty.
         if (score1 > score2) {
             p1_class += ' winner';
             p2_class += ' loser';
