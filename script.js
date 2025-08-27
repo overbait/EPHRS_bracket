@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cell = availableCells.splice(randomCellIndex, 1)[0];
 
             const col = cell % gridCols;
-            const row = Math.floor(cell / gridCols);
+            const row = Math.floor(cell / gridRows);
 
             // Calculate random position within the cell
             const top = row * cellHeight + Math.random() * (cellHeight - 20); // -20 to avoid edges
