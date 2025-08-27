@@ -32,7 +32,7 @@ body {
     aspect-ratio: 16 / 9;
     border: 1px solid var(--primary-color);
     position: relative;
-    overflow: hidden;
+    /* overflow: hidden; */ /* Removed to allow trophy icon to show */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -187,7 +187,7 @@ body {
     display: flex;
     align-items: center;
     height: 50px;
-    padding: 10px 20px;
+    padding: 10px 20px 10px 60px; /* Add significant left padding */
     margin: 8px 0;
     border: 1px solid rgba(255, 210, 125, 0.2);
     border-radius: 4px;
@@ -206,7 +206,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 60px; /* Increased padding to not overlap with flag */
+    padding-left: 10px; /* Small padding, as the parent slot is now padded */
 }
 /* The old .flag class is no longer needed */
 
@@ -358,7 +358,7 @@ body {
 .bracket-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.4rem;
+    font-size: 1.6rem; /* Increased from 1.4rem */
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     padding-left: 40px;
@@ -459,8 +459,8 @@ img[src=""] {
 }
 .groups-view .player-slot .flag-image {
     top: 0;
-    left: 20px; /* Add space from the left edge */
-    width: 30%;
+    left: 0; /* Position at the start of the padded container */
+    width: 45px; /* Fixed width for the flag area */
     height: 100%;
 }
 .groups-view .player-slot .avatar,
