@@ -592,16 +592,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleCanvasClick(e) {
         const playerSlot = e.target.closest('.player-slot');
         if (playerSlot) {
-            activeSlotId = playerSlot.dataset.slotId;
-            const availablePlayers = state.players; // Allow assigning same player multiple times
-            let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
-            optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
-            playerAssignModal.innerHTML = optionsHtml;
-            playerAssignModal.style.left = `${e.clientX}px`;
-            playerAssignModal.style.top = `${e.clientY}px`;
-            playerAssignModal.classList.remove('modal-hidden');
-            return;
+            let slotId = playerSlot.dataset.slotId;
+            // For group view, the ID is on the wrapper, not the slot itself.
+            if (!slotId) {
+                const wrapper = playerSlot.closest('.player-slot-group-wrapper');
+                if (wrapper) {
+                    slotId = wrapper.dataset.slotId;
+                }
+            }
+
+            if (slotId) {
+                activeSlotId = slotId;
+                const availablePlayers = state.players; // Allow assigning same player multiple times
+                let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
+                optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
+                playerAssignModal.innerHTML = optionsHtml;
+                playerAssignModal.style.left = `${e.clientX}px`;
+                playerAssignModal.style.top = `${e.clientY}px`;
+                playerAssignModal.classList.remove('modal-hidden');
+                return; // Exit after handling the click
+            }
         }
+
+        // If the click was not on a slot, hide the modal (unless clicking in the modal)
         if (!e.target.closest('#player-assign-modal')) {
             playerAssignModal.classList.add('modal-hidden');
         }
