@@ -200,7 +200,7 @@ body {
 .player-slot-group-wrapper .flag-image {
     position: absolute;
     top: 0;
-    left: 30px; /* Pushed right to avoid clipping */
+    left: 0; /* Pushed right to avoid clipping */
     width: 30%;
     height: 100%;
     z-index: 0;
@@ -223,7 +223,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 75px; /* Adjusted for new flag position */
+    padding-left: 100px; /* Adjusted for new flag position */
 }
 /* The old .flag class is no longer needed */
 
@@ -462,7 +462,7 @@ img[src=""] {
 .flag-image {
     position: absolute;
     z-index: 0;
-    object-fit: cover; /* Replaces background-size: cover */
+    object-fit: contain; /* Replaces background-size: cover */
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
     mask-image: linear-gradient(to right, black 40%, transparent 100%);
@@ -474,7 +474,7 @@ img[src=""] {
     /* This is now the selector for the group flag */
     width: 30%;
     height: 100%;
-    left: 30px; /* Pushed right to avoid clipping */
+    left: 0; /* Pushed right to avoid clipping */
 }
 /* For Brackets View */
 .match-box .flag-image {
