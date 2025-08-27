@@ -187,7 +187,7 @@ body {
 /* NEW Group player slot styling */
 .player-slot-group-wrapper {
     position: relative;
-    height: 50px;
+    height: 60px; /* Increased height */
     margin: 8px 0;
     border: 1px solid rgba(255, 210, 125, 0.2);
     border-radius: 4px;
