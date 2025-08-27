@@ -206,7 +206,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 65px; /* Increased padding to avoid flag */
+    padding-left: 45px; /* Nudged to make space for flag */
 }
 /* The old .flag class is no longer needed */
 
@@ -358,7 +358,7 @@ body {
 .bracket-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.6rem; /* Increased from 1.4rem */
+    font-size: 1.6rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     padding-left: 40px;
@@ -459,7 +459,7 @@ img[src=""] {
 }
 .groups-view .player-slot .flag-image {
     top: 0;
-    left: 20px; /* Pushed right to avoid clipping */
+    left: 5px; /* Nudged right to prevent clipping */
     width: 30%;
     height: 100%;
 }
@@ -511,10 +511,10 @@ img[src=""] {
 
 .trophy-icon {
     position: absolute;
-    right: 10px; /* Positioned safely inside the container */
+    right: 55px; /* Positioned safely to the left of the score */
     top: 50%;
     transform: translateY(-50%) rotate(10deg);
-    width: 60px; /* Slightly smaller to fit well */
+    width: 60px;
     height: auto;
     z-index: 20;
     pointer-events: none;

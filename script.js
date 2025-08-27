@@ -293,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let p1_class = player1 ? 'player-slot' : 'player-slot empty-slot';
         let p2_class = player2 ? 'player-slot' : 'player-slot empty-slot';
-
         let p1_trophy = '';
         let p2_trophy = '';
 
