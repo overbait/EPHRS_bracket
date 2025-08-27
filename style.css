@@ -194,7 +194,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     position: relative;
-    background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
+    /* background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%); */
 }
 .groups-view .player-slot:hover {
     border-color: rgba(255, 210, 125, 0.5);
