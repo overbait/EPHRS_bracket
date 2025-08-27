@@ -262,10 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const flagSrc = player ? player.flag : '';
             const playerName = player ? player.name : '';
 
+            // This new structure mimics the match-box, with the flag as a sibling to the content
             groupHtml += `
-                <div class="${slotClass}" data-slot-id="${slotId}">
+                <div class="player-slot-group-wrapper" data-slot-id="${slotId}">
                     <img class="flag-image" src="${flagSrc}" alt="">
-                    <span class="name">${playerName}</span>
+                    <div class="${slotClass}">
+                        <span class="name">${playerName}</span>
+                    </div>
                 </div>`;
         }
         groupHtml += `</div>`;
