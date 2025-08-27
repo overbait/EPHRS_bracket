@@ -204,6 +204,8 @@ body {
     width: 30%;
     height: 100%;
     z-index: 0;
+    object-fit: contain;
+    object-position: left;
 }
 .groups-view .player-slot {
     display: flex;
@@ -462,7 +464,7 @@ img[src=""] {
 .flag-image {
     position: absolute;
     z-index: 0;
-    object-fit: contain; /* Replaces background-size: cover */
+    object-fit: cover; /* Replaces background-size: cover */
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
     mask-image: linear-gradient(to right, black 40%, transparent 100%);
