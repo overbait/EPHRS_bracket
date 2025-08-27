@@ -263,8 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
             const assignedPlayerId = state.assignments[slotId];
             const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', flag: '' };
+            const slotClass = player.name ? 'player-slot' : 'player-slot empty-slot';
             groupHtml += `
-                <div class="player-slot" data-slot-id="${slotId}">
+                <div class="${slotClass}" data-slot-id="${slotId}">
                     <img class="flag-image" src="${player.flag}" alt="">
                     <span class="name">${player.name}</span>
                 </div>`;
@@ -293,29 +294,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
         const score2 = player2 ? (state.scores[p2_slot_id] !== undefined ? state.scores[p2_slot_id] : 0) : '';
 
-        let p1_class = 'player-slot';
-        let p2_class = 'player-slot';
+        let p1_class = player1 ? 'player-slot' : 'player-slot empty-slot';
+        let p2_class = player2 ? 'player-slot' : 'player-slot empty-slot';
         let p1_trophy = '';
         let p2_trophy = '';
 
-        // Check for a winner, ensuring scores are actual numbers and not tied
-        const hasWinner = typeof score1 === 'number' && typeof score2 === 'number' && score1 !== score2;
-
-        if (hasWinner) {
-            if (score1 > score2) {
-                p1_class += ' winner';
-                p2_class += ' loser';
-                if (matchId === 'final') {
-                    p1_class += ' grand-final-winner';
-                    p1_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
-                }
-            } else {
-                p2_class += ' winner';
-                p1_class += ' loser';
-                if (matchId === 'final') {
-                    p2_class += ' grand-final-winner';
-                    p2_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
-                }
+        // This comparison works correctly because JS coerces the empty string '' to 0.
+        // This ensures winner/loser status is applied even if one slot is empty.
+        if (score1 > score2) {
+            p1_class += ' winner';
+            p2_class += ' loser';
+            if (matchId === 'final') {
+                p1_class += ' grand-final-winner';
+                p1_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
+            }
+        } else if (score2 > score1) {
+            p2_class += ' winner';
+            p1_class += ' loser';
+            if (matchId === 'final') {
+                p2_class += ' grand-final-winner';
+                p2_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
             }
         }
 

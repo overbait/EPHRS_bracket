@@ -206,7 +206,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px;
+    padding-left: 60px; /* Increased padding to not overlap with flag */
 }
 /* The old .flag class is no longer needed */
 
@@ -447,8 +447,8 @@ img[src=""] {
     z-index: 0;
     object-fit: cover; /* Replaces background-size: cover */
     pointer-events: none;
-    -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
-    mask-image: linear-gradient(to right, black 40%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
     opacity: 0.5;
 }
 
@@ -459,8 +459,8 @@ img[src=""] {
 }
 .groups-view .player-slot .flag-image {
     top: 0;
-    left: 15px; /* Added padding so flag isn't clipped */
-    width: 25%; /* Reduced width slightly */
+    left: 20px; /* Add space from the left edge */
+    width: 30%;
     height: 100%;
 }
 .groups-view .player-slot .avatar,
@@ -513,4 +513,9 @@ img[src=""] {
     height: auto;
     z-index: 20;
     pointer-events: none;
+}
+
+.groups-view .player-slot.empty-slot,
+.bracket-view .player-slot.empty-slot {
+    background: linear-gradient(to right, rgba(245, 230, 200, 0.15), rgba(245, 230, 200, 0));
 }
