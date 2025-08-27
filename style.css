@@ -200,7 +200,7 @@ body {
 .player-slot-group-wrapper .flag-image {
     position: absolute;
     top: 0;
-    left: 0;
+    left: 30px; /* Pushed right to avoid clipping */
     width: 30%;
     height: 100%;
     z-index: 0;
@@ -209,7 +209,7 @@ body {
     display: flex;
     align-items: center;
     height: 100%;
-    padding: 10px 20px;
+    padding: 0 20px; /* No vertical padding, rely on flexbox for centering */
     background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
     position: relative;
     z-index: 1;
@@ -223,7 +223,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px;
+    padding-left: 75px; /* Adjusted for new flag position */
 }
 /* The old .flag class is no longer needed */
 
@@ -470,10 +470,12 @@ img[src=""] {
 }
 
 /* For Groups View */
-.groups-view .player-slot {
-    /* This rule is now for the inner div of the wrapper */
+.player-slot-group-wrapper .flag-image {
+    /* This is now the selector for the group flag */
+    width: 30%;
+    height: 100%;
+    left: 30px; /* Pushed right to avoid clipping */
 }
-
 /* For Brackets View */
 .match-box .flag-image {
     width: 50%;
