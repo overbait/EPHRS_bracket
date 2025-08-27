@@ -200,14 +200,6 @@ body {
     border-color: rgba(255, 210, 125, 0.5);
     background: rgba(0,0,0,0.4);
 }
-.groups-view .player-slot .avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: #555;
-    margin-left: 20px;
-    object-fit: cover;
-}
 .groups-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
@@ -340,7 +332,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    overflow: hidden;
+    /* overflow: hidden; */ /* Removed to allow trophy icon to show */
     flex-shrink: 0; /* Prevent match box from shrinking */
 }
 
@@ -447,6 +439,9 @@ body {
 }
 
 /* --- FLAG IMAGE STYLES --- */
+img[src=""] {
+    display: none;
+}
 .flag-image {
     position: absolute;
     z-index: 0;
@@ -464,8 +459,8 @@ body {
 }
 .groups-view .player-slot .flag-image {
     top: 0;
-    left: 0;
-    width: 30%;
+    left: 15px; /* Added padding so flag isn't clipped */
+    width: 25%; /* Reduced width slightly */
     height: 100%;
 }
 .groups-view .player-slot .avatar,
@@ -504,3 +499,18 @@ body {
     filter: drop-shadow(0 0 3px var(--primary-color));
 }
 
+/* --- SPECIAL EFFECTS --- */
+.grand-final-winner {
+    filter: drop-shadow(0 0 12px var(--primary-color));
+}
+
+.trophy-icon {
+    position: absolute;
+    right: -50px;
+    top: 50%;
+    transform: translateY(-50%) rotate(10deg);
+    width: 90px;
+    height: auto;
+    z-index: 20;
+    pointer-events: none;
+}

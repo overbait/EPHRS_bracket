@@ -158,6 +158,22 @@ document.addEventListener('DOMContentLoaded', () => {
         closeEditModal();
     }
 
+    function handleReset() {
+        if (confirm('Are you sure you want to reset everything? This will delete all players and clear all slots.')) {
+            // Reset state to a deep copy of the default state
+            state = JSON.parse(JSON.stringify(defaultState));
+            // Explicitly mark as dirty to ensure the change is saved
+            markDirty();
+            // Save the now-empty state to localStorage
+            saveState();
+            // Re-render the entire UI
+            render();
+            // Update the save button to show "Saved"
+            updateSaveButton();
+            console.log('State has been reset.');
+        }
+    }
+
     function handlePlayerBankClick(e) {
         const playerItem = e.target.closest('.player-bank-item');
         if (!playerItem) return;
@@ -246,12 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
             const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
             const assignedPlayerId = state.assignments[slotId];
-            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
+            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', flag: '' };
             groupHtml += `
                 <div class="player-slot" data-slot-id="${slotId}">
                     <img class="flag-image" src="${player.flag}" alt="">
                     <span class="name">${player.name}</span>
-                    <img src="${player.avatar}" class="avatar">
                 </div>`;
         }
         groupHtml += `</div>`;
@@ -271,8 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const player1Name = player1 ? player1.name : '';
         const player2Name = player2 ? player2.name : '';
 
-        const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
-        const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
+        const player1Flag = player1 ? player1.flag : '';
+        const player2Flag = player2 ? player2.flag : '';
 
         // Ensure scores are never 'undefined'. Default to 0 for players, '' for empty slots.
         const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
@@ -280,13 +295,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let p1_class = 'player-slot';
         let p2_class = 'player-slot';
+        let p1_trophy = '';
+        let p2_trophy = '';
 
-        if (score1 > score2) {
-            p1_class += ' winner';
-            p2_class += ' loser';
-        } else if (score2 > score1) {
-            p2_class += ' winner';
-            p1_class += ' loser';
+        // Check for a winner, ensuring scores are actual numbers and not tied
+        const hasWinner = typeof score1 === 'number' && typeof score2 === 'number' && score1 !== score2;
+
+        if (hasWinner) {
+            if (score1 > score2) {
+                p1_class += ' winner';
+                p2_class += ' loser';
+                if (matchId === 'final') {
+                    p1_class += ' grand-final-winner';
+                    p1_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
+                }
+            } else {
+                p2_class += ' winner';
+                p1_class += ' loser';
+                if (matchId === 'final') {
+                    p2_class += ' grand-final-winner';
+                    p2_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
+                }
+            }
         }
 
         return `
@@ -296,10 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
                     <span class="name">${player1Name}</span>
                     <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
+                    ${p1_trophy}
                 </div>
                 <div class="${p2_class}" data-slot-id="${p2_slot_id}">
                     <span class="name">${player2Name}</span>
                     <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
+                    ${p2_trophy}
                 </div>
             </div>`;
     }
@@ -638,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.addEventListener('click', saveState);
         addPlayerBtn.addEventListener('click', handleAddPlayer);
         document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
+        document.getElementById('reset-btn').addEventListener('click', handleReset);
 
         document.getElementById('export-png').addEventListener('click', () => {
             const canvasToExport = document.getElementById('canvas');
