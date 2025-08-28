@@ -37,8 +37,6 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
-    background-size: cover;
-    background-position: center;
 }
 #canvas {
     width: 1840px; /* Cropped width to align with branding */
@@ -46,17 +44,8 @@ body {
     transform-origin: center;
     position: relative;
     box-sizing: border-box;
-    overflow: visible; /* Allow content to spill out for positioning */
+    /* overflow: hidden; */ /* Ensure background scaling doesn't bleed out */
     z-index: 10; /* Ensure canvas is on top of decorations */
-}
-
-#layout-area {
-    position: absolute;
-    width: 120%;
-    height: 100%;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
 }
 
 /* --- SAVE BUTTON --- */
@@ -129,14 +118,30 @@ body {
 
 /* --- GROUPS VIEW --- */
 .groups-view {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    position: relative;
     width: 100%;
     height: 100%;
-    padding: 50px 0; /* Removed horizontal padding to maximize space */
-    box-sizing: border-box;
-    position: relative;
+}
+
+.groups-left-col {
+    position: absolute;
+    left: -150px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.groups-logo-col {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.groups-right-col {
+    position: absolute;
+    right: -150px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 /* Базовая карточка */
@@ -172,39 +177,47 @@ body {
     width: 420px; /* Width of a single group box */
 }
 .logo-column-main {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    flex-shrink: 0;
 }
 .logo-column-main img {
-    width: 400px; /* Increased size */
+    width: 340px; /* Increased size */
     height: auto;
+}
+
+/* NEW Group player slot styling */
+.player-slot-group-wrapper {
+    position: relative;
+    height: 60px; /* Increased height */
+    margin: 8px 0;
+    border: 1px solid rgba(255, 210, 125, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.player-slot-group-wrapper:hover {
+    border-color: rgba(255, 210, 125, 0.5);
+}
+.player-slot-group-wrapper .flag-image {
+    position: absolute;
+    top: 0;
+    left: 0; /* Pushed right to avoid clipping */
+    width: 30%;
+    height: 100%;
+    z-index: 0;
+    object-fit: contain;
+    object-position: left;
 }
 .groups-view .player-slot {
     display: flex;
     align-items: center;
-    height: 50px;
-    padding: 10px 20px;
-    margin: 8px 0;
-    border: 1px solid rgba(255, 210, 125, 0.2);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    position: relative;
+    height: 100%;
+    padding: 0 20px; /* No vertical padding, rely on flexbox for centering */
     background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 30%);
+    position: relative;
+    z-index: 1;
 }
-.groups-view .player-slot:hover {
-    border-color: rgba(255, 210, 125, 0.5);
+.player-slot-group-wrapper:hover .player-slot {
     background: rgba(0,0,0,0.4);
-}
-.groups-view .player-slot .avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: #555;
-    margin-left: 20px;
-    object-fit: cover;
 }
 .groups-view .player-slot .name {
     flex-grow: 1;
@@ -212,7 +225,7 @@ body {
     font-size: 1.8rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    padding-left: 40px;
+    padding-left: 100px; /* Adjusted for new flag position */
 }
 /* The old .flag class is no longer needed */
 
@@ -228,32 +241,33 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 26%; /* A default width */
+    width: 400px;
 }
 
 .bracket-qf-column {
-    left: -5%;
+    left: -150px; /* Push strongly left */
     top: 48%;
     transform: translateY(-50%);
 }
 
 .bracket-sf-column {
     left: 50%;
-    top: 42%;
+    top: 48%;
     transform: translate(-50%, -50%);
+    width: 26%; /* Keep SF narrower */
 }
 
 .bracket-final-group {
-    right: -5%;
-    top: 60px; /* Position from top */
-    /* align-items is removed to allow children to stretch and center text */
+    right: -180px; /* Push strongly right */
+    top: 60px;
+    align-items: flex-end;
 }
 
 .bracket-third-place-group {
-    left: 60%;
-    bottom: 40px; /* Position from bottom */
+    left: 65%; /* A bit to the right of center */
+    bottom: 40px;
     transform: translateX(-50%);
-    align-items: center; /* Align content of this group to the center */
+    align-items: center;
 }
 
 .final-logo {
@@ -261,7 +275,9 @@ body {
 }
 
 .round-header {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 20px;
     font-family: var(--font-title);
 }
@@ -303,7 +319,8 @@ body {
     margin-bottom: 4px;
 }
 .third-header {
-    margin-top: 40px; /* Reduced margin */
+    margin-top: 10px; /* Reduced margin */
+    margin-bottom: -10px; /* Move closer to match box */
 }
 .final-logo {
     max-width: 250px;
@@ -352,15 +369,15 @@ body {
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
-    background-color: rgba(60, 179, 113, 0.15);
+    background: radial-gradient(circle at 90% 50%, rgba(60, 179, 113, 0.3) 0%, rgba(60, 179, 113, 0) 60%);
 }
 .bracket-view .player-slot.loser {
-    background-color: rgba(220, 20, 60, 0.1);
+    background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
 }
 .bracket-view .player-slot .name {
     flex-grow: 1;
     font-family: var(--font-display);
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     padding-left: 40px;
@@ -415,7 +432,7 @@ body {
 }
 
 #bottom-branding img {
-    height: 50px; /* Adjust as needed */
+    height: 40px; /* Adjust as needed */
 }
 
 .hosted-by-text {
@@ -440,48 +457,75 @@ body {
     padding: 0 20px;
 }
 
-/* --- FLAG BACKGROUND STYLES --- */
-.flag-background {
+/* --- FLAG IMAGE STYLES --- */
+img[src=""] {
+    display: none;
+}
+.flag-image {
     position: absolute;
-    z-index: 0; /* Behind text content */
-    background-size: cover;
-    background-position: center;
-    background-image: var(--flag-image); /* Set via JS */
+    z-index: 0;
+    object-fit: cover; /* Replaces background-size: cover */
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
     mask-image: linear-gradient(to right, black 40%, transparent 100%);
+    opacity: 0.5;
 }
 
 /* For Groups View */
-.groups-view .player-slot .flag-background {
-    top: 0;
-    left: 0;
+.player-slot-group-wrapper .flag-image {
+    /* This is now the selector for the group flag */
     width: 30%;
     height: 100%;
-    background-size: cover;
-    background-position: center;
-    opacity: 0.5;
+    left: 0; /* Pushed right to avoid clipping */
 }
-.groups-view .player-slot .avatar,
-.groups-view .player-slot .name {
-    z-index: 1; /* Ensure avatar and name are on top of the flag background */
-}
-
-
 /* For Brackets View */
-.match-box {
-    position: relative; /* Ensure it's a positioning context for the flags */
-    overflow: hidden; /* This will clip the flag backgrounds */
-}
-.match-box .flag-background {
-    width: 50%; /* Smaller, sits behind the player name */
+.match-box .flag-image {
+    width: 50%;
     height: 50%;
     left: 0;
-    opacity: 0.5; /* Match opacity of group view flags */
 }
-.match-box .p1-flag-bg {
+.match-box .p1-flag-img {
     top: 0;
 }
-.match-box .p2-flag-bg {
+.match-box .p2-flag-img {
     bottom: 0;
+}
+
+/* --- CUSTOM FIXES --- */
+.bracket-final-group .round-header,
+.bracket-final-group .match-box {
+    width: 100%;
+}
+
+/* --- WINNER LINES --- */
+.progression-line {
+    stroke-width: 4px;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.winner-line {
+    stroke: var(--primary-color);
+    filter: drop-shadow(0 0 3px var(--primary-color));
+}
+
+.groups-view .player-slot.empty-slot,
+.bracket-view .player-slot.empty-slot {
+    background: linear-gradient(to right, rgba(245, 230, 200, 0.15), rgba(245, 230, 200, 0));
+}
+
+/* --- SPECIAL EFFECTS --- */
+.grand-final-winner {
+    filter: drop-shadow(0 0 12px var(--primary-color));
+}
+
+.trophy-icon {
+    position: absolute;
+    right: 55px;
+    top: 50%;
+    transform: translateY(-50%) rotate(10deg);
+    width: 60px;
+    height: auto;
+    z-index: 20;
+    pointer-events: none;
 }
