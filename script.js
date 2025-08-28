@@ -82,13 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // --- DOM ELEMENT REFERENCES ---
     const saveBtn = document.getElementById('save-btn');
     const playerListEl = document.getElementById('player-list');
     const addPlayerBtn = document.getElementById('add-player-btn');
     const editModalEl = document.getElementById('player-edit-modal');
-
 
     // --- PLAYER BANK ---
     let editingPlayer = null;
@@ -241,11 +239,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
 
-        let html = '<div class="groups-view">'; // This will be position: relative
+        let html = '<div id="layout-area"><div class="groups-view">';
         html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
         html += `<div class="groups-logo-col logo-column-main">${logoHtml}</div>`;
         html += `<div class="groups-right-col group-column">${rightColumnHtml}</div>`;
-        html += '</div>';
+        html += '</div></div>';
 
         container.innerHTML = html;
         initCardGradients();
@@ -333,9 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
-        let html = '<div class="bracket-view">'; // This will be a position: relative container
-
-        // --- Absolutely Positioned Columns ---
+        let html = '<div id="layout-area"><div class="bracket-view">'; // This will be a position: relative container
 
         // Quarterfinals Column
         html += '<div class="bracket-column bracket-qf-column">';
@@ -366,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
-        html += '</div>'; // Close .bracket-view
+        html += '</div></div>'; // Close .bracket-view and #layout-area
         container.innerHTML = html;
 
         // Delay drawing to ensure DOM is ready after render, using rAF for reliability
@@ -400,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
         path.classList.add('winner-line');
         return path;
     }
-
 
     function drawProgressionLines() {
         const canvas = document.getElementById('canvas');
@@ -488,7 +483,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         markDirty();
     }
-
 
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
@@ -670,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.style.transform = `scale(${scale})`;
     }
 
-
     // --- INITIALIZATION ---
     function init() {
         loadState();
@@ -779,7 +772,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 markDirty();
             }
         });
-
 
         console.log('Application initialized.');
         document.querySelector(`input[name="mode"][value="${state.viewMode}"]`).checked = true;

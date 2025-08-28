@@ -37,18 +37,26 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
-    background-size: auto 100%;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
 #canvas {
-    width: 1840px; /* Cropped width to align with branding */
+    width: 1840px;
     height: 1080px;
     transform-origin: center;
     position: relative;
     box-sizing: border-box;
-    /* overflow: hidden; */ /* Ensure background scaling doesn't bleed out */
-    z-index: 10; /* Ensure canvas is on top of decorations */
+    overflow: visible;
+    z-index: 10;
+}
+#layout-area {
+    position: absolute;
+    width: 120%;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
 }
 
 /* --- SAVE BUTTON --- */
@@ -124,22 +132,21 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
+    padding: 50px 0;
+    box-sizing: border-box;
 }
-
 .groups-left-col {
     position: absolute;
     left: -150px;
     top: 50%;
     transform: translateY(-50%);
 }
-
 .groups-logo-col {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
-
 .groups-right-col {
     position: absolute;
     right: -150px;
@@ -149,26 +156,26 @@ body {
 
 /* Базовая карточка */
 .content-box {
-  background-color: var(--content-box-bg); /* полупрозрачный темный */
-  border: 1px solid rgba(255, 210, 125, 0.4); /* тонкая золотистая рамка */
-  padding: 25px 35px;
-  border-radius: 6px;
-  position: relative; /* важно для фонового слоя */
-  z-index: 1;
+    background-color: var(--content-box-bg); /* полупрозрачный темный */
+    border: 1px solid rgba(255, 210, 125, 0.4); /* тонкая золотистая рамка */
+    padding: 25px 35px;
+    border-radius: 6px;
+    position: relative; /* важно для фонового слоя */
+    z-index: 1;
 }
 
 /* Слои для градиентных пятен */
 .card-bg-container {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border-radius: 6px;
-  z-index: -1; /* уходит под контент карточки */
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    z-index: -1; /* уходит под контент карточки */
 }
 .card-bg {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
 }
 
 .group-title { font-family: var(--font-display); color: var(--primary-color); text-align: center; font-size: 2.5rem; margin: -5px 0 15px; }
@@ -180,10 +187,13 @@ body {
     width: 420px; /* Width of a single group box */
 }
 .logo-column-main {
-    flex-shrink: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 .logo-column-main img {
-    width: 340px; /* Increased size */
+    width: 400px; /* Increased size */
     height: auto;
 }
 
@@ -230,7 +240,6 @@ body {
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     padding-left: 100px; /* Adjusted for new flag position */
 }
-/* The old .flag class is no longer needed */
 
 /* --- BRACKET VIEW --- */
 .bracket-view {
@@ -238,7 +247,6 @@ body {
     width: 100%;
     height: 100%;
 }
-
 .bracket-column {
     position: absolute;
     display: flex;
@@ -246,37 +254,30 @@ body {
     gap: 20px;
     width: 400px;
 }
-
 .bracket-qf-column {
-    left: -150px; /* Push strongly left */
+    left: -150px;
     top: 48%;
     transform: translateY(-50%);
 }
-
 .bracket-sf-column {
     left: 50%;
     top: 48%;
     transform: translate(-50%, -50%);
-    width: 26%; /* Keep SF narrower */
+    width: 26%;
 }
-
 .bracket-final-group {
-    right: -180px; /* Push strongly right */
+    right: -180px;
     top: 60px;
-    align-items: flex-end;
 }
-
 .bracket-third-place-group {
-    left: 65%; /* A bit to the right of center */
+    left: 65%;
     bottom: 40px;
     transform: translateX(-50%);
     align-items: center;
 }
-
 .final-logo {
-    align-self: flex-end; /* Re-apply logo alignment within its new parent */
+    align-self: flex-end;
 }
-
 .round-header {
     display: flex;
     flex-direction: column;
@@ -289,7 +290,7 @@ body {
     color: var(--primary-color);
     font-size: 2rem;
     margin: 5px 0;
-    padding: 5px 40px; /* Reduced padding */
+    padding: 5px 40px;
     white-space: nowrap;
     display: inline-block;
     border-radius: 10px;
@@ -310,7 +311,6 @@ body {
     color: var(--accent-color);
     font-weight: bold;
 }
-
 .round-header .date:not(:empty),
 .round-header .best-of:not(:empty),
 .round-header .time:not(:empty) {
@@ -322,14 +322,14 @@ body {
     margin-bottom: 4px;
 }
 .third-header {
-    margin-top: 10px; /* Reduced margin */
-    margin-bottom: -10px; /* Move closer to match box */
+    margin-top: 10px;
+    margin-bottom: -10px;
 }
 .final-logo {
     max-width: 250px;
     width: 60%;
     height: auto;
-    align-self: flex-end; /* Was center */
+    align-self: flex-end;
     margin-bottom: 20px;
 }
 .bracket-logo {
@@ -338,44 +338,41 @@ body {
     left: 50%;
     transform: translateX(-50%);
     width: 200px;
-    z-index: -1; /* Behind connectors and content */
+    z-index: -1;
     opacity: 0.3;
 }
-
 .match-box {
-    position: relative; /* No longer absolute */
+    position: relative;
     width: 100%;
-    height: auto; /* Height will be determined by content */
+    height: auto;
     background-color: var(--content-box-bg);
     border: 1px solid var(--primary-color);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
-    padding: 12px 8px 12px 30px; /* Increased vertical padding */
+    padding: 12px 8px 12px 30px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     overflow: hidden;
-    flex-shrink: 0; /* Prevent match box from shrinking */
+    flex-shrink: 0;
 }
-
 .third-match {
-    margin-top: 5px; /* Spacing from the final match */
+    margin-top: 5px;
 }
-
 .bracket-view .player-slot {
     display: flex;
     align-items: center;
-    min-height: 55px; /* Increased height */
+    min-height: 55px;
     cursor: pointer;
     position: relative;
     transition: all 0.2s ease-in-out;
 }
 .bracket-view .player-slot:hover { background: rgba(255,255,255,0.1); }
 .bracket-view .player-slot.winner {
-    background: radial-gradient(circle at 90% 50%, rgba(60, 179, 113, 0.3) 0%, rgba(60, 179, 113, 0) 60%);
+    background-color: rgba(60, 179, 113, 0.15);
 }
 .bracket-view .player-slot.loser {
-    background: radial-gradient(circle at 90% 50%, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0) 60%);
+    background-color: rgba(220, 20, 60, 0.1);
 }
 .bracket-view .player-slot .name {
     flex-grow: 1;
@@ -396,7 +393,6 @@ body {
     color: var(--primary-color);
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
-
 .bracket-svg {
     position: absolute;
     top: 0;
@@ -404,15 +400,13 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 0; /* Above background, below content */
+    z-index: 0;
 }
-
 .bracket-connector-path {
     stroke: var(--primary-color);
     stroke-width: 4px;
     fill: none;
 }
-
 #player-assign-modal { position: absolute; z-index: 100; background: #222; border: 1px solid var(--primary-color); }
 #player-assign-modal div { padding: 8px; cursor: pointer; }
 #player-assign-modal div:hover { background: var(--accent-color); }
@@ -428,16 +422,14 @@ body {
     background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
     z-index: 4;
     display: flex;
-    justify-content: flex-start; /* Aligned to the left */
+    justify-content: flex-start;
     align-items: flex-end;
-    padding: 0 0 20px 40px; /* Added left padding */
+    padding: 0 0 20px 40px;
     box-sizing: border-box;
 }
-
 #bottom-branding img {
-    height: 40px; /* Adjust as needed */
+    height: 40px;
 }
-
 .hosted-by-text {
     color: white;
     font-family: var(--font-title);
@@ -445,7 +437,6 @@ body {
     margin-right: 15px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
-
 #main-title {
     position: absolute;
     top: 30px;
@@ -467,21 +458,17 @@ img[src=""] {
 .flag-image {
     position: absolute;
     z-index: 0;
-    object-fit: cover; /* Replaces background-size: cover */
+    object-fit: cover;
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, black 40%, transparent 100%);
     mask-image: linear-gradient(to right, black 40%, transparent 100%);
     opacity: 0.5;
 }
-
-/* For Groups View */
 .player-slot-group-wrapper .flag-image {
-    /* This is now the selector for the group flag */
     width: 30%;
     height: 100%;
-    left: 0; /* Pushed right to avoid clipping */
+    left: 0;
 }
-/* For Brackets View */
 .match-box .flag-image {
     width: 50%;
     height: 50%;
@@ -511,7 +498,6 @@ img[src=""] {
     stroke: var(--primary-color);
     filter: drop-shadow(0 0 3px var(--primary-color));
 }
-
 .groups-view .player-slot.empty-slot,
 .bracket-view .player-slot.empty-slot {
     background: linear-gradient(to right, rgba(245, 230, 200, 0.15), rgba(245, 230, 200, 0));
@@ -521,7 +507,6 @@ img[src=""] {
 .grand-final-winner {
     filter: drop-shadow(0 0 12px var(--primary-color));
 }
-
 .trophy-icon {
     position: absolute;
     right: 55px;
