@@ -158,6 +158,17 @@ document.addEventListener('DOMContentLoaded', () => {
         closeEditModal();
     }
 
+    function handleReset() {
+        if (confirm('Are you sure you want to reset everything? This will delete all players and clear all slots.')) {
+            state = JSON.parse(JSON.stringify(defaultState));
+            markDirty();
+            saveState();
+            render();
+            updateSaveButton();
+            console.log('State has been reset.');
+        }
+    }
+
     function handlePlayerBankClick(e) {
         const playerItem = e.target.closest('.player-bank-item');
         if (!playerItem) return;
@@ -193,6 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentArea = document.querySelector('.content-area');
 
     function render() {
+        // Clear any existing progression lines whenever a re-render happens.
+        // This prevents lines from persisting between view modes or during updates.
+        const existingLines = document.querySelector('.progression-lines-svg');
+        if (existingLines) {
+            existingLines.remove();
+        }
+
         renderPlayerBank();
         const mainTitleEl = document.getElementById('main-title');
 
@@ -211,23 +229,25 @@ document.addEventListener('DOMContentLoaded', () => {
             right: ['B', 'D']
         };
 
-        let leftColumnHtml = '<div class="group-column left">';
-        let rightColumnHtml = '<div class="group-column right">';
-
+        let leftColumnHtml = '';
         for (const groupLetter of groups.left) {
             leftColumnHtml += renderGroup(groupLetter);
         }
+
+        let rightColumnHtml = '';
         for (const groupLetter of groups.right) {
             rightColumnHtml += renderGroup(groupLetter);
         }
 
-        leftColumnHtml += '</div>';
-        rightColumnHtml += '</div>';
+        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
 
-        const logoHtml = `<div class="logo-column-main"><img src="Media/Logo_main-min.png" alt="Logo"></div>`;
+        let html = '<div class="groups-view">'; // This will be position: relative
+        html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
+        html += `<div class="groups-logo-col logo-column-main">${logoHtml}</div>`;
+        html += `<div class="groups-right-col group-column">${rightColumnHtml}</div>`;
+        html += '</div>';
 
-        // Use `groups-view` as the main class for the 3-column layout
-        container.innerHTML = `<div id="layout-area"><div class="groups-view">${leftColumnHtml}${logoHtml}${rightColumnHtml}</div></div>`;
+        container.innerHTML = html;
         initCardGradients();
     }
 
@@ -237,12 +257,18 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
             const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
             const assignedPlayerId = state.assignments[slotId];
-            const player = state.players.find(p => p.id === assignedPlayerId) || { name: '', avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E`, flag: 'countryflags/aq.png' };
+            const player = state.players.find(p => p.id === assignedPlayerId);
+            const slotClass = player ? 'player-slot' : 'player-slot empty-slot';
+            const flagSrc = player ? player.flag : '';
+            const playerName = player ? player.name : '';
+
+            // This new structure mimics the match-box, with the flag as a sibling to the content
             groupHtml += `
-                <div class="player-slot" data-slot-id="${slotId}">
-                    <div class="flag-background" style="--flag-image: url('${player.flag}')"></div>
-                    <span class="name">${player.name}</span>
-                    <img src="${player.avatar}" class="avatar">
+                <div class="player-slot-group-wrapper" data-slot-id="${slotId}">
+                    <img class="flag-image" src="${flagSrc}" alt="">
+                    <div class="${slotClass}">
+                        <span class="name">${playerName}</span>
+                    </div>
                 </div>`;
         }
         groupHtml += `</div>`;
@@ -262,41 +288,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const player1Name = player1 ? player1.name : '';
         const player2Name = player2 ? player2.name : '';
 
-        const player1Flag = player1 ? player1.flag : 'countryflags/aq.png';
-        const player2Flag = player2 ? player2.flag : 'countryflags/aq.png';
+        const player1Flag = player1 ? player1.flag : '';
+        const player2Flag = player2 ? player2.flag : '';
 
-        // Ensure scores are never 'undefined'. Default to 0 for players, '' for empty slots.
         const score1 = player1 ? (state.scores[p1_slot_id] !== undefined ? state.scores[p1_slot_id] : 0) : '';
         const score2 = player2 ? (state.scores[p2_slot_id] !== undefined ? state.scores[p2_slot_id] : 0) : '';
 
-        let p1_class = 'player-slot';
-        let p2_class = 'player-slot';
+        let p1_class = player1 ? 'player-slot' : 'player-slot empty-slot';
+        let p2_class = player2 ? 'player-slot' : 'player-slot empty-slot';
+        let p1_trophy = '';
+        let p2_trophy = '';
 
         if (score1 > score2) {
             p1_class += ' winner';
             p2_class += ' loser';
+            if (matchId === 'final') {
+                p1_class += ' grand-final-winner';
+                p1_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
+            }
         } else if (score2 > score1) {
             p2_class += ' winner';
             p1_class += ' loser';
+            if (matchId === 'final') {
+                p2_class += ' grand-final-winner';
+                p2_trophy = '<img src="Media/icon_troph2-min.png" class="trophy-icon" alt="Trophy">';
+            }
         }
 
         return `
             <div class="match-box ${extraClass}" data-match-id="${matchId}">
-                <div class="flag-background p1-flag-bg" style="--flag-image: url('${player1Flag}')"></div>
-                <div class="flag-background p2-flag-bg" style="--flag-image: url('${player2Flag}')"></div>
+                <img class="flag-image p1-flag-img" src="${player1Flag}" alt="">
+                <img class="flag-image p2-flag-img" src="${player2Flag}" alt="">
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
                     <span class="name">${player1Name}</span>
                     <span class="score" data-score-id="${p1_slot_id}" contenteditable="true">${score1}</span>
+                    ${p1_trophy}
                 </div>
                 <div class="${p2_class}" data-slot-id="${p2_slot_id}">
                     <span class="name">${player2Name}</span>
                     <span class="score" data-score-id="${p2_slot_id}" contenteditable="true">${score2}</span>
+                    ${p2_trophy}
                 </div>
             </div>`;
     }
 
     function renderBracketCanvas(container) {
-        let html = '<div id="layout-area"><div class="bracket-view">'; // This will be a position: relative container
+        let html = '<div class="bracket-view">'; // This will be a position: relative container
 
         // --- Absolutely Positioned Columns ---
 
@@ -329,8 +366,98 @@ document.addEventListener('DOMContentLoaded', () => {
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
-        html += '</div></div>'; // Close .bracket-view and #layout-area
+        html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
+
+        // Delay drawing to ensure DOM is ready after render, using rAF for reliability
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                drawProgressionLines();
+            });
+        });
+    }
+
+    function createPath(startSlot, endSlot, matchId, canvasRect, scale) {
+        const startRect = startSlot.getBoundingClientRect();
+        const endRect = endSlot.getBoundingClientRect();
+
+        // Get coords from the slots' vertical center and edges, and un-scale them
+        const startX = (startRect.right - canvasRect.left) / scale;
+        const startY = (startRect.top + startRect.height / 2 - canvasRect.top) / scale;
+        const endX = (endRect.left - canvasRect.left) / scale;
+        const endY = (endRect.top + endRect.height / 2 - canvasRect.top) / scale;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+        const offsets = { 'qf1': -40, 'qf2': -20, 'qf3': 20, 'qf4': 40, 'sf1': -40, 'sf2': 40 };
+        const offset = offsets[matchId] || 0;
+
+        const midX = startX + (endX - startX) / 2 + offset;
+        const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+
+        path.setAttribute('d', d);
+        path.classList.add('progression-line');
+        path.classList.add('winner-line');
+        return path;
+    }
+
+
+    function drawProgressionLines() {
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return;
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('progression-lines-svg');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.pointerEvents = 'none';
+        svg.style.zIndex = '4'; // Place lines behind content area (z-index: 5)
+
+        const canvasRect = canvas.getBoundingClientRect();
+        if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
+
+        // Calculate the scale factor
+        const scale = canvasRect.width / canvas.offsetWidth;
+        if (scale === 0) return; // Avoid division by zero if canvas is not rendered
+
+        const matches = document.querySelectorAll('.match-box[data-match-id]');
+        matches.forEach(matchBox => {
+            const matchId = matchBox.dataset.matchId;
+            if (!matchId.startsWith('qf') && !matchId.startsWith('sf')) {
+                return;
+            }
+
+            const p1_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
+            const p2_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p2']`);
+            if (!p1_slot || !p2_slot) return;
+
+            const p1_score_el = p1_slot.querySelector('.score');
+            const p2_score_el = p2_slot.querySelector('.score');
+            if (!p1_score_el || !p2_score_el) return;
+
+            const p1_score = parseInt(p1_score_el.textContent, 10) || 0;
+            const p2_score = parseInt(p2_score_el.textContent, 10) || 0;
+
+            if (p1_score === p2_score) return;
+
+            const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
+            const progression = bracketProgression[matchId];
+            if (!progression || !progression.winnerTo) return;
+
+            const endSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
+
+            if (winnerSlot && endSlot) {
+                const path = createPath(winnerSlot, endSlot, matchId, canvasRect, scale);
+                svg.appendChild(path);
+            }
+        });
+
+        if (svg.children.length > 0) {
+            canvas.appendChild(svg);
+        }
     }
 
     function updateBracketProgression(matchId) {
@@ -362,66 +489,6 @@ document.addEventListener('DOMContentLoaded', () => {
         markDirty();
     }
 
-    function drawBracketConnectors(container) {
-        const oldSvg = container.querySelector('.bracket-svg');
-        if (oldSvg) oldSvg.remove();
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('bracket-svg');
-        container.prepend(svg);
-
-        function createConnectorPath(sourceEl, destEl, containerEl) {
-            if (!sourceEl || !destEl || !containerEl) return '';
-            const sourceRect = sourceEl.getBoundingClientRect();
-            const destRect = destEl.getBoundingClientRect();
-            const containerRect = containerEl.getBoundingClientRect();
-
-            const startX = sourceRect.right - containerRect.left;
-            const startY = sourceRect.top + sourceRect.height / 2 - containerRect.top;
-            const endX = destRect.left - containerRect.left;
-            const endY = destRect.top + destRect.height / 2 - containerRect.top;
-
-            const midX = startX + 40; // Controls the horizontal length of the connector line
-
-            return `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
-        }
-
-        const connections = [
-            { from: 'qf1', to: 'sf1-p1' }, { from: 'qf2', to: 'sf1-p2' },
-            { from: 'qf3', to: 'sf2-p1' }, { from: 'qf4', to: 'sf2-p2' },
-            { from: 'sf1', to: 'final-p1', loserTo: 'third-place-p1' },
-            { from: 'sf2', to: 'final-p2', loserTo: 'third-place-p2' },
-        ];
-
-        connections.forEach(conn => {
-            const fromMatchEl = container.querySelector(`[data-match-id="${conn.from}"]`);
-            if (!fromMatchEl) return;
-
-            // Connect winner
-            const winnerSlot = fromMatchEl.querySelector('.winner');
-            const destSlot = container.querySelector(`[data-slot-id="${conn.to}"]`);
-            if (winnerSlot && destSlot) {
-                const pathString = createConnectorPath(winnerSlot, destSlot, container);
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', pathString);
-                path.classList.add('bracket-connector-path');
-                svg.appendChild(path);
-            }
-
-            // Connect loser (for semifinals)
-            if (conn.loserTo) {
-                const loserSlot = fromMatchEl.querySelector('.loser');
-                const loserDestSlot = container.querySelector(`[data-slot-id="${conn.loserTo}"]`);
-                if (loserSlot && loserDestSlot) {
-                    const pathString = createConnectorPath(loserSlot, loserDestSlot, container);
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', pathString);
-                    path.classList.add('bracket-connector-path');
-                    svg.appendChild(path);
-                }
-            }
-        });
-    }
 
     // --- DECORATIONS ---
     const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
@@ -501,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cell = availableCells.splice(randomCellIndex, 1)[0];
 
             const col = cell % gridCols;
-            const row = Math.floor(cell / gridCols);
+            const row = Math.floor(cell / gridRows);
 
             // Calculate random position within the cell
             const top = row * cellHeight + Math.random() * (cellHeight - 20); // -20 to avoid edges
@@ -525,16 +592,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleCanvasClick(e) {
         const playerSlot = e.target.closest('.player-slot');
         if (playerSlot) {
-            activeSlotId = playerSlot.dataset.slotId;
-            const availablePlayers = state.players; // Allow assigning same player multiple times
-            let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
-            optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
-            playerAssignModal.innerHTML = optionsHtml;
-            playerAssignModal.style.left = `${e.clientX}px`;
-            playerAssignModal.style.top = `${e.clientY}px`;
-            playerAssignModal.classList.remove('modal-hidden');
-            return;
+            let slotId = playerSlot.dataset.slotId;
+            // For group view, the ID is on the wrapper, not the slot itself.
+            if (!slotId) {
+                const wrapper = playerSlot.closest('.player-slot-group-wrapper');
+                if (wrapper) {
+                    slotId = wrapper.dataset.slotId;
+                }
+            }
+
+            if (slotId) {
+                activeSlotId = slotId;
+                const availablePlayers = state.players; // Allow assigning same player multiple times
+                let optionsHtml = availablePlayers.map(p => `<div data-player-id="${p.id}">${p.name}</div>`).join('');
+                optionsHtml += `<div data-player-id="unassign" style="color: #ff8a8a;">-- Unassign --</div>`;
+                playerAssignModal.innerHTML = optionsHtml;
+                playerAssignModal.style.left = `${e.clientX}px`;
+                playerAssignModal.style.top = `${e.clientY}px`;
+                playerAssignModal.classList.remove('modal-hidden');
+                return; // Exit after handling the click
+            }
         }
+
+        // If the click was not on a slot, hide the modal (unless clicking in the modal)
         if (!e.target.closest('#player-assign-modal')) {
             playerAssignModal.classList.add('modal-hidden');
         }
@@ -599,6 +679,43 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.addEventListener('click', saveState);
         addPlayerBtn.addEventListener('click', handleAddPlayer);
         document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
+        document.getElementById('reset-btn').addEventListener('click', handleReset);
+
+        document.getElementById('export-png').addEventListener('click', () => {
+            const canvasToExport = document.getElementById('canvas');
+            const originalScale = canvasToExport.style.transform;
+
+            // Temporarily reset scale for full-resolution capture
+            canvasToExport.style.transform = 'scale(1)';
+
+            html2canvas(canvasToExport, {
+                width: 1840,
+                height: 1080,
+                useCORS: true,
+                scale: 1,
+                onclone: (clonedDoc) => {
+                    // Ensure fonts and styles are applied in the cloned document
+                    const clonedCanvas = clonedDoc.getElementById('canvas');
+                    clonedCanvas.style.transform = 'scale(1)';
+                }
+            }).then(canvas => {
+                // Restore original scale
+                canvasToExport.style.transform = originalScale;
+
+                const link = document.createElement('a');
+                link.download = 'tournament-graphic.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error("Error exporting canvas: ", err);
+                // Restore original scale even if there's an error
+                canvasToExport.style.transform = originalScale;
+                alert("Sorry, there was an error exporting the image.");
+            });
+        });
+
         playerListEl.addEventListener('click', handlePlayerBankClick);
         document.getElementById('save-player-changes-btn').addEventListener('click', handleSaveChanges);
         document.getElementById('cancel-player-edit-btn').addEventListener('click', closeEditModal);
