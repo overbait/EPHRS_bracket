@@ -683,36 +683,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('export-png').addEventListener('click', () => {
             const canvasToExport = document.getElementById('canvas');
+            const wrapper = document.getElementById('canvas-wrapper'); // Get the wrapper
             const originalScale = canvasToExport.style.transform;
+            const originalWrapperOverflow = wrapper.style.overflow; // Save wrapper's overflow
 
-            // Temporarily reset scale for full-resolution capture
+            // Prepare for capture
             canvasToExport.style.transform = 'scale(1)';
+            wrapper.style.overflow = 'visible'; // Allow canvas to be larger than wrapper
+
+            // Ensure lines are drawn if in bracket mode
+            if (state.viewMode === 'bracket') {
+                drawProgressionLines();
+            }
 
             html2canvas(canvasToExport, {
                 width: 1840,
                 height: 1080,
                 useCORS: true,
+                allowTaint: true, // Add allowTaint for better image handling
                 scale: 1,
-                onclone: (clonedDoc) => {
-                    // Ensure fonts and styles are applied in the cloned document
-                    const clonedCanvas = clonedDoc.getElementById('canvas');
-                    clonedCanvas.style.transform = 'scale(1)';
-                }
-            }).then(canvas => {
-                // Restore original scale
+                backgroundColor: null, // Use transparent background
+                logging: true, // Enable logging for debugging
+            }).then(exportedCanvas => {
+                // Restore original styles
                 canvasToExport.style.transform = originalScale;
+                wrapper.style.overflow = originalWrapperOverflow;
 
                 const link = document.createElement('a');
                 link.download = 'tournament-graphic.png';
-                link.href = canvas.toDataURL('image/png');
-                document.body.appendChild(link);
+                link.href = exportedCanvas.toDataURL('image/png');
                 link.click();
-                document.body.removeChild(link);
             }).catch(err => {
                 console.error("Error exporting canvas: ", err);
-                // Restore original scale even if there's an error
+
+                // Restore original styles even if there's an error
                 canvasToExport.style.transform = originalScale;
-                alert("Sorry, there was an error exporting the image.");
+                wrapper.style.overflow = originalWrapperOverflow;
+
+                alert("Error exporting image: " + err.message + ". Check the console for more details.");
             });
         });
 
