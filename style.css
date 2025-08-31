@@ -37,6 +37,8 @@ body {
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    background-size: cover;
+    background-position: center;
 }
 #canvas {
     width: 1840px; /* Cropped width to align with branding */

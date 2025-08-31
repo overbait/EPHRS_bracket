@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyDecorations() {
-        const bgElement = document.querySelector('#canvas .background'); // Target child for background
+        const bgElement = document.querySelector('#canvas-wrapper'); // Target wrapper for background
         if (!bgElement) return;
         const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         bgElement.style.backgroundImage = `url('${randomBg}')`;
