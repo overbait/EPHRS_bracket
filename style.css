@@ -125,7 +125,7 @@ body {
 
 .groups-left-col {
     position: absolute;
-    left: -150px;
+    left: -170px;
     top: 50%;
     transform: translateY(-50%);
 }
@@ -139,7 +139,7 @@ body {
 
 .groups-right-col {
     position: absolute;
-    right: -150px;
+    right: -170px;
     top: 50%;
     transform: translateY(-50%);
 }
@@ -174,7 +174,7 @@ body {
     flex-direction: column;
     justify-content: center;
     gap: 40px;
-    width: 420px; /* Width of a single group box */
+    width: 457px; /* Width of a single group box */
 }
 .logo-column-main {
     flex-shrink: 0;
@@ -204,7 +204,7 @@ body {
     width: 30%;
     height: 100%;
     z-index: 0;
-    object-fit: contain;
+    object-fit: cover;
     object-position: left;
 }
 .groups-view .player-slot {
