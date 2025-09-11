@@ -213,12 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderPlayerBank();
         const mainTitleEl = document.getElementById('main-title');
+        const canvasEl = document.getElementById('canvas');
 
+        // Add a class to the canvas based on the view mode
+        canvasEl.classList.remove('bracket-mode', 'groups-mode');
         if (state.viewMode === 'bracket') {
             mainTitleEl.textContent = state.mainTitle_bracket;
+            canvasEl.classList.add('bracket-mode');
             renderBracketCanvas(contentArea);
         } else {
             mainTitleEl.textContent = state.mainTitle_groups;
+            canvasEl.classList.add('groups-mode');
             renderGroupsCanvas(contentArea);
         }
     }
