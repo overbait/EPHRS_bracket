@@ -459,6 +459,14 @@ body {
     padding: 0 20px;
 }
 
+/* --- PLAYOFFS-SPECIFIC STYLES --- */
+.bracket-mode #main-title {
+    min-height: 120px; /* Increased height for more text */
+    white-space: pre-wrap; /* Allows wrapping text with Enter */
+    overflow: hidden; /* Prevents text from overflowing the box */
+    outline: none; /* Removes outline on focus */
+}
+
 /* --- FLAG IMAGE STYLES --- */
 img[src=""] {
     display: none;
