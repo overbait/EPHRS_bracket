@@ -465,7 +465,7 @@ body {
     white-space: pre-wrap; /* Allows wrapping text with Enter */
     overflow: hidden; /* Prevents text from overflowing the box */
     outline: none; /* Removes outline on focus */
-    width: 70%; /* Widen the element to prevent premature wrapping */
+    width: 90%; /* Widen the element to prevent premature wrapping */
     text-align: center; /* Keep the text centered */
 }
 
