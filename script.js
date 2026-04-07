@@ -8,6 +8,10 @@ window.onerror = function(message, source, lineno, colno, error) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
+    const queryParams = new URLSearchParams(window.location.search);
+    const isExportMode = queryParams.get('export') === '1';
+    const SERVER_BASE_URL = 'http://127.0.0.1:8765';
+    const isServerHosted = window.location.origin === SERVER_BASE_URL;
     let state = {};
     const defaultState = {
         players: [],
@@ -23,22 +27,192 @@ document.addEventListener('DOMContentLoaded', () => {
         mainTitle_bracket: 'PLAYOFFS',
         mainTitle_groups: 'GROUPS',
         viewMode: 'bracket',
+        theme: 'autumn',
+        decoration: null,
+        positions: {},
         nextPlayerId: 1,
         isDirty: false,
     };
 
-    function loadState() {
+    const themeConfigs = {
+        autumn: {
+            label: 'Autumn',
+            logoMain: 'Media/Logo_main-min.png',
+            logoCompact: 'Media/Logo_main-min.png',
+            backgrounds: [
+                { src: 'Media/background1-min.png', position: 'center center' },
+                { src: 'Media/background2-min.png', position: 'center center' },
+                { src: 'Media/background3-min.png', position: 'center center' },
+            ],
+            leafPool: [
+                'Media/leves_1-min.png',
+                'Media/leves_2-min.png',
+                'Media/leves_3-min.png',
+                'Media/leves_4-min.png',
+                'Media/leves_5-min.png',
+                'Media/leves_6-min.png',
+                'Media/leves_7-min.png',
+                'Media/leves_8-min.png',
+            ],
+            cardGradients: {
+                sizeMin: 280,
+                sizeMax: 580,
+                blurPx: 52,
+                opacity: 0.055,
+                colors: [
+                    ['#C9CBA3', '#FFE1A8'],
+                    ['#E26D5C', '#723D46'],
+                    ['#6b3e26', '#e26d5c'],
+                    ['#FFE1A8', '#c36a2d'],
+                ],
+            },
+        },
+        spring: {
+            label: 'Spring',
+            logoMain: 'Media/spring_assets/Logo_Spring4.png',
+            logoCompact: 'Media/spring_assets/Logo_Spring4_small.png',
+            backgrounds: [
+                { src: 'Media/spring_assets/bgs/bg_01.png', position: 'left top' },
+                { src: 'Media/spring_assets/bgs/bg_02.png', position: 'center top' },
+                { src: 'Media/spring_assets/bgs/bg_03.png', position: 'right top' },
+                { src: 'Media/spring_assets/bgs/bg_04.png', position: 'left top' },
+                { src: 'Media/spring_assets/bgs/bg_05.png', position: 'center top' },
+                { src: 'Media/spring_assets/bgs/bg_06.png', position: 'right top' },
+            ],
+            leafPool: [
+                'Media/spring_assets/leaves/leaves_green_mid1.png',
+                'Media/spring_assets/leaves/leaves_green_mid2.png',
+                'Media/spring_assets/leaves/leaves_green_mid3.png',
+                'Media/spring_assets/leaves/leaves_green_mid4.png',
+                'Media/spring_assets/leaves/leaves_green_mid5.png',
+                'Media/spring_assets/leaves/leaves_green_mid6.png',
+                'Media/spring_assets/leaves/leaves_green_mid7.png',
+                'Media/spring_assets/leaves/leaves_green_mid8.png',
+                'Media/spring_assets/leaves/leaves_green_mid9.png',
+                'Media/spring_assets/leaves/leaves_green_small1.png',
+                'Media/spring_assets/leaves/leaves_green_small2.png',
+                'Media/spring_assets/leaves/leaves_green_small3.png',
+                'Media/spring_assets/leaves/leaves_green_small4.png',
+                'Media/spring_assets/leaves/leaves_green_small5.png',
+                'Media/spring_assets/leaves/leaves_green_small6.png',
+                'Media/spring_assets/leaves/leaves_pink_mid1.png',
+                'Media/spring_assets/leaves/leaves_pink_mid2.png',
+                'Media/spring_assets/leaves/leaves_pink_mid3.png',
+                'Media/spring_assets/leaves/leaves_pink_mid4.png',
+                'Media/spring_assets/leaves/leaves_pink_mid5.png',
+                'Media/spring_assets/leaves/leaves_pink_mid6.png',
+                'Media/spring_assets/leaves/leaves_pink_mid7.png',
+                'Media/spring_assets/leaves/leaves_pink_mid8.png',
+                'Media/spring_assets/leaves/leaves_pink_mid9.png',
+                'Media/spring_assets/leaves/leaves_pink_mid10.png',
+            ],
+            leafPresets: [
+                [
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid7.png', top: '4%', left: '5%', rotate: -28, scale: 1.08, width: 180, height: 180, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid9.png', top: '8%', left: '17%', rotate: -14, scale: 1.03, width: 170, height: 170, opacity: 0.96 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small4.png', top: '12%', left: '32%', rotate: -2, scale: 0.82, width: 92, height: 92, opacity: 0.86 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid2.png', top: '17%', left: '78%', rotate: 12, scale: 1.04, width: 168, height: 168, opacity: 0.93 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid4.png', top: '12%', left: '90%', rotate: 20, scale: 0.98, width: 150, height: 150, opacity: 0.94 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small1.png', top: '28%', left: '93%', rotate: -6, scale: 0.8, width: 84, height: 84, opacity: 0.82 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid6.png', top: '69%', left: '2%', rotate: 32, scale: 1.08, width: 170, height: 170, opacity: 0.94 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid5.png', top: '76%', left: '16%', rotate: 28, scale: 1.01, width: 154, height: 154, opacity: 0.92 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small3.png', top: '68%', left: '29%', rotate: 36, scale: 0.82, width: 90, height: 90, opacity: 0.84 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid7.png', top: '74%', left: '82%', rotate: 40, scale: 1.07, width: 170, height: 170, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid3.png', top: '82%', left: '94%', rotate: 28, scale: 1.01, width: 150, height: 150, opacity: 0.92 },
+                ],
+                [
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid7.png', top: '6%', left: '8%', rotate: -30, scale: 1.04, width: 152, height: 152, opacity: 0.94 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid2.png', top: '12%', left: '20%', rotate: -14, scale: 1.02, width: 150, height: 150, opacity: 0.92 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small5.png', top: '16%', left: '33%', rotate: -4, scale: 0.78, width: 88, height: 88, opacity: 0.8 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid9.png', top: '12%', left: '78%', rotate: -8, scale: 0.98, width: 144, height: 144, opacity: 0.9 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small2.png', top: '18%', left: '90%', rotate: -18, scale: 0.8, width: 90, height: 90, opacity: 0.82 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid3.png', top: '72%', left: '4%', rotate: 24, scale: 1.05, width: 150, height: 150, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid6.png', top: '78%', left: '16%', rotate: 34, scale: 1.01, width: 148, height: 148, opacity: 0.91 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small6.png', top: '65%', left: '28%', rotate: 46, scale: 0.84, width: 92, height: 92, opacity: 0.84 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid10.png', top: '74%', left: '74%', rotate: 42, scale: 1.08, width: 155, height: 155, opacity: 0.96 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid3.png', top: '82%', left: '86%', rotate: 28, scale: 1.01, width: 148, height: 148, opacity: 0.91 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small5.png', top: '68%', left: '96%', rotate: 22, scale: 0.84, width: 90, height: 90, opacity: 0.82 },
+                ],
+                [
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid8.png', top: '8%', left: '74%', rotate: -18, scale: 1.02, width: 148, height: 148, opacity: 0.92 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid5.png', top: '14%', left: '87%', rotate: -4, scale: 1.06, width: 152, height: 152, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small2.png', top: '22%', left: '97%', rotate: 10, scale: 0.78, width: 86, height: 86, opacity: 0.82 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid8.png', top: '68%', left: '78%', rotate: 24, scale: 1.05, width: 154, height: 154, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid4.png', top: '76%', left: '91%', rotate: 36, scale: 1.01, width: 150, height: 150, opacity: 0.92 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid4.png', top: '10%', left: '2%', rotate: -24, scale: 1.06, width: 156, height: 156, opacity: 0.94 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid6.png', top: '16%', left: '14%', rotate: -10, scale: 1.01, width: 148, height: 148, opacity: 0.9 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small1.png', top: '23%', left: '27%', rotate: 4, scale: 0.8, width: 88, height: 88, opacity: 0.82 },
+                    { src: 'Media/spring_assets/leaves/leaves_pink_mid8.png', top: '72%', left: '6%', rotate: 20, scale: 1.07, width: 158, height: 158, opacity: 0.95 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_mid7.png', top: '80%', left: '19%', rotate: 32, scale: 1.02, width: 148, height: 148, opacity: 0.9 },
+                    { src: 'Media/spring_assets/leaves/leaves_green_small4.png', top: '67%', left: '31%', rotate: 42, scale: 0.84, width: 92, height: 92, opacity: 0.84 },
+                ],
+            ],
+            cardGradients: {
+                sizeMin: 290,
+                sizeMax: 560,
+                blurPx: 54,
+                opacity: 0.06,
+                colors: [
+                    ['#6EC9FF', '#4DD0E1'],
+                    ['#7EE8A1', '#6EC9FF'],
+                    ['#F59DDA', '#74E2D6'],
+                    ['#B1F2B2', '#75B8FF'],
+                ],
+            },
+        },
+    };
+
+    function getThemeConfig(themeId = state.theme) {
+        return themeConfigs[themeId] || themeConfigs.autumn;
+    }
+
+    function serverApiUrl(path) {
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+            return path;
+        }
+
+        return `${SERVER_BASE_URL}${path}`;
+    }
+
+    async function fetchServerState() {
         try {
-            const savedState = localStorage.getItem('tournamentState');
-            if (savedState) {
-                state = JSON.parse(savedState);
-                console.log('Loaded state from localStorage.');
-            } else {
-                throw new Error('No saved state found.');
+            const response = await fetch(serverApiUrl('/api/state'), { cache: 'no-store' });
+            if (!response.ok) {
+                return null;
             }
-        } catch (e) {
-            console.warn('Could not load state, using default. Error:', e.message);
-            state = JSON.parse(JSON.stringify(defaultState)); // Deep copy
+
+            const serverState = await response.json();
+            if (!serverState || typeof serverState !== 'object' || Object.keys(serverState).length === 0) {
+                return null;
+            }
+
+            return serverState;
+        } catch (error) {
+            console.warn('Could not load state from server:', error);
+            return null;
+        }
+    }
+
+    async function loadState() {
+        const shouldUseServerState = isExportMode || isServerHosted;
+        const serverState = shouldUseServerState ? await fetchServerState() : null;
+
+        if (serverState) {
+            state = serverState;
+            console.log('Loaded state from server snapshot.');
+        } else {
+            try {
+                const savedState = localStorage.getItem('tournamentState');
+                if (savedState) {
+                    state = JSON.parse(savedState);
+                    console.log('Loaded state from localStorage.');
+                } else {
+                    throw new Error('No saved state found.');
+                }
+            } catch (e) {
+                console.warn('Could not load state, using default. Error:', e.message);
+                state = JSON.parse(JSON.stringify(defaultState)); // Deep copy
+            }
         }
 
         for (const key in defaultState) {
@@ -46,14 +220,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 state[key] = defaultState[key];
             }
         }
+
+        if (!themeConfigs[state.theme]) {
+            state.theme = defaultState.theme;
+        }
+
+        if (!state.positions || typeof state.positions !== 'object') {
+            state.positions = {};
+        }
+
         state.isDirty = false;
         updateSaveButton();
     }
 
-    function saveState() {
+    async function persistStateToServer() {
+        try {
+            await fetch(serverApiUrl('/api/state'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state),
+            });
+        } catch (error) {
+            console.warn('Could not persist state to server:', error);
+        }
+    }
+
+    async function saveState() {
         if (!state.isDirty) return;
         try {
             localStorage.setItem('tournamentState', JSON.stringify(state));
+            await persistStateToServer();
             state.isDirty = false;
             updateSaveButton();
             console.log('State saved!');
@@ -82,9 +278,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function applyTheme() {
+        document.body.dataset.theme = state.theme;
+        document.body.classList.toggle('export-render', isExportMode);
+        document.documentElement.classList.toggle('export-render', isExportMode);
+        if (themeSelect) {
+            themeSelect.value = state.theme;
+        }
+    }
+
 
     // --- DOM ELEMENT REFERENCES ---
     const saveBtn = document.getElementById('save-btn');
+    const exportPngBtn = document.getElementById('export-png');
+    const exportPdfBtn = document.getElementById('export-pdf');
+    const randomiseBackgroundBtn = document.getElementById('randomise-background-btn');
+    const randomiseLeavesBtn = document.getElementById('randomise-leaves-btn');
+    const themeSelect = document.getElementById('theme-select');
     const playerListEl = document.getElementById('player-list');
     const addPlayerBtn = document.getElementById('add-player-btn');
     const editModalEl = document.getElementById('player-edit-modal');
@@ -163,7 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
             state = JSON.parse(JSON.stringify(defaultState));
             markDirty();
             saveState();
+            applyTheme();
             render();
+            renderDecorations();
             updateSaveButton();
             console.log('State has been reset.');
         }
@@ -200,8 +412,120 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- CANVAS & RENDERING ---
+    const canvasWrapper = document.getElementById('canvas-wrapper');
     const canvas = document.getElementById('canvas');
     const contentArea = document.querySelector('.content-area');
+    const layoutSelector = '[data-draggable-id]';
+    let lineRedrawFrame = null;
+    let lineRedrawFrameInner = null;
+    let layoutSanitizeFrame = null;
+    const DRAG_HOLD_MS = 180;
+
+    function getStoredPosition(draggableId) {
+        const saved = state.positions?.[draggableId];
+        return {
+            x: Number(saved?.x) || 0,
+            y: Number(saved?.y) || 0,
+        };
+    }
+
+    function setStoredPosition(draggableId, nextPosition) {
+        state.positions[draggableId] = {
+            x: Math.round(nextPosition.x),
+            y: Math.round(nextPosition.y),
+        };
+    }
+
+    function applyStoredLayoutPositions(root = document) {
+        root.querySelectorAll(layoutSelector).forEach(element => {
+            const draggableId = element.dataset.draggableId;
+            const position = getStoredPosition(draggableId);
+            element.style.translate = `${position.x}px ${position.y}px`;
+            element.classList.add('draggable-item');
+        });
+    }
+
+    function isElementOutsideCanvas(element, canvasRect) {
+        const rect = element.getBoundingClientRect();
+        const hasHorizontalOverlap = rect.right > canvasRect.left + 12 && rect.left < canvasRect.right - 12;
+        const hasVerticalOverlap = rect.bottom > canvasRect.top + 12 && rect.top < canvasRect.bottom - 12;
+        return !hasHorizontalOverlap || !hasVerticalOverlap;
+    }
+
+    function sanitizeLayoutPositions({ persist = false } = {}) {
+        const canvasRect = canvas.getBoundingClientRect();
+        if (!canvasRect.width || !canvasRect.height) return;
+
+        let resetAnything = false;
+        canvas.querySelectorAll(layoutSelector).forEach(element => {
+            const draggableId = element.dataset.draggableId;
+            if (!draggableId) return;
+            const position = getStoredPosition(draggableId);
+            if (position.x === 0 && position.y === 0) return;
+
+            if (!isElementOutsideCanvas(element, canvasRect)) {
+                return;
+            }
+
+            setStoredPosition(draggableId, { x: 0, y: 0 });
+            element.style.translate = '0px 0px';
+            resetAnything = true;
+        });
+
+        if (!resetAnything) return;
+
+        if (!isExportMode) {
+            markDirty();
+        }
+
+        scheduleLineRedraw();
+
+        if (persist && !isExportMode) {
+            saveState();
+        }
+    }
+
+    function scheduleLayoutSanitization() {
+        if (layoutSanitizeFrame !== null) {
+            cancelAnimationFrame(layoutSanitizeFrame);
+        }
+
+        layoutSanitizeFrame = requestAnimationFrame(() => {
+            layoutSanitizeFrame = null;
+            sanitizeLayoutPositions();
+        });
+    }
+
+    function scheduleLineRedraw() {
+        if (lineRedrawFrame !== null) {
+            cancelAnimationFrame(lineRedrawFrame);
+        }
+        if (lineRedrawFrameInner !== null) {
+            cancelAnimationFrame(lineRedrawFrameInner);
+        }
+
+        lineRedrawFrame = requestAnimationFrame(() => {
+            lineRedrawFrame = null;
+            lineRedrawFrameInner = requestAnimationFrame(() => {
+                lineRedrawFrameInner = null;
+                drawProgressionLines();
+            });
+        });
+    }
+
+    function scheduleSettledLineRedraw() {
+        scheduleLineRedraw();
+
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(() => {
+                scheduleLineRedraw();
+            }).catch(() => {});
+        }
+
+        waitForImages(canvas).then(() => {
+            scheduleLineRedraw();
+        }).catch(() => {});
+    }
 
     function render() {
         // Clear any existing progression lines whenever a re-render happens.
@@ -226,9 +550,14 @@ document.addEventListener('DOMContentLoaded', () => {
             canvasEl.classList.add('groups-mode');
             renderGroupsCanvas(contentArea);
         }
+
+        applyStoredLayoutPositions(canvas);
+        scheduleLayoutSanitization();
+        scheduleSettledLineRedraw();
     }
 
     function renderGroupsCanvas(container) {
+        const theme = getThemeConfig();
         const groups = {
             left: ['A', 'C'],
             right: ['B', 'D']
@@ -244,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rightColumnHtml += renderGroup(groupLetter);
         }
 
-        const logoHtml = `<img src="Media/Logo_main-min.png" alt="Logo">`;
+        const logoHtml = `<img src="${theme.logoMain}" alt="Logo" class="draggable-item" data-draggable-id="groups-main-logo" draggable="false">`;
 
         let html = '<div class="groups-view">'; // This will be position: relative
         html += `<div class="groups-left-col group-column">${leftColumnHtml}</div>`;
@@ -253,11 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
 
         container.innerHTML = html;
-        initCardGradients();
+        initCardGradients(theme.cardGradients);
     }
 
     function renderGroup(groupLetter) {
-        let groupHtml = `<div class="content-box">
+        let groupHtml = `<div class="content-box draggable-item" data-draggable-id="group-card-${groupLetter}">
             <h2 class="group-title" data-title-id="group-title-${groupLetter}" contenteditable="true">${state.titles[`group-title-${groupLetter}`] || `GROUP ${groupLetter}`}</h2>`;
         for (let j = 1; j <= 4; j++) { // Assuming 4 players per group
             const slotId = `group-${groupLetter.toLowerCase()}-${j}`;
@@ -321,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return `
-            <div class="match-box ${extraClass}" data-match-id="${matchId}">
+            <div class="match-box draggable-item ${extraClass}" data-match-id="${matchId}" data-draggable-id="match-${matchId}">
                 <img class="flag-image p1-flag-img" src="${player1Flag}" alt="">
                 <img class="flag-image p2-flag-img" src="${player2Flag}" alt="">
                 <div class="${p1_class}" data-slot-id="${p1_slot_id}">
@@ -338,13 +667,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBracketCanvas(container) {
+        const theme = getThemeConfig();
         let html = '<div class="bracket-view">'; // This will be a position: relative container
 
         // --- Absolutely Positioned Columns ---
 
         // Quarterfinals Column
         html += '<div class="bracket-column bracket-qf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
+        html += `<div class="round-header draggable-item" data-draggable-id="header-qf"><span class="date" contenteditable="true" data-title-id="qf_date">${state.titles.qf_date || ''}</span><h3>Quarterfinals</h3><span class="best-of" contenteditable="true" data-title-id="qf_best">${state.titles.qf_best || ''}</span></div>`;
         html += renderMatch('qf1');
         html += renderMatch('qf2');
         html += renderMatch('qf3');
@@ -353,63 +683,182 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Semifinals Column
         html += '<div class="bracket-column bracket-sf-column">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
+        html += `<div class="round-header draggable-item" data-draggable-id="header-sf"><span class="date" contenteditable="true" data-title-id="sf_date">${state.titles.sf_date || ''}</span><h3>Semifinals</h3><span class="best-of" contenteditable="true" data-title-id="sf_best">${state.titles.sf_best || ''}</span></div>`;
         html += renderMatch('sf1');
         html += renderMatch('sf2');
         html += '</div>';
 
         // Grand Final Group
         html += '<div class="bracket-column bracket-final-group">';
-        html += '<img src="Media/Logo_main-min.png" alt="Logo" class="final-logo">';
-        html += `<div class="round-header"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
+        html += `<img src="${theme.logoCompact}" alt="Logo" class="final-logo draggable-item" data-draggable-id="main-logo" draggable="false">`;
+        html += `<div class="round-header draggable-item" data-draggable-id="header-final"><span class="date" contenteditable="true" data-title-id="final_date">${state.titles.final_date || ''}</span><h3>Grand Final</h3><span class="best-of" contenteditable="true" data-title-id="final_best">${state.titles.final_best || ''}</span><span class="time live" contenteditable="true" data-title-id="final_time">${state.titles.final_time || ''}</span></div>`;
         html += renderMatch('final');
         html += '</div>';
 
         // 3rd Place Group
         html += '<div class="bracket-column bracket-third-place-group">';
-        html += `<div class="round-header third-header"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
+        html += `<div class="round-header third-header draggable-item" data-draggable-id="header-third"><span class="date" contenteditable="true" data-title-id="third_date">${state.titles.third_date || ''}</span><h3>3rd Place Match</h3><span class="best-of" contenteditable="true" data-title-id="third_best">${state.titles.third_best || ''}</span><span class="time live" contenteditable="true" data-title-id="third_time">${state.titles.third_time || ''}</span></div>`;
         html += renderMatch('third-place', 'third-match');
         html += '</div>';
 
         html += '</div>'; // Close .bracket-view
         container.innerHTML = html;
 
-        // Delay drawing to ensure DOM is ready after render, using rAF for reliability
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                drawProgressionLines();
-            });
-        });
     }
 
-    function createPath(startSlot, endSlot, matchId, canvasRect, scale) {
-        const startRect = startSlot.getBoundingClientRect();
-        const endRect = endSlot.getBoundingClientRect();
+    const MATCH_LEFT_NOTCH = 20;
 
-        // Get coords from the slots' vertical center and edges, and un-scale them
-        const startX = (startRect.right - canvasRect.left) / scale;
-        const startY = (startRect.top + startRect.height / 2 - canvasRect.top) / scale;
-        const endX = (endRect.left - canvasRect.left) / scale;
-        const endY = (endRect.top + endRect.height / 2 - canvasRect.top) / scale;
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+    }
 
+    function getVisibleBoundaryX(matchBoxRect, anchorY) {
+        const relativeY = clamp((anchorY - matchBoxRect.top) / matchBoxRect.height, 0, 1);
+        const notchRatio = 1 - Math.min(1, Math.abs(relativeY - 0.5) / 0.5);
+        return matchBoxRect.left + MATCH_LEFT_NOTCH * notchRatio;
+    }
+
+    function getAnchorPoint(element, canvasRect, scale, side = 'right') {
+        const rect = element.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        let x = side === 'left' ? rect.left : rect.right;
+
+        if (side === 'left') {
+            const matchBox = element.closest('.match-box');
+            if (matchBox) {
+                x = getVisibleBoundaryX(matchBox.getBoundingClientRect(), centerY);
+            }
+        }
+
+        return {
+            x: (x - canvasRect.left) / scale,
+            y: (centerY - canvasRect.top) / scale,
+        };
+    }
+
+    function getMatchSlotAnchor(matchBox, slotIndex, canvasRect, scale, side = 'left') {
+        const rect = matchBox.getBoundingClientRect();
+        const fallbackRatio = slotIndex === 1 ? 0.28 : 0.72;
+        const slotElement = matchBox.querySelector(`[data-slot-id='${matchBox.dataset.matchId}-p${slotIndex}']`);
+        const slotRect = slotElement?.getBoundingClientRect();
+        const centerY = slotRect
+            ? slotRect.top + slotRect.height / 2
+            : rect.top + rect.height * fallbackRatio;
+
+        let x = side === 'left' ? rect.left : rect.right;
+        if (side === 'left') {
+            x = getVisibleBoundaryX(rect, centerY);
+        }
+
+        return {
+            x: (x - canvasRect.left) / scale,
+            y: (centerY - canvasRect.top) / scale,
+        };
+    }
+
+    function getWinnerTargetAnchor(targetSlotId, canvasRect, scale) {
+        const slotElement = document.querySelector(`[data-slot-id='${targetSlotId}']`);
+        const slotIndexMatch = /-p([12])$/.exec(targetSlotId);
+        const slotIndex = slotIndexMatch ? parseInt(slotIndexMatch[1], 10) : 1;
+        const targetMatchId = targetSlotId.replace(/-p[12]$/, '');
+        const targetMatchBox = document.querySelector(`.match-box[data-match-id='${targetMatchId}']`);
+
+        if (targetMatchBox) {
+            return getMatchSlotAnchor(targetMatchBox, slotIndex, canvasRect, scale, 'left');
+        }
+
+        if (slotElement) {
+            return getAnchorPoint(slotElement, canvasRect, scale, 'left');
+        }
+
+        return null;
+    }
+
+    function buildConnectorPath(startPoint, endPoint, laneX) {
+        const corridorStart = Math.max(startPoint.x + 28, laneX);
+        const safeLaneX = Math.min(endPoint.x - 28, corridorStart);
+        const verticalDelta = endPoint.y - startPoint.y;
+        const radius = Math.min(22, Math.abs(verticalDelta) / 2, Math.max(12, (endPoint.x - startPoint.x) / 7));
+
+        if (Math.abs(verticalDelta) < 4) {
+            return `M ${startPoint.x} ${startPoint.y} H ${endPoint.x}`;
+        }
+
+        const sweep = verticalDelta > 0 ? 1 : -1;
+        const startCornerY = startPoint.y + radius * sweep;
+        const endCornerY = endPoint.y - radius * sweep;
+
+        return [
+            `M ${startPoint.x} ${startPoint.y}`,
+            `H ${safeLaneX - radius}`,
+            `Q ${safeLaneX} ${startPoint.y} ${safeLaneX} ${startCornerY}`,
+            `V ${endCornerY}`,
+            `Q ${safeLaneX} ${endPoint.y} ${safeLaneX + radius} ${endPoint.y}`,
+            `H ${endPoint.x}`,
+        ].join(' ');
+    }
+
+    function createConnectorPath(startPoint, endPoint, options = {}) {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-        const offsets = { 'qf1': -40, 'qf2': -20, 'qf3': 20, 'qf4': 40, 'sf1': -40, 'sf2': 40 };
-        const offset = offsets[matchId] || 0;
+        path.setAttribute('d', buildConnectorPath(startPoint, endPoint, options.laneX));
+        path.classList.add('progression-line', options.variant || 'base-line');
 
-        const midX = startX + (endX - startX) / 2 + offset;
-        const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+        if (options.variant === 'active-line') {
+            path.dataset.emphasis = options.emphasis || 'strong';
+        }
 
-        path.setAttribute('d', d);
-        path.classList.add('progression-line');
-        path.classList.add('winner-line');
+        if (options.active) {
+            path.dataset.active = 'true';
+        }
+
         return path;
     }
 
+    function getConnectionStage(matchId) {
+        return matchId.startsWith('qf') ? 'qf-sf' : 'sf-final';
+    }
+
+    function getSeededSourceSlot(matchId, p1Slot, p2Slot, progression) {
+        if (!progression?.winnerTo) return p1Slot;
+        return progression.winnerTo.endsWith('p2') ? p2Slot : p1Slot;
+    }
+
+    function assignLanePositions(connections) {
+        const grouped = connections.reduce((acc, connection) => {
+            const stage = getConnectionStage(connection.matchId);
+            acc[stage] = acc[stage] || [];
+            acc[stage].push(connection);
+            return acc;
+        }, {});
+
+        Object.values(grouped).forEach(groupConnections => {
+            groupConnections.sort((a, b) => a.baseStart.y - b.baseStart.y);
+
+            const maxStartX = Math.max(...groupConnections.map(connection => connection.baseStart.x));
+            const minEndX = Math.min(...groupConnections.map(connection => connection.end.x));
+            const corridorWidth = Math.max(60, minEndX - maxStartX - 52);
+            const spacing = Math.min(34, Math.max(18, corridorWidth / (groupConnections.length + 1)));
+            const laneStart = maxStartX + Math.max(26, corridorWidth * 0.34);
+            const centerOffset = (groupConnections.length - 1) / 2;
+
+            groupConnections.forEach((connection, index) => {
+                const laneX = laneStart + (index - centerOffset) * spacing;
+                connection.laneX = clamp(laneX, maxStartX + 30, minEndX - 30);
+            });
+        });
+
+        return connections;
+    }
 
     function drawProgressionLines() {
         const canvas = document.getElementById('canvas');
         if (!canvas) return;
+
+        const existingLines = canvas.querySelector('.progression-lines-svg');
+        if (existingLines) {
+            existingLines.remove();
+        }
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('progression-lines-svg');
@@ -419,45 +868,60 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.style.width = '100%';
         svg.style.height = '100%';
         svg.style.pointerEvents = 'none';
-        svg.style.zIndex = '4'; // Place lines behind content area (z-index: 5)
+        svg.style.zIndex = '4';
 
         const canvasRect = canvas.getBoundingClientRect();
-        if (canvasRect.width === 0) return; // Don't draw if canvas is not visible
+        if (canvasRect.width === 0) return;
 
-        // Calculate the scale factor
         const scale = canvasRect.width / canvas.offsetWidth;
-        if (scale === 0) return; // Avoid division by zero if canvas is not rendered
+        if (scale === 0) return;
 
-        const matches = document.querySelectorAll('.match-box[data-match-id]');
-        matches.forEach(matchBox => {
-            const matchId = matchBox.dataset.matchId;
-            if (!matchId.startsWith('qf') && !matchId.startsWith('sf')) {
+        const connections = Object.entries(bracketProgression).map(([matchId, progression]) => {
+            const matchBox = document.querySelector(`.match-box[data-match-id='${matchId}']`);
+            const endAnchor = progression.winnerTo
+                ? getWinnerTargetAnchor(progression.winnerTo, canvasRect, scale)
+                : null;
+
+            if (!matchBox || !endAnchor) return null;
+
+            const p1Slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
+            const p2Slot = matchBox.querySelector(`[data-slot-id='${matchId}-p2']`);
+            if (!p1Slot || !p2Slot) return null;
+
+            const seededSlot = getSeededSourceSlot(matchId, p1Slot, p2Slot, progression);
+            const p1Score = parseInt(p1Slot.querySelector('.score')?.textContent, 10) || 0;
+            const p2Score = parseInt(p2Slot.querySelector('.score')?.textContent, 10) || 0;
+            const winnerSlot = p1Score === p2Score ? null : (p1Score > p2Score ? p1Slot : p2Slot);
+
+            return {
+                matchId,
+                progression,
+                end: endAnchor,
+                baseStart: getAnchorPoint(seededSlot, canvasRect, scale, 'right'),
+                activeStart: winnerSlot ? getAnchorPoint(winnerSlot, canvasRect, scale, 'right') : null,
+                isResolved: Boolean(winnerSlot),
+            };
+        }).filter(Boolean);
+
+        assignLanePositions(connections).forEach(connection => {
+            const neutralPath = createConnectorPath(connection.baseStart, connection.end, {
+                laneX: connection.laneX,
+                variant: 'base-line',
+            });
+            svg.appendChild(neutralPath);
+
+            if (!connection.isResolved || !connection.activeStart) {
                 return;
             }
 
-            const p1_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p1']`);
-            const p2_slot = matchBox.querySelector(`[data-slot-id='${matchId}-p2']`);
-            if (!p1_slot || !p2_slot) return;
+            neutralPath.dataset.active = 'true';
 
-            const p1_score_el = p1_slot.querySelector('.score');
-            const p2_score_el = p2_slot.querySelector('.score');
-            if (!p1_score_el || !p2_score_el) return;
-
-            const p1_score = parseInt(p1_score_el.textContent, 10) || 0;
-            const p2_score = parseInt(p2_score_el.textContent, 10) || 0;
-
-            if (p1_score === p2_score) return;
-
-            const winnerSlot = p1_score > p2_score ? p1_slot : p2_slot;
-            const progression = bracketProgression[matchId];
-            if (!progression || !progression.winnerTo) return;
-
-            const endSlot = document.querySelector(`[data-slot-id='${progression.winnerTo}']`);
-
-            if (winnerSlot && endSlot) {
-                const path = createPath(winnerSlot, endSlot, matchId, canvasRect, scale);
-                svg.appendChild(path);
-            }
+            const activePath = createConnectorPath(connection.activeStart, connection.end, {
+                laneX: connection.laneX,
+                variant: 'active-line',
+                emphasis: 'strong',
+            });
+            svg.appendChild(activePath);
         });
 
         if (svg.children.length > 0) {
@@ -496,9 +960,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- DECORATIONS ---
-    const backgroundImages = [ 'Media/background1-min.png', 'Media/background2-min.png', 'Media/background3-min.png' ];
-    const leafImages = [ 'Media/leves_1-min.png', 'Media/leves_2-min.png', 'Media/leves_3-min.png', 'Media/leves_4-min.png', 'Media/leves_5-min.png', 'Media/leves_6-min.png', 'Media/leves_7-min.png', 'Media/leves_8-min.png' ];
-
     function initCardGradients({
       blobsPerCard = 3,
       sizeMin = 600,      // Increased for larger blobs
@@ -547,54 +1008,255 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    function applyDecorations() {
-        const bgElement = document.querySelector('#canvas-wrapper'); // Target wrapper for background
-        if (!bgElement) return;
-        const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
-        bgElement.style.backgroundImage = `url('${randomBg}')`;
+    function pickRandomBackground(theme) {
+        const background = theme.backgrounds[Math.floor(Math.random() * theme.backgrounds.length)];
+        return {
+            src: background.src,
+            position: background.position || 'center center',
+        };
+    }
+
+    function buildLeafLayout(theme) {
+        const presetPool = theme.leafPresets?.length ? theme.leafPresets : [];
+        const chosenPreset = presetPool.length
+            ? presetPool[Math.floor(Math.random() * presetPool.length)].map(leaf => ({ ...leaf }))
+            : [];
+
+        const desiredLeafCount = theme === themeConfigs.spring ? 16 : 12;
+        const layout = chosenPreset.length ? chosenPreset : [];
+
+        while (layout.length < desiredLeafCount) {
+            layout.push(...buildRandomLeafLayout(theme, desiredLeafCount - layout.length));
+        }
+
+        return layout.slice(0, desiredLeafCount);
+    }
+
+    function buildRandomLeafLayout(theme, countOverride = null) {
+        const leafCount = countOverride ?? (theme === themeConfigs.spring ? 16 : 12);
+        const safeZones = theme === themeConfigs.spring
+            ? [
+                { top: [4, 28], left: [2, 34] },
+                { top: [6, 28], left: [72, 98] },
+                { top: [36, 56], left: [2, 20] },
+                { top: [36, 56], left: [84, 98] },
+                { top: [66, 90], left: [2, 32] },
+                { top: [66, 90], left: [72, 98] },
+            ]
+            : [
+                { top: [6, 26], left: [4, 32] },
+                { top: [8, 30], left: [74, 96] },
+                { top: [36, 56], left: [2, 18] },
+                { top: [36, 56], left: [86, 98] },
+                { top: [68, 88], left: [6, 34] },
+                { top: [66, 88], left: [72, 96] },
+            ];
+
+        return Array.from({ length: leafCount }, (_, index) => {
+            const zone = safeZones[index % safeZones.length];
+            const isSpring = theme === themeConfigs.spring;
+            const size = isSpring
+                ? (index % 3 === 0 ? 122 : index % 3 === 1 ? 102 : 72)
+                : (index % 3 === 0 ? 132 : index % 3 === 1 ? 108 : 76);
+
+            return {
+                src: theme.leafPool[Math.floor(Math.random() * theme.leafPool.length)],
+                top: `${zone.top[0] + Math.random() * (zone.top[1] - zone.top[0])}%`,
+                left: `${zone.left[0] + Math.random() * (zone.left[1] - zone.left[0])}%`,
+                rotate: Math.round(Math.random() * 72 - 36),
+                scale: isSpring ? (Math.random() * 0.22 + 0.82) : (Math.random() * 0.22 + 0.62),
+                width: size,
+                height: size,
+                opacity: isSpring ? (Math.random() * 0.16 + 0.78) : (Math.random() * 0.22 + 0.34),
+            };
+        });
+    }
+
+    function buildDecorationPreset({ preserveBackground = false, preserveLeaves = false } = {}) {
+        const theme = getThemeConfig();
+        const background = preserveBackground && state.decoration?.theme === state.theme
+            ? { src: state.decoration.background, position: state.decoration.backgroundPosition }
+            : pickRandomBackground(theme);
+        const leaves = preserveLeaves && state.decoration?.theme === state.theme
+            ? state.decoration.leaves.map(leaf => ({ ...leaf }))
+            : buildLeafLayout(theme);
+        return {
+            theme: state.theme,
+            background: background.src,
+            backgroundPosition: background.position || 'center center',
+            leaves,
+        };
+    }
+
+    function renderDecorations() {
+        const backgroundLayer = canvas.querySelector('.background');
+        if (!backgroundLayer) return;
+
+        if (!state.decoration || state.decoration.theme !== state.theme) {
+            state.decoration = buildDecorationPreset();
+        }
+
+        backgroundLayer.style.backgroundImage = `url('${state.decoration.background}')`;
+        backgroundLayer.style.backgroundPosition = state.decoration.backgroundPosition || 'center center';
 
         const decorationsContainer = document.getElementById('decorations-container');
         decorationsContainer.innerHTML = '';
 
-        // Grid placement logic to prevent overlaps
-        const numLeaves = 8;
-        const gridCols = 4;
-        const gridRows = 3;
-        const cellWidth = 100 / gridCols;
-        const cellHeight = 100 / gridRows;
-
-        let availableCells = Array.from({ length: gridCols * gridRows }, (_, i) => i);
-
-        for (let i = 0; i < numLeaves; i++) {
-            if (availableCells.length === 0) break; // Stop if we run out of cells
-
-            // Pick a random available cell and remove it from the list
-            const randomCellIndex = Math.floor(Math.random() * availableCells.length);
-            const cell = availableCells.splice(randomCellIndex, 1)[0];
-
-            const col = cell % gridCols;
-            const row = Math.floor(cell / gridRows);
-
-            // Calculate random position within the cell
-            const top = row * cellHeight + Math.random() * (cellHeight - 20); // -20 to avoid edges
-            const left = col * cellWidth + Math.random() * (cellWidth - 15);
-
+        state.decoration.leaves.forEach(leafConfig => {
             const leaf = document.createElement('img');
             leaf.className = 'leaf-decoration';
-            leaf.src = leafImages[Math.floor(Math.random() * leafImages.length)];
-            leaf.style.top = `${top}%`;
-            leaf.style.left = `${left}%`;
-            leaf.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.25 + 0.25})`;
-            leaf.style.opacity = `${Math.random() * 0.4 + 0.3}`;
+            leaf.src = leafConfig.src;
+            leaf.style.top = leafConfig.top;
+            leaf.style.left = leafConfig.left;
+            leaf.style.width = `${leafConfig.width}px`;
+            leaf.style.height = `${leafConfig.height}px`;
+            leaf.style.transform = `rotate(${leafConfig.rotate}deg) scale(${leafConfig.scale})`;
+            leaf.style.opacity = `${leafConfig.opacity ?? 0.9}`;
             decorationsContainer.appendChild(leaf);
+        });
+    }
+
+    function applyDecorations({ markStateDirty = true, preserveBackground = false, preserveLeaves = false } = {}) {
+        state.decoration = buildDecorationPreset({ preserveBackground, preserveLeaves });
+        renderDecorations();
+        initCardGradients(getThemeConfig().cardGradients);
+
+        if (markStateDirty) {
+            markDirty();
         }
     }
 
     // --- CANVAS INTERACTION ---
     const playerAssignModal = document.getElementById('player-assign-modal');
     let activeSlotId = null;
+    let activeLayoutDrag = null;
+    let pendingLayoutDrag = null;
+    let suppressCanvasClick = false;
+
+    function getCanvasScale() {
+        const canvasRect = canvas.getBoundingClientRect();
+        return canvasRect.width && canvas.offsetWidth ? canvasRect.width / canvas.offsetWidth : 1;
+    }
+
+    function beginLayoutDrag(session) {
+        activeLayoutDrag = session;
+        pendingLayoutDrag = null;
+
+        if (typeof session.element.setPointerCapture === 'function') {
+            session.element.setPointerCapture(session.pointerId);
+        }
+    }
+
+    function clearPendingLayoutDrag() {
+        if (!pendingLayoutDrag) return;
+        clearTimeout(pendingLayoutDrag.timerId);
+        pendingLayoutDrag = null;
+    }
+
+    function buildLayoutDragSession(e, draggable) {
+        return {
+            pointerId: e.pointerId,
+            element: draggable,
+            draggableId: draggable.dataset.draggableId,
+            startX: e.clientX,
+            startY: e.clientY,
+            origin: getStoredPosition(draggable.dataset.draggableId),
+            moved: false,
+        };
+    }
+
+    function handleLayoutPointerDown(e) {
+        if (isExportMode || e.button !== 0) return;
+
+        const draggable = e.target.closest(layoutSelector);
+        if (!draggable || !canvas.contains(draggable)) return;
+
+        const session = buildLayoutDragSession(e, draggable);
+        const shouldDelayDrag = Boolean(e.target.closest('.player-slot, .player-slot-group-wrapper'));
+
+        clearPendingLayoutDrag();
+
+        if (shouldDelayDrag) {
+            session.timerId = setTimeout(() => {
+                beginLayoutDrag(session);
+                suppressCanvasClick = true;
+            }, DRAG_HOLD_MS);
+            pendingLayoutDrag = session;
+            return;
+        }
+
+        beginLayoutDrag(session);
+    }
+
+    function handleLayoutPointerMove(e) {
+        if (pendingLayoutDrag && e.pointerId === pendingLayoutDrag.pointerId) {
+            const drift = Math.hypot(e.clientX - pendingLayoutDrag.startX, e.clientY - pendingLayoutDrag.startY);
+            if (drift > 6) {
+                clearPendingLayoutDrag();
+            }
+        }
+
+        if (!activeLayoutDrag || e.pointerId !== activeLayoutDrag.pointerId) return;
+
+        const scale = getCanvasScale();
+        const dx = (e.clientX - activeLayoutDrag.startX) / scale;
+        const dy = (e.clientY - activeLayoutDrag.startY) / scale;
+
+        if (!activeLayoutDrag.moved && Math.hypot(dx, dy) < 4) {
+            return;
+        }
+
+        if (!activeLayoutDrag.moved) {
+            activeLayoutDrag.moved = true;
+            suppressCanvasClick = true;
+            document.body.classList.add('layout-dragging');
+            activeLayoutDrag.element.classList.add('is-dragging');
+        }
+
+        const nextPosition = {
+            x: activeLayoutDrag.origin.x + dx,
+            y: activeLayoutDrag.origin.y + dy,
+        };
+
+        activeLayoutDrag.element.style.translate = `${nextPosition.x}px ${nextPosition.y}px`;
+        scheduleLineRedraw();
+        e.preventDefault();
+    }
+
+    function finishLayoutDrag(e) {
+        if (pendingLayoutDrag && (!e || e.pointerId === pendingLayoutDrag.pointerId)) {
+            clearPendingLayoutDrag();
+        }
+
+        if (!activeLayoutDrag || (e && e.pointerId !== activeLayoutDrag.pointerId)) return;
+
+        const { element, draggableId, origin, startX, startY, moved } = activeLayoutDrag;
+
+        if (moved && e) {
+            const scale = getCanvasScale();
+            const nextPosition = {
+                x: origin.x + (e.clientX - startX) / scale,
+                y: origin.y + (e.clientY - startY) / scale,
+            };
+
+            setStoredPosition(draggableId, nextPosition);
+            element.style.translate = `${nextPosition.x}px ${nextPosition.y}px`;
+            sanitizeLayoutPositions({ persist: false });
+            markDirty();
+            scheduleLineRedraw();
+        }
+
+        element.classList.remove('is-dragging');
+        document.body.classList.remove('layout-dragging');
+        activeLayoutDrag = null;
+    }
 
     function handleCanvasClick(e) {
+        if (suppressCanvasClick) {
+            suppressCanvasClick = false;
+            return;
+        }
+
         const playerSlot = e.target.closest('.player-slot');
         if (playerSlot) {
             let slotId = playerSlot.dataset.slotId;
@@ -622,6 +1284,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // If the click was not on a slot, hide the modal (unless clicking in the modal)
         if (!e.target.closest('#player-assign-modal')) {
             playerAssignModal.classList.add('modal-hidden');
+        }
+    }
+
+    function handleNativeDragStart(e) {
+        if (e.target.closest('.final-logo, .logo-column-main img, #bottom-branding img')) {
+            e.preventDefault();
         }
     }
 
@@ -664,8 +1332,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.getElementById('canvas');
         if (!wrapper || !canvas) return;
 
-        const wrapperWidth = wrapper.clientWidth;
-        const wrapperHeight = wrapper.clientHeight;
+        if (isExportMode) {
+            canvas.style.transform = 'none';
+            return;
+        }
+
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const wrapperWidth = wrapperRect.width;
+        const wrapperHeight = wrapperRect.height;
 
         const canvasWidth = 1840;
         const canvasHeight = 1080;
@@ -675,51 +1349,347 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.style.transform = `scale(${scale})`;
     }
 
+    function setExportButtonsBusy(isBusy, label = 'Exporting...') {
+        [exportPngBtn, exportPdfBtn].forEach(button => {
+            if (!button) return;
+            if (!button.dataset.defaultLabel) {
+                button.dataset.defaultLabel = button.textContent;
+            }
+            button.disabled = isBusy;
+            button.textContent = isBusy ? label : button.dataset.defaultLabel;
+        });
+    }
 
-    // --- INITIALIZATION ---
-    function init() {
-        loadState();
+    function waitForImages(root) {
+        const imageElements = Array.from(root.querySelectorAll('img'));
+        const imagePromises = imageElements.map(image => {
+            if (image.complete && image.naturalWidth > 0) {
+                return Promise.resolve();
+            }
 
-        // Toolbar & Modals
-        saveBtn.addEventListener('click', saveState);
-        addPlayerBtn.addEventListener('click', handleAddPlayer);
-        document.getElementById('randomise-btn').addEventListener('click', applyDecorations);
-        document.getElementById('reset-btn').addEventListener('click', handleReset);
-
-        document.getElementById('export-png').addEventListener('click', () => {
-            const canvasToExport = document.getElementById('canvas');
-            const originalScale = canvasToExport.style.transform;
-
-            // Temporarily reset scale for full-resolution capture
-            canvasToExport.style.transform = 'scale(1)';
-
-            html2canvas(canvasToExport, {
-                width: 1840,
-                height: 1080,
-                useCORS: true,
-                scale: 1,
-                onclone: (clonedDoc) => {
-                    // Ensure fonts and styles are applied in the cloned document
-                    const clonedCanvas = clonedDoc.getElementById('canvas');
-                    clonedCanvas.style.transform = 'scale(1)';
-                }
-            }).then(canvas => {
-                // Restore original scale
-                canvasToExport.style.transform = originalScale;
-
-                const link = document.createElement('a');
-                link.download = 'tournament-graphic.png';
-                link.href = canvas.toDataURL('image/png');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }).catch(err => {
-                console.error("Error exporting canvas: ", err);
-                // Restore original scale even if there's an error
-                canvasToExport.style.transform = originalScale;
-                alert("Sorry, there was an error exporting the image.");
+            return new Promise(resolve => {
+                image.addEventListener('load', resolve, { once: true });
+                image.addEventListener('error', resolve, { once: true });
             });
         });
+
+        return Promise.all(imagePromises);
+    }
+
+    const exportAssetCache = new Map();
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function requestBlobWithXhr(url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 0) {
+                    resolve(xhr.response);
+                    return;
+                }
+                reject(new Error(`XHR failed for ${url}`));
+            };
+            xhr.onerror = () => reject(new Error(`XHR network error for ${url}`));
+            xhr.send();
+        });
+    }
+
+    async function urlToDataUrl(url) {
+        if (!url || url.startsWith('data:')) {
+            return url;
+        }
+
+        if (exportAssetCache.has(url)) {
+            return exportAssetCache.get(url);
+        }
+
+        try {
+            let blob;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${url}`);
+                }
+                blob = await response.blob();
+            } catch (fetchError) {
+                blob = await requestBlobWithXhr(url);
+            }
+
+            const dataUrl = await blobToDataUrl(blob);
+            exportAssetCache.set(url, dataUrl);
+            return dataUrl;
+        } catch (error) {
+            console.warn('Could not inline export asset:', url, error);
+            exportAssetCache.set(url, null);
+            return null;
+        }
+    }
+
+    function extractBackgroundUrls(backgroundValue) {
+        const matches = [];
+        const regex = /url\((['"]?)(.*?)\1\)/g;
+        let result = regex.exec(backgroundValue);
+
+        while (result) {
+            matches.push(result[2]);
+            result = regex.exec(backgroundValue);
+        }
+
+        return matches;
+    }
+
+    async function inlineImagesForExport(root) {
+        const imageElements = Array.from(root.querySelectorAll('img'));
+        await Promise.all(imageElements.map(async image => {
+            const source = image.currentSrc || image.src;
+            const dataUrl = await urlToDataUrl(source);
+            if (dataUrl) {
+                image.src = dataUrl;
+            }
+        }));
+    }
+
+    async function inlineBackgroundImagesForExport(root) {
+        const elements = [root, ...root.querySelectorAll('*')];
+
+        await Promise.all(elements.map(async element => {
+            const backgroundValue = element.style.backgroundImage;
+            if (!backgroundValue || backgroundValue === 'none') return;
+
+            let nextValue = backgroundValue;
+            const urls = extractBackgroundUrls(backgroundValue);
+            for (const url of urls) {
+                const dataUrl = await urlToDataUrl(url);
+                if (dataUrl) {
+                    nextValue = nextValue.replace(url, dataUrl);
+                }
+            }
+
+            element.style.backgroundImage = nextValue;
+        }));
+    }
+
+    function buildExportStage() {
+        const wrapper = document.getElementById('canvas-wrapper');
+        if (!wrapper) {
+            throw new Error('Canvas wrapper is missing.');
+        }
+
+        const stage = document.createElement('div');
+        stage.style.position = 'fixed';
+        stage.style.left = '-10000px';
+        stage.style.top = '0';
+        stage.style.width = '1840px';
+        stage.style.height = '1080px';
+        stage.style.pointerEvents = 'none';
+        stage.style.opacity = '1';
+        stage.style.zIndex = '-1';
+
+        const clone = wrapper.cloneNode(true);
+        clone.id = 'export-canvas-wrapper';
+        clone.style.width = '1840px';
+        clone.style.height = '1080px';
+        clone.style.maxWidth = 'none';
+        clone.style.aspectRatio = 'auto';
+        clone.style.border = 'none';
+        clone.style.boxShadow = 'none';
+
+        const cloneCanvas = clone.querySelector('#canvas');
+        if (cloneCanvas) {
+            cloneCanvas.style.transform = 'none';
+            cloneCanvas.style.transformOrigin = 'top left';
+            cloneCanvas.style.width = '1840px';
+            cloneCanvas.style.height = '1080px';
+        }
+
+        stage.appendChild(clone);
+        document.body.appendChild(stage);
+
+        return { stage, target: clone };
+    }
+
+    async function renderCanvasForExport() {
+        if (typeof html2canvas !== 'function') {
+            throw new Error('html2canvas is not available.');
+        }
+
+        const { stage, target } = buildExportStage();
+
+        try {
+            await document.fonts.ready;
+            await waitForImages(target);
+            await inlineImagesForExport(target);
+            await inlineBackgroundImagesForExport(target);
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            return await html2canvas(target, {
+                width: 1840,
+                height: 1080,
+                scale: 1,
+                useCORS: false,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false,
+                imageTimeout: 0,
+            });
+        } finally {
+            stage.remove();
+        }
+    }
+
+    function concatUint8Arrays(chunks) {
+        const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        const output = new Uint8Array(totalLength);
+        let offset = 0;
+
+        chunks.forEach(chunk => {
+            output.set(chunk, offset);
+            offset += chunk.length;
+        });
+
+        return output;
+    }
+
+    function dataUrlToUint8Array(dataUrl) {
+        const base64 = dataUrl.split(',')[1];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+
+        return bytes;
+    }
+
+    function createSingleImagePdf(jpegDataUrl, imageWidth, imageHeight) {
+        const encoder = new TextEncoder();
+        const jpegBytes = dataUrlToUint8Array(jpegDataUrl);
+        const pageWidth = Math.round(imageWidth * 0.75);
+        const pageHeight = Math.round(imageHeight * 0.75);
+        const contentStream = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ`;
+        const chunks = [];
+        const offsets = [0];
+        let offset = 0;
+
+        const pushText = text => {
+            const bytes = encoder.encode(text);
+            chunks.push(bytes);
+            offset += bytes.length;
+        };
+
+        const pushBytes = bytes => {
+            chunks.push(bytes);
+            offset += bytes.length;
+        };
+
+        pushText('%PDF-1.4\n');
+
+        const objects = [
+            `<< /Type /Catalog /Pages 2 0 R >>`,
+            `<< /Type /Pages /Count 1 /Kids [3 0 R] >>`,
+            `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`,
+            null,
+            `<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream`,
+        ];
+
+        objects.forEach((objectBody, index) => {
+            const objectNumber = index + 1;
+            offsets[objectNumber] = offset;
+            pushText(`${objectNumber} 0 obj\n`);
+
+            if (objectNumber === 4) {
+                pushText(`<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+                pushBytes(jpegBytes);
+                pushText('\nendstream\n');
+            } else {
+                pushText(`${objectBody}\n`);
+            }
+
+            pushText('endobj\n');
+        });
+
+        const startXref = offset;
+        pushText(`xref\n0 ${objects.length + 1}\n`);
+        pushText('0000000000 65535 f \n');
+
+        for (let objectNumber = 1; objectNumber <= objects.length; objectNumber++) {
+            pushText(`${String(offsets[objectNumber]).padStart(10, '0')} 00000 n \n`);
+        }
+
+        pushText(`trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
+
+        return concatUint8Arrays(chunks);
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function handleServerExport(format) {
+        await saveState();
+        await persistStateToServer();
+
+        const response = await fetch(serverApiUrl(`/api/export?format=${encodeURIComponent(format)}`), {
+            method: 'POST',
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `Server export failed with status ${response.status}`);
+        }
+
+        const filename = response.headers.get('X-Export-Filename')
+            || `tournament-graphic.${format === 'pdf' ? 'pdf' : 'png'}`;
+        const blob = await response.blob();
+        downloadBlob(blob, filename);
+    }
+
+    async function handleExport(format) {
+        setExportButtonsBusy(true, format === 'pdf' ? 'Building PDF...' : 'Building PNG...');
+
+        try {
+            await handleServerExport(format);
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert(`Export ${format.toUpperCase()} failed. Start ${SERVER_BASE_URL} via start_generator.bat and try again.`);
+        } finally {
+            setExportButtonsBusy(false);
+        }
+    }
+
+
+    // --- INITIALIZATION ---
+    async function init() {
+        await loadState();
+        applyTheme();
+
+        // Toolbar & Modals
+        saveBtn.addEventListener('click', () => { saveState(); });
+        addPlayerBtn.addEventListener('click', handleAddPlayer);
+        randomiseBackgroundBtn.addEventListener('click', () => applyDecorations({ preserveLeaves: true }));
+        randomiseLeavesBtn.addEventListener('click', () => applyDecorations({ preserveBackground: true }));
+        document.getElementById('reset-btn').addEventListener('click', handleReset);
+        exportPngBtn.addEventListener('click', () => { handleExport('png'); });
+        exportPdfBtn.addEventListener('click', () => { handleExport('pdf'); });
 
         playerListEl.addEventListener('click', handlePlayerBankClick);
         document.getElementById('save-player-changes-btn').addEventListener('click', handleSaveChanges);
@@ -731,6 +1701,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 markDirty();
                 render();
             });
+        });
+        themeSelect.addEventListener('change', (e) => {
+            if (!themeConfigs[e.target.value]) return;
+            state.theme = e.target.value;
+            state.decoration = buildDecorationPreset();
+            applyTheme();
+            markDirty();
+            render();
+            renderDecorations();
         });
 
         // Player Edit Modal Listeners
@@ -773,8 +1752,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Canvas
         canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('dragstart', handleNativeDragStart);
         canvas.addEventListener('focusout', handleCanvasBlur);
-        window.addEventListener('resize', scaleCanvas);
+        canvasWrapper.addEventListener('pointerdown', handleLayoutPointerDown);
+        window.addEventListener('pointermove', handleLayoutPointerMove);
+        window.addEventListener('pointerup', finishLayoutDrag);
+        window.addEventListener('pointercancel', finishLayoutDrag);
+        window.addEventListener('resize', () => {
+            scaleCanvas();
+            scheduleLineRedraw();
+        });
+        window.addEventListener('load', () => {
+            scaleCanvas();
+            scheduleSettledLineRedraw();
+        });
 
         document.getElementById('main-title').addEventListener('focusout', (e) => {
             const newTitle = e.target.textContent;
@@ -788,9 +1779,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log('Application initialized.');
         document.querySelector(`input[name="mode"][value="${state.viewMode}"]`).checked = true;
+        themeSelect.value = state.theme;
         render();
         scaleCanvas(); // Initial scale
-        applyDecorations(); // Initial decorations
+        renderDecorations();
+        initCardGradients(getThemeConfig().cardGradients);
 
         setInterval(() => { if (state.isDirty) saveState(); }, 30000);
     }

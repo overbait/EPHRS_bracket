@@ -25,23 +25,32 @@
                     <label><input type="radio" name="mode" value="bracket" checked> Playoffs</label>
                     <label><input type="radio" name="mode" value="groups"> Groups</label>
                 </div>
+                <label id="theme-selector">
+                    <span>Version</span>
+                    <select id="theme-select">
+                        <option value="autumn">Autumn</option>
+                        <option value="spring">Spring</option>
+                    </select>
+                </label>
                 <button id="save-btn" class="btn-primary">Save</button>
                 <button id="export-png" class="btn-primary">Export as PNG</button>
-                <button id="randomise-btn" class="btn-primary">Randomise</button>
+                <button id="export-pdf" class="btn-primary">Export as PDF</button>
+                <button id="randomise-background-btn" class="btn-primary">Randomise Background</button>
+                <button id="randomise-leaves-btn" class="btn-primary">Randomise Leaves</button>
                 <button id="reset-btn" class="btn-primary">Reset</button>
             </div>
 
             <div id="canvas-wrapper">
-                <div id="decorations-container"></div>
-                <div id="bottom-branding">
-                    <span class="hosted-by-text">Hosted by </span>
-                    <img src="Media/text new-min.png" alt="Branding Logo">
-                </div>
                 <div id="canvas">
-                    <h1 id="main-title" contenteditable="true"></h1>
                     <div class="background"></div>
+                    <div id="decorations-container"></div>
                     <div class="overlay"></div>
                     <div class="edge-vignette"></div>
+                    <div id="bottom-branding" data-draggable-id="branding-block">
+                        <span class="hosted-by-text">Hosted by </span>
+                        <img src="Media/text new-min.png" alt="Branding Logo" draggable="false">
+                    </div>
+                    <h1 id="main-title" contenteditable="true" data-draggable-id="main-title"></h1>
                     <div class="content-area"></div>
                 </div>
             </div>
