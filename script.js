@@ -1333,6 +1333,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!wrapper || !canvas) return;
 
         if (isExportMode) {
+            canvas.style.left = '0';
+            canvas.style.top = '0';
             canvas.style.transform = 'none';
             return;
         }
@@ -1346,7 +1348,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
 
-        canvas.style.transform = `scale(${scale})`;
+        canvas.style.left = '50%';
+        canvas.style.top = '50%';
+        canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
     }
 
     function setExportButtonsBusy(isBusy, label = 'Exporting...') {
@@ -1507,6 +1511,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const cloneCanvas = clone.querySelector('#canvas');
         if (cloneCanvas) {
+            cloneCanvas.style.left = '0';
+            cloneCanvas.style.top = '0';
             cloneCanvas.style.transform = 'none';
             cloneCanvas.style.transformOrigin = 'top left';
             cloneCanvas.style.width = '1840px';

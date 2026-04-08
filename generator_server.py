@@ -78,13 +78,116 @@ try {{
         )
 
 
-def run_browser_export(fmt: str, port: int) -> Path:
-    browser = resolve_browser_executable()
-    EXPORT_DIR.mkdir(exist_ok=True)
-    output_path = EXPORT_DIR / f"tournament-graphic.{fmt}"
-    export_url = build_export_url(port)
-    profile_dir = Path(tempfile.mkdtemp(prefix="ephrs-export-profile-"))
+def convert_png_to_jpeg(source_path: Path, output_path: Path) -> None:
+    powershell_command = rf"""
+Add-Type -AssemblyName System.Drawing
+$src = [System.Drawing.Bitmap]::FromFile('{source_path}')
+try {{
+    $target = New-Object System.Drawing.Bitmap($src.Width, $src.Height)
+    try {{
+        $graphics = [System.Drawing.Graphics]::FromImage($target)
+        try {{
+            $graphics.Clear([System.Drawing.Color]::Black)
+            $graphics.DrawImage($src, 0, 0, $src.Width, $src.Height)
+        }} finally {{
+            $graphics.Dispose()
+        }}
 
+        $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object {{ $_.MimeType -eq 'image/jpeg' }}
+        $encoder = [System.Drawing.Imaging.Encoder]::Quality
+        $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
+        $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter($encoder, [long]95)
+        $target.Save('{output_path}', $jpegCodec, $encoderParams)
+    }} finally {{
+        $target.Dispose()
+    }}
+}} finally {{
+    $src.Dispose()
+}}
+"""
+    completed = subprocess.run(
+        [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            powershell_command,
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    if completed.returncode != 0 or not output_path.exists():
+        raise RuntimeError(
+            f"JPEG conversion failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
+        )
+
+
+def create_single_image_pdf(jpeg_path: Path, output_path: Path, image_width: int, image_height: int) -> None:
+    jpeg_bytes = jpeg_path.read_bytes()
+    page_width = round(image_width * 0.75)
+    page_height = round(image_height * 0.75)
+    content_stream = f"q\n{page_width} 0 0 {page_height} 0 0 cm\n/Im0 Do\nQ".encode("ascii")
+
+    chunks: list[bytes] = []
+    offsets = [0]
+    offset = 0
+
+    def push(data: bytes) -> None:
+        nonlocal offset
+        chunks.append(data)
+        offset += len(data)
+
+    push(b"%PDF-1.4\n")
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Count 1 /Kids [3 0 R] >>",
+        f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {page_width} {page_height}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>".encode("ascii"),
+        None,
+        b"<< /Length " + str(len(content_stream)).encode("ascii") + b" >>\nstream\n" + content_stream + b"\nendstream",
+    ]
+
+    for index, object_body in enumerate(objects, start=1):
+        offsets.append(offset)
+        push(f"{index} 0 obj\n".encode("ascii"))
+
+        if index == 4:
+            push(
+                (
+                    f"<< /Type /XObject /Subtype /Image /Width {image_width} /Height {image_height} "
+                    f"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(jpeg_bytes)} >>\nstream\n"
+                ).encode("ascii")
+            )
+            push(jpeg_bytes)
+            push(b"\nendstream")
+        else:
+            assert object_body is not None
+            push(object_body)
+
+        push(b"\nendobj\n")
+
+    start_xref = offset
+    push(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    push(b"0000000000 65535 f \n")
+
+    for object_offset in offsets[1:]:
+        push(f"{object_offset:010d} 00000 n \n".encode("ascii"))
+
+    push(
+        (
+            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+            f"startxref\n{start_xref}\n%%EOF"
+        ).encode("ascii")
+    )
+
+    output_path.write_bytes(b"".join(chunks))
+
+
+def render_cropped_png(browser: str, export_url: str, profile_dir: Path, output_path: Path) -> None:
+    raw_output_path = EXPORT_DIR / "tournament-graphic-raw.png"
     command = [
         browser,
         "--headless=new",
@@ -98,52 +201,55 @@ def run_browser_export(fmt: str, port: int) -> Path:
         "--no-first-run",
         "--no-default-browser-check",
         f"--user-data-dir={profile_dir}",
+        "--window-size=1924,1232",
+        f"--screenshot={raw_output_path}",
+        export_url,
     ]
 
+    completed = subprocess.run(
+        command,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=45,
+        check=False,
+    )
+    if completed.returncode != 0 or not raw_output_path.exists():
+        raise RuntimeError(
+            f"Browser export failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
+        )
+
+    crop_png_to_canvas(raw_output_path, output_path)
+    raw_output_path.unlink(missing_ok=True)
+
+
+def run_browser_export(fmt: str, port: int) -> Path:
+    browser = resolve_browser_executable()
+    EXPORT_DIR.mkdir(exist_ok=True)
+    output_path = EXPORT_DIR / f"tournament-graphic.{fmt}"
+    export_url = build_export_url(port)
+    profile_dir = Path(tempfile.mkdtemp(prefix="ephrs-export-profile-"))
+
     if fmt == "png":
-        raw_output_path = EXPORT_DIR / "tournament-graphic-raw.png"
-        command.extend(
-            [
-                "--window-size=1924,1232",
-                f"--screenshot={raw_output_path}",
-                export_url,
-            ]
-        )
+        try:
+            render_cropped_png(browser, export_url, profile_dir, output_path)
+            return output_path
+        finally:
+            shutil.rmtree(profile_dir, ignore_errors=True)
     elif fmt == "pdf":
-        command.extend(
-            [
-                f"--print-to-pdf={output_path}",
-                "--no-pdf-header-footer",
-                export_url,
-            ]
-        )
+        png_output_path = EXPORT_DIR / "tournament-graphic-pdf-source.png"
+        jpeg_output_path = EXPORT_DIR / "tournament-graphic-pdf-source.jpg"
+        try:
+            render_cropped_png(browser, export_url, profile_dir, png_output_path)
+            convert_png_to_jpeg(png_output_path, jpeg_output_path)
+            create_single_image_pdf(jpeg_output_path, output_path, EXPORT_WIDTH, EXPORT_HEIGHT)
+            return output_path
+        finally:
+            png_output_path.unlink(missing_ok=True)
+            jpeg_output_path.unlink(missing_ok=True)
+            shutil.rmtree(profile_dir, ignore_errors=True)
     else:
         raise ValueError(f"Unsupported export format: {fmt}")
-
-    try:
-        completed = subprocess.run(
-            command,
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            timeout=45,
-            check=False,
-        )
-        if fmt == "png":
-            if completed.returncode != 0 or not raw_output_path.exists():
-                raise RuntimeError(
-                    f"Browser export failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
-                )
-
-            crop_png_to_canvas(raw_output_path, output_path)
-            raw_output_path.unlink(missing_ok=True)
-        elif completed.returncode != 0 or not output_path.exists():
-            raise RuntimeError(
-                f"Browser export failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
-            )
-        return output_path
-    finally:
-        shutil.rmtree(profile_dir, ignore_errors=True)
 
 
 class GeneratorHandler(SimpleHTTPRequestHandler):

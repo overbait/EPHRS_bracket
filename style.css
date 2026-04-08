@@ -18,6 +18,7 @@
     --connector-shadow: rgba(255, 210, 125, 0.5);
     --empty-slot-fill: rgba(245, 230, 200, 0.15);
     --empty-slot-fade: rgba(245, 230, 200, 0);
+    --content-safe-inset-x: 100px;
 }
 
 body[data-theme="spring"] {
@@ -36,6 +37,11 @@ body[data-theme="spring"] {
     --connector-shadow: rgba(255, 210, 125, 0.5);
     --empty-slot-fill: rgba(190, 255, 236, 0.16);
     --empty-slot-fade: rgba(190, 255, 236, 0.02);
+}
+
+@page {
+    size: 1840px 1080px;
+    margin: 0;
 }
 
 @font-face {
@@ -156,7 +162,7 @@ body.export-render #canvas-wrapper {
 #canvas-wrapper {
     width: 95%;
     max-width: 1400px;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1840 / 1080;
     border: 1px solid var(--primary-color);
     position: relative;
     overflow: hidden;
@@ -170,7 +176,9 @@ body.export-render #canvas-wrapper {
     width: 1840px;
     height: 1080px;
     transform-origin: center;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     box-sizing: border-box;
     overflow: hidden;
     isolation: isolate;
@@ -284,7 +292,11 @@ body.export-render #canvas-wrapper {
         );
     box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.18);
 }
-#canvas .content-area { z-index: 5; }
+#canvas .content-area {
+    z-index: 5;
+    left: var(--content-safe-inset-x);
+    width: calc(100% - (var(--content-safe-inset-x) * 2));
+}
 
 /* --- GROUPS VIEW --- */
 .groups-view {
