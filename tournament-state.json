@@ -139,7 +139,9 @@
     "group-d-3": 22,
     "group-d-4": 21,
     "group-b-4": 19,
-    "qf1-p1": 5
+    "qf1-p1": 5,
+    "group-a-1": 10,
+    "group-d-1": 13
   },
   "scores": {
     "qf2-p1": "2",
@@ -175,11 +177,12 @@
     "final_time": "",
     "qf_best": "",
     "qf_date": "",
-    "group-title-C": "GROUP C"
+    "group-title-C": "GROUP C",
+    "group-title-B": "GROUP B"
   },
-  "viewMode": "bracket",
+  "viewMode": "groups",
   "nextPlayerId": 23,
-  "isDirty": false,
+  "isDirty": true,
   "mainTitle_bracket": "EPOHERS Wtomorrow   ",
   "mainTitle_groups": "GROUPS",
   "decorations": [
@@ -471,12 +474,24 @@
       "y": 4
     },
     "main-title": {
-      "x": -84,
-      "y": 50
+      "x": 1,
+      "y": 33
     },
     "group-card-C": {
       "x": -1,
       "y": 0
+    },
+    "group-card-A": {
+      "x": -1,
+      "y": 29
+    },
+    "group-card-B": {
+      "x": 0,
+      "y": 29
+    },
+    "groups-main-logo": {
+      "x": -2,
+      "y": -119
     }
   }
 }

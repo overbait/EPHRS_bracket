@@ -1,81 +1,63 @@
 from __future__ import annotations
 
+import argparse
 import json
-import mimetypes
 import shutil
+import socket
 import subprocess
-import tempfile
+import sys
+import threading
 import time
+import traceback
+import urllib.error
+import urllib.request
+import webbrowser
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 
-ROOT = Path(__file__).resolve().parent
-STATE_FILE = ROOT / "tournament-state.json"
-EXPORT_DIR = ROOT / "exports"
 HOST = "127.0.0.1"
-PORT = 8765
+PREFERRED_PORT = 8765
+APP_NAME = "EPHRS Bracket"
 EXPORT_WIDTH = 1840
 EXPORT_HEIGHT = 1080
 
 
-def resolve_browser_executable() -> str:
-    candidates = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-    ]
+def resolve_bundle_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
 
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return candidate
-
-    raise FileNotFoundError(
-        "Could not find Edge or Chrome. Install one of them or update generator_server.py."
-    )
+    return Path(__file__).resolve().parent
 
 
-def build_export_url(port: int) -> str:
-    return f"http://{HOST}:{port}/index.html?export=1&_ts={int(time.time() * 1000)}"
+def resolve_app_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent
 
 
-def crop_png_to_canvas(source_path: Path, output_path: Path) -> None:
-    powershell_command = rf"""
-Add-Type -AssemblyName System.Drawing
-$src = [System.Drawing.Bitmap]::FromFile('{source_path}')
-try {{
-    $rect = New-Object System.Drawing.Rectangle 0, 0, {EXPORT_WIDTH}, {EXPORT_HEIGHT}
-    $target = $src.Clone($rect, $src.PixelFormat)
-    try {{
-        $target.Save('{output_path}', [System.Drawing.Imaging.ImageFormat]::Png)
-    }} finally {{
-        $target.Dispose()
-    }}
-}} finally {{
-    $src.Dispose()
-}}
-"""
-    completed = subprocess.run(
-        [
-            "powershell",
-            "-NoProfile",
-            "-Command",
-            powershell_command,
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
+BUNDLE_ROOT = resolve_bundle_root()
+APP_ROOT = resolve_app_root()
+STATE_FILE = APP_ROOT / "tournament-state.json"
+EXPORT_DIR = APP_ROOT / "exports"
+RUNTIME_DIR = APP_ROOT / ".runtime"
+AUTOMATION_STATUS_FILE = RUNTIME_DIR / "automation-status.json"
+ERROR_LOG_FILE = APP_ROOT / "server-error.log"
 
-    if completed.returncode != 0 or not output_path.exists():
-        raise RuntimeError(
-            f"PNG crop failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
-        )
+
+def ensure_runtime_dirs() -> None:
+    EXPORT_DIR.mkdir(exist_ok=True)
+    RUNTIME_DIR.mkdir(exist_ok=True)
+
+
+def append_error_log(message: str) -> None:
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    ERROR_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with ERROR_LOG_FILE.open("a", encoding="utf-8") as handle:
+        handle.write(f"[{timestamp}] {message}\n")
 
 
 def convert_png_to_jpeg(source_path: Path, output_path: Path) -> None:
@@ -112,7 +94,7 @@ try {{
             "-Command",
             powershell_command,
         ],
-        cwd=ROOT,
+        cwd=APP_ROOT,
         capture_output=True,
         text=True,
         timeout=30,
@@ -186,75 +168,170 @@ def create_single_image_pdf(jpeg_path: Path, output_path: Path, image_width: int
     output_path.write_bytes(b"".join(chunks))
 
 
-def render_cropped_png(browser: str, export_url: str, profile_dir: Path, output_path: Path) -> None:
-    raw_output_path = EXPORT_DIR / "tournament-graphic-raw.png"
+def resolve_browser_executable() -> str | None:
+    candidates = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ]
+
+    for candidate in candidates:
+        if Path(candidate).exists():
+            return candidate
+
+    return None
+
+
+def is_our_server_running(port: int) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://{HOST}:{port}/api/ping", timeout=1.5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (OSError, urllib.error.URLError, json.JSONDecodeError):
+        return False
+
+    return payload.get("app") == APP_NAME
+
+
+def wait_for_file(path: Path, timeout_seconds: float = 20.0) -> bool:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        if path.exists() and path.stat().st_size > 0:
+            return True
+        time.sleep(0.2)
+    return False
+
+
+def sanitize_export_filename(filename: str, fmt: str) -> str:
+    cleaned = "".join(char if char.isalnum() or char in {"-", "_", "."} else "_" for char in filename.strip())
+    cleaned = cleaned.strip("._")
+    if not cleaned:
+        cleaned = f"tournament-graphic.{fmt}"
+
+    suffix = f".{fmt}"
+    if not cleaned.lower().endswith(suffix):
+        cleaned = f"{cleaned}{suffix}"
+
+    return cleaned
+
+
+def build_automation_url(port: int, fmt: str, filename: str) -> str:
+    query = urlencode(
+        {
+            "automation_export": fmt,
+            "automation_name": filename,
+        }
+    )
+    return f"http://{HOST}:{port}/index.html?{query}"
+
+
+def run_automation_export(fmt: str, port: int, filename: str | None = None) -> Path:
+    normalized_format = fmt.lower()
+    if normalized_format not in {"png", "pdf"}:
+        raise ValueError(f"Unsupported export format: {fmt}")
+
+    browser = resolve_browser_executable()
+    if not browser:
+        raise FileNotFoundError("Microsoft Edge or Google Chrome is required for automated export.")
+
+    ensure_runtime_dirs()
+    safe_name = sanitize_export_filename(filename or f"tournament-graphic.{normalized_format}", normalized_format)
+    output_path = EXPORT_DIR / safe_name
+    output_path.unlink(missing_ok=True)
+    AUTOMATION_STATUS_FILE.unlink(missing_ok=True)
+
+    profile_dir = RUNTIME_DIR / f"automation-profile-{int(time.time() * 1000)}"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    export_url = build_automation_url(port, normalized_format, safe_name)
     command = [
         browser,
         "--headless=new",
         "--disable-gpu",
-        "--force-device-scale-factor=1",
         "--hide-scrollbars",
         "--run-all-compositor-stages-before-draw",
-        "--virtual-time-budget=6000",
+        "--virtual-time-budget=30000",
         "--disable-crash-reporter",
         "--disable-breakpad",
         "--no-first-run",
         "--no-default-browser-check",
         f"--user-data-dir={profile_dir}",
-        "--window-size=1924,1232",
-        f"--screenshot={raw_output_path}",
+        "--window-size=1920,1200",
         export_url,
     ]
 
-    completed = subprocess.run(
-        command,
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        timeout=45,
-        check=False,
-    )
-    if completed.returncode != 0 or not raw_output_path.exists():
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=APP_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=90,
+            check=False,
+        )
+    finally:
+        shutil.rmtree(profile_dir, ignore_errors=True)
+
+    if completed.returncode != 0:
         raise RuntimeError(
-            f"Browser export failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
+            f"Automated export browser run failed.\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
         )
 
-    crop_png_to_canvas(raw_output_path, output_path)
-    raw_output_path.unlink(missing_ok=True)
+    if not wait_for_file(output_path, timeout_seconds=40.0):
+        if AUTOMATION_STATUS_FILE.exists():
+            try:
+                status_payload = json.loads(AUTOMATION_STATUS_FILE.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                status_payload = {}
+
+            if status_payload.get("status") == "error":
+                raise RuntimeError(
+                    f"Automated export failed in the page: {status_payload.get('message', 'Unknown error')}"
+                )
+
+        raise RuntimeError(
+            "Automated export did not produce an output file within the expected time window."
+        )
+
+    return output_path
 
 
-def run_browser_export(fmt: str, port: int) -> Path:
+def launch_browser_window(url: str) -> tuple[subprocess.Popen[str] | None, callable]:
     browser = resolve_browser_executable()
-    EXPORT_DIR.mkdir(exist_ok=True)
-    output_path = EXPORT_DIR / f"tournament-graphic.{fmt}"
-    export_url = build_export_url(port)
-    profile_dir = Path(tempfile.mkdtemp(prefix="ephrs-export-profile-"))
+    if not browser:
+        webbrowser.open(url)
+        return None, lambda: None
 
-    if fmt == "png":
-        try:
-            render_cropped_png(browser, export_url, profile_dir, output_path)
-            return output_path
-        finally:
-            shutil.rmtree(profile_dir, ignore_errors=True)
-    elif fmt == "pdf":
-        png_output_path = EXPORT_DIR / "tournament-graphic-pdf-source.png"
-        jpeg_output_path = EXPORT_DIR / "tournament-graphic-pdf-source.jpg"
-        try:
-            render_cropped_png(browser, export_url, profile_dir, png_output_path)
-            convert_png_to_jpeg(png_output_path, jpeg_output_path)
-            create_single_image_pdf(jpeg_output_path, output_path, EXPORT_WIDTH, EXPORT_HEIGHT)
-            return output_path
-        finally:
-            png_output_path.unlink(missing_ok=True)
-            jpeg_output_path.unlink(missing_ok=True)
-            shutil.rmtree(profile_dir, ignore_errors=True)
-    else:
-        raise ValueError(f"Unsupported export format: {fmt}")
+    ensure_runtime_dirs()
+    profile_dir = RUNTIME_DIR / f"app-profile-{int(time.time() * 1000)}"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
+    command = [
+        browser,
+        f"--app={url}",
+        "--new-window",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-session-crashed-bubble",
+        f"--user-data-dir={profile_dir}",
+    ]
+    process = subprocess.Popen(command, cwd=APP_ROOT)
+
+    def cleanup() -> None:
+        shutil.rmtree(profile_dir, ignore_errors=True)
+
+    return process, cleanup
 
 
 class GeneratorHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
+        super().__init__(*args, directory=str(BUNDLE_ROOT), **kwargs)
+
+    def log_message(self, format: str, *args) -> None:
+        if sys.stderr is None:
+            return
+
+        super().log_message(format, *args)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
@@ -268,26 +345,55 @@ class GeneratorHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        parsed = urlparse(self.path)
-        if parsed.path == "/api/state":
-            self.handle_get_state()
-            return
+        try:
+            parsed = urlparse(self.path)
+            if parsed.path == "/api/ping":
+                self.handle_ping()
+                return
 
-        if parsed.path in {"", "/"}:
-            self.path = "/index.html"
+            if parsed.path == "/api/state":
+                self.handle_get_state()
+                return
 
-        super().do_GET()
+            if parsed.path in {"", "/"}:
+                self.path = "/index.html"
+
+            super().do_GET()
+        except Exception:
+            append_error_log(traceback.format_exc())
+            self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, "Internal server error")
 
     def do_POST(self):
-        parsed = urlparse(self.path)
-        if parsed.path == "/api/state":
-            self.handle_post_state()
-            return
-        if parsed.path == "/api/export":
-            self.handle_export(parsed)
-            return
+        try:
+            parsed = urlparse(self.path)
+            if parsed.path == "/api/state":
+                self.handle_post_state()
+                return
 
-        self.send_error(HTTPStatus.NOT_FOUND, "Unknown endpoint")
+            if parsed.path == "/api/exports":
+                self.handle_export_upload(parsed)
+                return
+
+            if parsed.path == "/api/pdf":
+                self.handle_pdf_render(parsed)
+                return
+
+            if parsed.path == "/api/automation-status":
+                self.handle_automation_status()
+                return
+
+            self.send_error(HTTPStatus.NOT_FOUND, "Unknown endpoint")
+        except Exception:
+            append_error_log(traceback.format_exc())
+            self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, "Internal server error")
+
+    def handle_ping(self):
+        payload = json.dumps({"app": APP_NAME, "status": "ok"}).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
 
     def handle_get_state(self):
         if STATE_FILE.exists():
@@ -317,13 +423,51 @@ class GeneratorHandler(SimpleHTTPRequestHandler):
         self.send_response(HTTPStatus.NO_CONTENT)
         self.end_headers()
 
-    def handle_export(self, parsed):
+    def handle_export_upload(self, parsed):
         query = parse_qs(parsed.query)
         fmt = (query.get("format", ["png"])[0] or "png").lower()
+        if fmt not in {"png", "pdf"}:
+            self.send_error(HTTPStatus.BAD_REQUEST, "Unsupported export format")
+            return
+
+        filename = sanitize_export_filename(query.get("filename", [""])[0], fmt)
+        content_length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(content_length)
+        if not body:
+            self.send_error(HTTPStatus.BAD_REQUEST, "Export body is empty")
+            return
+
+        ensure_runtime_dirs()
+        output_path = EXPORT_DIR / filename
+        output_path.write_bytes(body)
+
+        payload = json.dumps({"filename": filename, "path": str(output_path)}).encode("utf-8")
+        self.send_response(HTTPStatus.CREATED)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def handle_pdf_render(self, parsed):
+        query = parse_qs(parsed.query)
+        filename = sanitize_export_filename(query.get("filename", ["tournament-graphic.pdf"])[0], "pdf")
+        content_length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(content_length)
+        if not body:
+            self.send_error(HTTPStatus.BAD_REQUEST, "PNG body is empty")
+            return
+
+        ensure_runtime_dirs()
+        stamp = str(int(time.time() * 1000))
+        png_path = RUNTIME_DIR / f"pdf-source-{stamp}.png"
+        jpeg_path = RUNTIME_DIR / f"pdf-source-{stamp}.jpg"
+        pdf_path = RUNTIME_DIR / f"pdf-output-{stamp}.pdf"
 
         try:
-            output_path = run_browser_export(fmt, self.server.server_port)
-            content = output_path.read_bytes()
+            png_path.write_bytes(body)
+            convert_png_to_jpeg(png_path, jpeg_path)
+            create_single_image_pdf(jpeg_path, pdf_path, EXPORT_WIDTH, EXPORT_HEIGHT)
+            payload = pdf_path.read_bytes()
         except Exception as exc:
             encoded = str(exc).encode("utf-8", errors="replace")
             self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -332,28 +476,87 @@ class GeneratorHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(encoded)
             return
+        finally:
+            png_path.unlink(missing_ok=True)
+            jpeg_path.unlink(missing_ok=True)
+            pdf_path.unlink(missing_ok=True)
 
-        content_type = mimetypes.guess_type(output_path.name)[0] or "application/octet-stream"
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(content)))
-        self.send_header("X-Export-Filename", output_path.name)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
-        self.wfile.write(content)
+        self.wfile.write(payload)
+
+    def handle_automation_status(self):
+        content_length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(content_length)
+
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            self.send_error(HTTPStatus.BAD_REQUEST, f"Invalid JSON: {exc}")
+            return
+
+        ensure_runtime_dirs()
+        AUTOMATION_STATUS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.end_headers()
 
 
-def main():
-    EXPORT_DIR.mkdir(exist_ok=True)
-    server = ThreadingHTTPServer((HOST, PORT), GeneratorHandler)
-    print(f"Generator server running at http://{HOST}:{PORT}")
-    print("Keep this window open. The file-based generator can now save state and export through this local service.")
+def create_server(port: int) -> ThreadingHTTPServer:
+    return ThreadingHTTPServer((HOST, port), GeneratorHandler)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=f"Run the {APP_NAME} local app server.")
+    parser.add_argument("--no-open", action="store_true", help="Do not open the browser app window.")
+    parser.add_argument("--port", type=int, default=PREFERRED_PORT, help="Preferred HTTP port.")
+    args = parser.parse_args(argv)
+
+    ensure_runtime_dirs()
+
+    if not args.no_open and args.port == PREFERRED_PORT and is_our_server_running(PREFERRED_PORT):
+        url = f"http://{HOST}:{PREFERRED_PORT}"
+        launch_browser_window(url)
+        print(f"{APP_NAME} is already running at {url}")
+        return 0
+
+    port = args.port
+    if port == PREFERRED_PORT and not args.no_open and not is_our_server_running(PREFERRED_PORT):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            if probe.connect_ex((HOST, PREFERRED_PORT)) == 0:
+                port = 0
+
+    server = create_server(port)
+    url = f"http://{HOST}:{server.server_port}"
+    browser_process: subprocess.Popen[str] | None = None
+    cleanup_browser_profile = lambda: None
+
+    if not args.no_open:
+        browser_process, cleanup_browser_profile = launch_browser_window(url)
+        if browser_process is not None:
+            def shutdown_when_browser_closes() -> None:
+                browser_process.wait()
+                server.shutdown()
+
+            threading.Thread(target=shutdown_when_browser_closes, daemon=True).start()
+
+    print(f"{APP_NAME} running at {url}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopping server...")
+    except Exception:
+        append_error_log(traceback.format_exc())
+        raise
     finally:
         server.server_close()
+        cleanup_browser_profile()
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

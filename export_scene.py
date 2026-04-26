@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import sys
 import threading
-from pathlib import Path
 
-from generator_server import EXPORT_DIR, GeneratorHandler, HOST, ROOT, STATE_FILE, ThreadingHTTPServer, run_browser_export
+from generator_server import HOST, STATE_FILE, create_server, run_automation_export
 
 
 def main() -> int:
@@ -17,21 +16,18 @@ def main() -> int:
 
     if not STATE_FILE.exists():
         print("State snapshot not found.")
-        print("Open the generator through http://127.0.0.1:8765 and let it save the scene first.")
+        print(f"Start the app once at http://{HOST}:8765 and save the scene first.")
         return 1
 
-    EXPORT_DIR.mkdir(exist_ok=True)
-    server = ThreadingHTTPServer((HOST, 0), GeneratorHandler)
+    server = create_server(0)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
     try:
-        print(f"Temporary export server: http://{HOST}:{server.server_port}")
-        exported = []
+        print(f"Temporary automation export server: http://{HOST}:{server.server_port}")
         for fmt in formats:
-            output_path = run_browser_export(fmt, server.server_port)
-            exported.append(output_path)
-            print(f"Exported {fmt.upper()}: {output_path.relative_to(ROOT)}")
+            output_path = run_automation_export(fmt, server.server_port)
+            print(f"Exported {fmt.upper()}: {output_path}")
     finally:
         server.shutdown()
         server.server_close()
