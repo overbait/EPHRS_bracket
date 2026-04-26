@@ -1,17 +1,54 @@
 // --- GLOBAL ERROR HANDLER ---
 window.onerror = function(message, source, lineno, colno, error) {
-    alert('A critical error occurred. Please refresh the page. If the problem persists, try clearing your browser cache for this site.');
+    const queryParams = new URLSearchParams(window.location.search);
+    const automationExportFormat = (queryParams.get('automation_export') || '').toLowerCase();
+    const autoExportFormat = (queryParams.get('auto_export') || '').toLowerCase();
+    const requestedAutoExportFormat = automationExportFormat || autoExportFormat;
+    const isLoopbackHosted = /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(window.location.origin);
+
+    if (requestedAutoExportFormat && isLoopbackHosted) {
+        try {
+            navigator.sendBeacon(
+                `${window.location.origin}/api/automation-status`,
+                new Blob(
+                    [
+                        JSON.stringify({
+                            status: 'error',
+                            format: requestedAutoExportFormat,
+                            message: String(message),
+                        }),
+                    ],
+                    { type: 'application/json' }
+                )
+            );
+        } catch (beaconError) {
+            console.error('Could not report automation error:', beaconError);
+        }
+    } else {
+        alert('A critical error occurred. Please refresh the page. If the problem persists, try clearing your browser cache for this site.');
+    }
+
     console.error("Caught unhandled error:", { message, source, lineno, colno, error });
     // It's often a good idea to clear potentially corrupted state here
     localStorage.removeItem('tournamentState');
+};
+
+window.onunhandledrejection = function(event) {
+    const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+    return window.onerror(reason, '', 0, 0, event.reason);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
     const queryParams = new URLSearchParams(window.location.search);
     const isExportMode = queryParams.get('export') === '1';
-    const SERVER_BASE_URL = 'http://127.0.0.1:8765';
-    const isServerHosted = window.location.origin === SERVER_BASE_URL;
+    const automationExportFormat = (queryParams.get('automation_export') || '').toLowerCase();
+    const autoExportFormat = (queryParams.get('auto_export') || '').toLowerCase();
+    const requestedAutoExportFormat = automationExportFormat || autoExportFormat;
+    const automationExportName = queryParams.get('automation_name') || '';
+    const isLoopbackHosted = /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(window.location.origin);
+    const SERVER_BASE_URL = isLoopbackHosted ? window.location.origin : 'http://127.0.0.1:8765';
+    const isServerHosted = isLoopbackHosted;
     let state = {};
     const defaultState = {
         players: [],
@@ -1333,6 +1370,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!wrapper || !canvas) return;
 
         if (isExportMode) {
+            canvas.style.left = '0';
+            canvas.style.top = '0';
             canvas.style.transform = 'none';
             return;
         }
@@ -1346,7 +1385,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const scale = Math.min(wrapperWidth / canvasWidth, wrapperHeight / canvasHeight);
 
-        canvas.style.transform = `scale(${scale})`;
+        canvas.style.left = '50%';
+        canvas.style.top = '50%';
+        canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
     }
 
     function setExportButtonsBusy(isBusy, label = 'Exporting...') {
@@ -1480,7 +1521,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
     }
 
-    function buildExportStage() {
+    function freezeComputedStylesForExport(sourceRoot, targetRoot) {
+        const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+        const targetElements = [targetRoot, ...targetRoot.querySelectorAll('*')];
+
+        sourceElements.forEach((sourceElement, index) => {
+            const targetElement = targetElements[index];
+            if (!targetElement) {
+                return;
+            }
+
+            const computedStyle = window.getComputedStyle(sourceElement);
+            for (const propertyName of computedStyle) {
+                targetElement.style.setProperty(
+                    propertyName,
+                    computedStyle.getPropertyValue(propertyName),
+                    computedStyle.getPropertyPriority(propertyName)
+                );
+            }
+
+            targetElement.style.animation = 'none';
+            targetElement.style.transition = 'none';
+        });
+    }
+
+    function buildExportStage({ freezeComputedStyles = false } = {}) {
         const wrapper = document.getElementById('canvas-wrapper');
         if (!wrapper) {
             throw new Error('Canvas wrapper is missing.');
@@ -1497,6 +1562,9 @@ document.addEventListener('DOMContentLoaded', () => {
         stage.style.zIndex = '-1';
 
         const clone = wrapper.cloneNode(true);
+        if (freezeComputedStyles) {
+            freezeComputedStylesForExport(wrapper, clone);
+        }
         clone.id = 'export-canvas-wrapper';
         clone.style.width = '1840px';
         clone.style.height = '1080px';
@@ -1507,6 +1575,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const cloneCanvas = clone.querySelector('#canvas');
         if (cloneCanvas) {
+            cloneCanvas.style.left = '0';
+            cloneCanvas.style.top = '0';
             cloneCanvas.style.transform = 'none';
             cloneCanvas.style.transformOrigin = 'top left';
             cloneCanvas.style.width = '1840px';
@@ -1519,9 +1589,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return { stage, target: clone };
     }
 
+    async function renderLiveCanvasForExport() {
+        const wrapper = document.getElementById('canvas-wrapper');
+        const liveCanvas = document.getElementById('canvas');
+        if (!wrapper || !liveCanvas) {
+            throw new Error('Live export canvas is missing.');
+        }
+
+        const previousWrapperStyle = wrapper.getAttribute('style');
+        const previousCanvasStyle = liveCanvas.getAttribute('style');
+
+        wrapper.style.width = '1840px';
+        wrapper.style.height = '1080px';
+        wrapper.style.maxWidth = 'none';
+        wrapper.style.aspectRatio = 'auto';
+        wrapper.style.border = 'none';
+        wrapper.style.boxShadow = 'none';
+
+        liveCanvas.style.left = '0';
+        liveCanvas.style.top = '0';
+        liveCanvas.style.transform = 'none';
+        liveCanvas.style.transformOrigin = 'top left';
+        liveCanvas.style.width = '1840px';
+        liveCanvas.style.height = '1080px';
+
+        try {
+            await document.fonts.ready;
+            await waitForImages(wrapper);
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            return await html2canvas(wrapper, {
+                width: 1840,
+                height: 1080,
+                scale: 1,
+                foreignObjectRendering: true,
+                useCORS: false,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false,
+                imageTimeout: 0,
+            });
+        } finally {
+            if (previousWrapperStyle === null) {
+                wrapper.removeAttribute('style');
+            } else {
+                wrapper.setAttribute('style', previousWrapperStyle);
+            }
+
+            if (previousCanvasStyle === null) {
+                liveCanvas.removeAttribute('style');
+            } else {
+                liveCanvas.setAttribute('style', previousCanvasStyle);
+            }
+            scaleCanvas();
+            scheduleSettledLineRedraw();
+        }
+    }
+
     async function renderCanvasForExport() {
         if (typeof html2canvas !== 'function') {
             throw new Error('html2canvas is not available.');
+        }
+
+        const useForeignObjectRendering = !automationExportFormat;
+
+        if (useForeignObjectRendering) {
+            return renderLiveCanvasForExport();
         }
 
         const { stage, target } = buildExportStage();
@@ -1531,12 +1664,14 @@ document.addEventListener('DOMContentLoaded', () => {
             await waitForImages(target);
             await inlineImagesForExport(target);
             await inlineBackgroundImagesForExport(target);
+
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
             return await html2canvas(target, {
                 width: 1840,
                 height: 1080,
                 scale: 1,
+                foreignObjectRendering: false,
                 useCORS: false,
                 allowTaint: false,
                 backgroundColor: null,
@@ -1546,91 +1681,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             stage.remove();
         }
-    }
-
-    function concatUint8Arrays(chunks) {
-        const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const output = new Uint8Array(totalLength);
-        let offset = 0;
-
-        chunks.forEach(chunk => {
-            output.set(chunk, offset);
-            offset += chunk.length;
-        });
-
-        return output;
-    }
-
-    function dataUrlToUint8Array(dataUrl) {
-        const base64 = dataUrl.split(',')[1];
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-
-        return bytes;
-    }
-
-    function createSingleImagePdf(jpegDataUrl, imageWidth, imageHeight) {
-        const encoder = new TextEncoder();
-        const jpegBytes = dataUrlToUint8Array(jpegDataUrl);
-        const pageWidth = Math.round(imageWidth * 0.75);
-        const pageHeight = Math.round(imageHeight * 0.75);
-        const contentStream = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ`;
-        const chunks = [];
-        const offsets = [0];
-        let offset = 0;
-
-        const pushText = text => {
-            const bytes = encoder.encode(text);
-            chunks.push(bytes);
-            offset += bytes.length;
-        };
-
-        const pushBytes = bytes => {
-            chunks.push(bytes);
-            offset += bytes.length;
-        };
-
-        pushText('%PDF-1.4\n');
-
-        const objects = [
-            `<< /Type /Catalog /Pages 2 0 R >>`,
-            `<< /Type /Pages /Count 1 /Kids [3 0 R] >>`,
-            `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`,
-            null,
-            `<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream`,
-        ];
-
-        objects.forEach((objectBody, index) => {
-            const objectNumber = index + 1;
-            offsets[objectNumber] = offset;
-            pushText(`${objectNumber} 0 obj\n`);
-
-            if (objectNumber === 4) {
-                pushText(`<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
-                pushBytes(jpegBytes);
-                pushText('\nendstream\n');
-            } else {
-                pushText(`${objectBody}\n`);
-            }
-
-            pushText('endobj\n');
-        });
-
-        const startXref = offset;
-        pushText(`xref\n0 ${objects.length + 1}\n`);
-        pushText('0000000000 65535 f \n');
-
-        for (let objectNumber = 1; objectNumber <= objects.length; objectNumber++) {
-            pushText(`${String(offsets[objectNumber]).padStart(10, '0')} 00000 n \n`);
-        }
-
-        pushText(`trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
-
-        return concatUint8Arrays(chunks);
     }
 
     function downloadBlob(blob, filename) {
@@ -1644,35 +1694,165 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    async function handleServerExport(format) {
-        await saveState();
-        await persistStateToServer();
+    function canvasToBlob(canvas, mimeType, quality) {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+                if (blob) {
+                    resolve(blob);
+                    return;
+                }
 
-        const response = await fetch(serverApiUrl(`/api/export?format=${encodeURIComponent(format)}`), {
-            method: 'POST',
+                reject(new Error(`Could not convert canvas to ${mimeType}.`));
+            }, mimeType, quality);
         });
+    }
+
+    function buildExportFilename(format, preferredName = '') {
+        const normalizedFormat = format === 'pdf' ? 'pdf' : 'png';
+        const trimmedName = preferredName.trim();
+        if (!trimmedName) {
+            return `tournament-graphic.${normalizedFormat}`;
+        }
+
+        return trimmedName.toLowerCase().endsWith(`.${normalizedFormat}`)
+            ? trimmedName
+            : `${trimmedName}.${normalizedFormat}`;
+    }
+
+    async function buildExportArtifact(format, preferredName = '') {
+        await saveState();
+
+        const renderedCanvas = await renderCanvasForExport();
+        const filename = buildExportFilename(format, preferredName);
+
+        if (format === 'png') {
+            const blob = await canvasToBlob(renderedCanvas, 'image/png');
+            return { blob, filename };
+        }
+
+        if (format === 'pdf') {
+            if (!isServerHosted) {
+                throw new Error('PDF export requires the local app server.');
+            }
+
+            const pngBlob = await canvasToBlob(renderedCanvas, 'image/png');
+            const blob = await buildPdfOnServer(pngBlob, filename);
+            return { blob, filename };
+        }
+
+        throw new Error(`Unsupported export format: ${format}`);
+    }
+
+    async function uploadExportArtifact(format, blob, filename) {
+        const response = await fetch(
+            serverApiUrl(`/api/exports?format=${encodeURIComponent(format)}&filename=${encodeURIComponent(filename)}`),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': blob.type || 'application/octet-stream',
+                },
+                body: blob,
+            }
+        );
 
         if (!response.ok) {
             const message = await response.text();
-            throw new Error(message || `Server export failed with status ${response.status}`);
+            throw new Error(message || `Export upload failed with status ${response.status}`);
+        }
+    }
+
+    async function buildPdfOnServer(pngBlob, filename) {
+        const response = await fetch(
+            serverApiUrl(`/api/pdf?filename=${encodeURIComponent(filename)}`),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'image/png',
+                },
+                body: pngBlob,
+            }
+        );
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `PDF generation failed with status ${response.status}`);
         }
 
-        const filename = response.headers.get('X-Export-Filename')
-            || `tournament-graphic.${format === 'pdf' ? 'pdf' : 'png'}`;
-        const blob = await response.blob();
-        downloadBlob(blob, filename);
+        return response.blob();
+    }
+
+    async function reportAutomationStatus(status, message = '') {
+        if (!isServerHosted || !requestedAutoExportFormat) {
+            return;
+        }
+
+        await fetch(serverApiUrl('/api/automation-status'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status,
+                format: requestedAutoExportFormat,
+                message,
+            }),
+        });
+    }
+
+    async function handleClientExport(format, options = {}) {
+        const {
+            download = true,
+            uploadToServer = false,
+            filename = '',
+        } = options;
+
+        const artifact = await buildExportArtifact(format, filename);
+
+        if (uploadToServer) {
+            await uploadExportArtifact(format, artifact.blob, artifact.filename);
+        }
+
+        if (download) {
+            downloadBlob(artifact.blob, artifact.filename);
+        }
+
+        return artifact;
     }
 
     async function handleExport(format) {
         setExportButtonsBusy(true, format === 'pdf' ? 'Building PDF...' : 'Building PNG...');
 
         try {
-            await handleServerExport(format);
+            await handleClientExport(format);
         } catch (error) {
             console.error('Export failed:', error);
-            alert(`Export ${format.toUpperCase()} failed. Start ${SERVER_BASE_URL} via start_generator.bat and try again.`);
+            alert(`Export ${format.toUpperCase()} failed. ${error.message}`);
         } finally {
             setExportButtonsBusy(false);
+        }
+    }
+
+    async function runAutomationExport() {
+        if (!requestedAutoExportFormat) {
+            return;
+        }
+
+        if (!isServerHosted) {
+            throw new Error('Automation export requires the local server.');
+        }
+
+        try {
+            await handleClientExport(requestedAutoExportFormat, {
+                download: false,
+                uploadToServer: true,
+                filename: automationExportName,
+            });
+            document.body.dataset.automationExport = 'success';
+            await reportAutomationStatus('success');
+        } catch (error) {
+            document.body.dataset.automationExport = 'error';
+            await reportAutomationStatus('error', error instanceof Error ? error.message : String(error));
+            throw error;
         }
     }
 
@@ -1784,6 +1964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scaleCanvas(); // Initial scale
         renderDecorations();
         initCardGradients(getThemeConfig().cardGradients);
+        await runAutomationExport();
 
         setInterval(() => { if (state.isDirty) saveState(); }, 30000);
     }

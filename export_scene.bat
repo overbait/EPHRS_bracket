@@ -1,4 +1,10 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-python export_scene.py %*
+
+call "%~dp0bootstrap_runtime.bat"
+if errorlevel 1 exit /b 1
+
+"%PYTHON_EXE%" export_scene.py %*
 if errorlevel 1 pause
+exit /b %errorlevel%
